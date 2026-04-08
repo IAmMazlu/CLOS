@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CLOS Advance Tool</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;background:#0A0A0A;color:#F5F5F7;padding:1.5rem;max-width:960px;margin:0 auto}
+h1{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.05em;margin-bottom:.25rem;color:#F5F5F7}
+.sub{font-size:13px;color:#A8B2BB;margin-bottom:2rem}
+.section{border:1px solid #1C1C1E;border-radius:12px;padding:1.25rem;margin-bottom:1.25rem;background:#0D1B2A}
+.sec-title{font-size:11px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem}
+.sec-sub{font-size:12px;color:#A8B2BB;margin-bottom:.75rem}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.fg label{font-size:12px;color:#A8B2BB}
+.fg:last-child{margin-bottom:0}
+input,select,textarea{background:#1C1C1E;border:1px solid #2a2a2e;border-radius:6px;color:#F5F5F7;font-size:13px;padding:8px 10px;width:100%;font-family:Inter,sans-serif}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.week-row{display:grid;grid-template-columns:100px 1fr 1fr;gap:12px}
+.btn{width:100%;padding:12px;font-size:14px;font-weight:600;margin:8px 0;cursor:pointer;background:#F5F5F7;color:#0A0A0A;border:none;border-radius:8px;letter-spacing:.02em}
+.btn:hover{background:#ddd}
+.btn-sm{font-size:12px;padding:6px 12px;cursor:pointer;background:transparent;border:1px solid #2a2a2e;color:#A8B2BB;border-radius:6px}
+.btn-sm:hover{border-color:#A8B2BB}
+.btn-save{width:100%;padding:9px;font-size:13px;font-weight:600;margin-top:8px;cursor:pointer;background:#0D1B2A;border:1px solid #A8B2BB;color:#F5F5F7;border-radius:6px}
+.btn-req{width:100%;padding:10px;font-size:13px;font-weight:600;margin-top:10px;cursor:pointer;background:#0D1B2A;border:1px solid #A8B2BB;color:#F5F5F7;border-radius:6px}
+.btn-req:hover,.btn-save:hover{background:#1C1C1E}
+.out-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem}
+.out-label{font-size:11px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.08em}
+.copy-btn{font-size:12px;padding:4px 10px;cursor:pointer;background:transparent;border:1px solid #2a2a2e;color:#A8B2BB;border-radius:5px}
+.copy-btn:hover{border-color:#A8B2BB}
+.post-box{font-size:13px;color:#F5F5F7;white-space:pre-wrap;font-family:'Courier New',monospace;background:#1C1C1E;border-radius:8px;padding:.75rem;line-height:1.65}
+.paste-box{width:100%;font-size:13px;font-family:'Courier New',monospace;resize:vertical;line-height:1.65;padding:.75rem;background:#1C1C1E;border:1px solid #2a2a2e;border-radius:8px;color:#F5F5F7;margin-top:8px}
+.hint{font-size:12px;color:#A8B2BB;margin-top:4px}
+.ok{font-size:12px;color:#4caf50;margin-top:6px}
+.hidden{display:none}
+.roster-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
+.remove-btn{font-size:12px;padding:6px 10px;cursor:pointer;background:transparent;border:1px solid #2a2a2e;color:#A8B2BB;border-radius:5px}
+.roster-head{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:6px}
+.roster-head span{font-size:11px;color:#A8B2BB;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.badge{font-size:11px;color:#4caf50;margin-left:8px}
+.row-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.divider{border:none;border-top:1px solid #1C1C1E;margin:1.5rem 0}
+.team-label{font-size:12px;font-weight:600;color:#A8B2BB;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+</style>
+</head>
+<body>
+
+<h1>CLOS ADVANCE TOOL</h1>
+<p class="sub">Campus Legends of Saturday — Advance Day Post Generator</p>
+
+<!-- ROSTER -->
+<div class="section">
+  <div class="row-header">
+    <div class="sec-title" style="margin-bottom:0">Coach Roster <span class="badge hidden" id="savedBadge">✓ Saved</span></div>
+    <button class="btn-sm" onclick="toggleRoster()">Show / Hide</button>
+  </div>
+  <div id="rosterPanel" class="hidden" style="margin-top:.75rem">
+    <p class="sec-sub">Map each user-controlled team to their Discord username. Save once per season — only update after the carousel.</p>
+    <div class="roster-head"><span>Team name</span><span>Discord username (no @)</span><span></span></div>
+    <div id="rosterRows"></div>
+    <button class="btn-sm" style="margin-top:4px" onclick="addRow('','')">+ Add team</button>
+    <button class="btn-save" onclick="saveRoster()">Save roster</button>
+    <div class="ok hidden" id="saveMsg">Roster saved.</div>
+  </div>
+</div>
+
+<!-- WEEK & SEASON -->
+<div class="section">
+  <div class="sec-title">Week & Season</div>
+  <div class="week-row">
+    <div class="fg" style="margin-bottom:0">
+      <label>Week</label>
+      <input type="number" id="weekNum" min="1" max="20" value="14"/>
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label>Season / Year</label>
+      <input type="number" id="seasonNum" min="1" max="20" value="7"/>
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label>Week type</label>
+      <select id="weekType">
+        <option value="early">Early Season (Wks 1–4)</option>
+        <option value="mid">Midseason (Wks 5–8)</option>
+        <option value="late" selected>Late Season (Wks 9–12)</option>
+        <option value="rivalry">Rivalry Week</option>
+        <option value="confchamp">Conference Championships</option>
+        <option value="playoffs">Playoffs / CFP</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- ADVANCE + GOTW -->
+<div class="section">
+  <div class="sec-title">Advance Post + Game of the Week</div>
+  <p class="sec-sub">Fill in the GOTW details below. Hit the button and Claude writes both the advance post and the full GOTW article in chat. Paste each into its box.</p>
+
+  <div class="grid2" style="margin-bottom:12px">
+    <div>
+      <div class="team-label">Team 1</div>
+      <div class="fg"><label>Team name</label><input type="text" id="g1team" placeholder="Oregon"/></div>
+      <div class="fg"><label>Coach name</label><input type="text" id="g1coach" placeholder="GoodGameBro"/></div>
+      <div class="fg"><label>Record</label><input type="text" id="g1rec" placeholder="15-1"/></div>
+      <div class="fg"><label>Ranking (optional)</label><input type="text" id="g1rank" placeholder="#1"/></div>
+      <div class="fg"><label>Recent result</label><input type="text" id="g1result" placeholder="W 52-17 vs #2 Ohio State"/></div>
+      <div class="fg"><label>Team narrative</label><textarea class="paste-box" id="g1narrative" rows="2" placeholder="Hot off a dominant title game win..."></textarea></div>
+      <div class="fg"><label>Key players</label><textarea class="paste-box" id="g1players" rows="3" placeholder="QB J. Smith — 341 yds, 4 TD&#10;RB M. Johnson — 214 yds, 3 TD"></textarea></div>
+    </div>
+    <div>
+      <div class="team-label">Team 2</div>
+      <div class="fg"><label>Team name</label><input type="text" id="g2team" placeholder="Oklahoma"/></div>
+      <div class="fg"><label>Coach name</label><input type="text" id="g2coach" placeholder="DEppsRightSteps"/></div>
+      <div class="fg"><label>Record</label><input type="text" id="g2rec" placeholder="14-1"/></div>
+      <div class="fg"><label>Ranking (optional)</label><input type="text" id="g2rank" placeholder="#3"/></div>
+      <div class="fg"><label>Recent result</label><input type="text" id="g2result" placeholder="W 38-21 vs Florida State"/></div>
+      <div class="fg"><label>Team narrative</label><textarea class="paste-box" id="g2narrative" rows="2" placeholder="Battle-tested and peaking late..."></textarea></div>
+      <div class="fg"><label>Key players</label><textarea class="paste-box" id="g2players" rows="3" placeholder="QB T. Williams — 298 yds, 3 TD&#10;DE C. Carter — 4 sacks"></textarea></div>
+    </div>
+  </div>
+
+  <div class="fg"><label>Storyline / stakes</label><input type="text" id="gotwCtx" placeholder="Playoff semifinal, revenge game, undefeated on the line..."/></div>
+  <div class="fg"><label>Home team</label><input type="text" id="gotwHome" placeholder="Oregon (or Neutral site)"/></div>
+
+  <button class="btn-req" onclick="requestBoth()">Request advance post + GOTW from Claude ↗</button>
+</div>
+
+<div class="section">
+  <div class="out-header">
+    <span class="out-label">Advance Post</span>
+    <button class="copy-btn" onclick="cpBox('advPaste',this)">Copy</button>
+  </div>
+  <textarea class="paste-box" id="advPaste" rows="5" placeholder="Paste Claude's advance post here..."></textarea>
+</div>
+
+<div class="section">
+  <div class="out-header">
+    <span class="out-label">Game of the Week Article</span>
+    <button class="copy-btn" onclick="cpBox('gotwPaste',this)">Copy</button>
+  </div>
+  <textarea class="paste-box" id="gotwPaste" rows="12" placeholder="Paste Claude's GOTW article here..."></textarea>
+</div>
+
+<hr class="divider"/>
+
+<!-- TOP 25 -->
+<div class="section">
+  <div class="sec-title">Top 25 Rankings</div>
+  <div class="grid2">
+    <div class="fg">
+      <label>This week — "Team Record" one per line</label>
+      <textarea id="top25" rows="14" style="width:100%;resize:vertical">Oregon 15-1
+Ohio State 14-3
+Oklahoma 14-1
+Florida State 12-2
+Georgia Tech 11-3
+James Madison 12-3
+Memphis 11-3
+Notre Dame 10-4
+Texas A&M 10-4
+Nevada 11-3
+TCU 10-3
+Texas 9-4
+Penn State 10-3
+Michigan 10-3
+Louisiana Tech 12-2
+Florida Atlantic 11-2
+Alabama 10-4
+San Diego State 11-3
+Cincinnati 11-2
+Oregon State 11-3
+Iowa State 10-3
+Central Michigan 11-3
+UCF 12-2
+Washington 11-3
+Syracuse 9-4</textarea>
+    </div>
+    <div class="fg">
+      <label>Last week — team names only (auto-fills after generate)</label>
+      <textarea id="last25" rows="14" style="width:100%;resize:vertical">Oklahoma
+Oregon
+Florida State
+Georgia Tech
+Ohio State
+James Madison
+Notre Dame
+Texas A&M
+Memphis
+Nevada
+Texas
+Penn State
+Louisiana Tech
+TCU
+Michigan
+Florida Atlantic
+San Diego State
+Alabama
+Iowa State
+Cincinnati
+Central Michigan
+Oregon State
+Washington
+UCF
+San Jose State</textarea>
+    </div>
+  </div>
+  <div class="fg" style="margin-top:10px">
+    <label>Receiving votes (one per line)</label>
+    <textarea id="receiving" rows="5" style="width:100%;resize:vertical">Clemson
+Georgia State
+Northern Illinois
+San Jose State
+Duke
+BYU
+Colorado State
+Kansas State
+Purdue
+Tulane</textarea>
+  </div>
+  <p class="hint">Teams receiving votes but not ranked in the Top 25 this week only.</p>
+</div>
+
+<button class="btn" onclick="generate()">Generate Top 25 post</button>
+
+<div id="output" class="hidden">
+  <div class="section">
+    <div class="out-header">
+      <span class="out-label">Top 25 Poll</span>
+      <button class="copy-btn" onclick="cp('t25Post',this)">Copy</button>
+    </div>
+    <div class="post-box" id="t25Post"></div>
+  </div>
+</div>
+
+<script>
+const DIV='━━━━━━━━━━━━━━━━━━━━';
+const ROSTER_KEY='clos_roster_v1';
+const LAST_KEY='clos_last_week_v1';
+const DEFAULT=[
+  {team:'Alabama',discord:'GoodGameBro'},
+  {team:'Ohio State',discord:'IAmMazlu'},
+  {team:'Notre Dame',discord:'GenieOfTheTrashCan'},
+  {team:'Oklahoma',discord:'DEppsRightSteps'},
+  {team:'Texas',discord:'ShaggyBlack'},
+];
+
+function loadRoster(){try{const s=localStorage.getItem(ROSTER_KEY);return s?JSON.parse(s):DEFAULT;}catch(e){return DEFAULT;}}
+function getRosterMap(){const m={};loadRoster().forEach(r=>{if(r.team&&r.discord)m[r.team.toLowerCase()]=r.discord;});return m;}
+
+function saveRoster(){
+  const data=[...document.querySelectorAll('.roster-row')].map(r=>{
+    const i=r.querySelectorAll('input');
+    return{team:i[0].value.trim(),discord:i[1].value.trim()};
+  }).filter(r=>r.team&&r.discord);
+  try{
+    localStorage.setItem(ROSTER_KEY,JSON.stringify(data));
+    document.getElementById('saveMsg').classList.remove('hidden');
+    document.getElementById('savedBadge').classList.remove('hidden');
+    setTimeout(()=>document.getElementById('saveMsg').classList.add('hidden'),3000);
+  }catch(e){alert('Local storage unavailable — will work on hosted version.');}
+}
+
+function renderRoster(){
+  document.getElementById('rosterRows').innerHTML='';
+  loadRoster().forEach(r=>addRow(r.team,r.discord));
+  if(localStorage.getItem(ROSTER_KEY))document.getElementById('savedBadge').classList.remove('hidden');
+}
+
+function addRow(team,discord){
+  const d=document.createElement('div');
+  d.className='roster-row';
+  d.innerHTML=`<input type="text" placeholder="Alabama" value="${team||''}"/><input type="text" placeholder="GoodGameBro" value="${discord||''}"/><button class="remove-btn" onclick="this.closest('.roster-row').remove()">✕</button>`;
+  document.getElementById('rosterRows').appendChild(d);
+}
+
+function toggleRoster(){document.getElementById('rosterPanel').classList.toggle('hidden');}
+
+function weekLabel(){
+  return{early:'Early Season',mid:'Midseason',late:'Late Season',rivalry:'Rivalry Week',confchamp:'Conference Championships',playoffs:'Playoffs / CFP'}[document.getElementById('weekType').value]||'';
+}
+
+function requestBoth(){
+  const week=document.getElementById('weekNum').value;
+  const season=document.getElementById('seasonNum').value;
+  const wt=weekLabel();
+  const g1t=document.getElementById('g1team').value.trim();
+  const g1c=document.getElementById('g1coach').value.trim();
+  const g1r=document.getElementById('g1rec').value.trim();
+  const g1rk=document.getElementById('g1rank').value.trim();
+  const g1res=document.getElementById('g1result').value.trim();
+  const g1nar=document.getElementById('g1narrative').value.trim();
+  const g1pl=document.getElementById('g1players').value.trim();
+  const g2t=document.getElementById('g2team').value.trim();
+  const g2c=document.getElementById('g2coach').value.trim();
+  const g2r=document.getElementById('g2rec').value.trim();
+  const g2rk=document.getElementById('g2rank').value.trim();
+  const g2res=document.getElementById('g2result').value.trim();
+  const g2nar=document.getElementById('g2narrative').value.trim();
+  const g2pl=document.getElementById('g2players').value.trim();
+  const ctx=document.getElementById('gotwCtx').value.trim();
+  const home=document.getElementById('gotwHome').value.trim();
+
+  alert('Copy the request below and paste it into your Claude chat.\n\n---\n\nI need two things written for CLOS (Campus Legends of Saturday). Label them clearly as ADVANCE POST and GOTW ARTICLE.\n\nADVANCE POST: Week '+week+', Season '+season+' ('+wt+'). Voice of the dynasty — authoritative, not personal. Must tag @CLOS Coach, reference #scheduling and getting games booked, end with a good luck sendoff. 3-4 sentences max. Fresh and unique every week.\n\nGOTW ARTICLE: Full immersive match preview for a Discord forum thread.\nMatchup: '+g1t+(g1rk?' ('+g1rk+')':'')+' ('+g1r+') coached by '+g1c+' vs '+g2t+(g2rk?' ('+g2rk+')':'')+' ('+g2r+') coached by '+g2c+'\nHome: '+(home||'Neutral')+'\n'+(ctx?'Stakes: '+ctx+'\n':'')+(g1res?g1t+' last result: '+g1res+'\n':'')+(g1nar?g1t+' narrative: '+g1nar+'\n':'')+(g1pl?g1t+' key players: '+g1pl+'\n':'')+(g2res?g2t+' last result: '+g2res+'\n':'')+(g2nar?g2t+' narrative: '+g2nar+'\n':'')+(g2pl?g2t+' key players: '+g2pl+'\n':'')+'\nFormat: bold header, multi-paragraph breakdown, fabricated coach quotes, dramatic close, end with "Who wins Week '+week+'\'s Game of the Week? Vote below!"');
+}
+
+function parseLine(line){
+  const p=line.trim().split(/\s+/);
+  const r=p[p.length-1];
+  if(/^\d+-\d+$/.test(r))return{team:p.slice(0,p.length-1).join(' '),record:r};
+  return{team:line.trim(),record:''};
+}
+
+function getMovement(rank,last,team){
+  if(!last.length)return null;
+  const i=last.findIndex(t=>t.toLowerCase()===team.toLowerCase());
+  if(i===-1)return null;
+  return(i+1)-rank;
+}
+
+function indicator(diff){
+  if(diff===null)return ' 🆕';
+  if(diff>0)return ' ↑'+diff;
+  if(diff<0)return ' ↓'+Math.abs(diff);
+  return ' —';
+}
+
+function generate(){
+  const week=document.getElementById('weekNum').value;
+  const season=document.getElementById('seasonNum').value;
+  const rm=getRosterMap();
+  const currRaw=document.getElementById('top25').value.split('\n').map(t=>t.trim()).filter(Boolean);
+  const last=document.getElementById('last25').value.split('\n').map(t=>t.trim()).filter(Boolean);
+  const recv=document.getElementById('receiving').value.split('\n').map(t=>t.trim()).filter(Boolean);
+
+  const parsed=currRaw.map((line,i)=>{
+    const{team,record}=parseLine(line);
+    const diff=getMovement(i+1,last,team);
+    return{team,record,diff,rank:i+1,discord:rm[team.toLowerCase()]||null};
+  });
+
+  let post='📊 **CLOS TOP 25 — WEEK '+week+' | SEASON '+season+'**\n'+DIV+'\n\n';
+  parsed.forEach(({team,record,diff,discord},i)=>{
+    post+='**'+(i+1)+'.** '+team+(record?' ('+record+')':'')+indicator(diff)+(discord?' | @'+discord:'')+'\n';
+  });
+
+  const newEntries=parsed.filter(p=>p.diff===null&&last.length>0);
+  const currLower=parsed.map(p=>p.team.toLowerCase());
+  const dropped=last.filter(t=>!currLower.includes(t.toLowerCase())).map(t=>({team:t,discord:rm[t.toLowerCase()]||null}));
+
+  if(newEntries.length){
+    post+='\n'+DIV+'\n🆕 **NEW TO THE POLL**\n';
+    newEntries.forEach(p=>{post+=p.team+(p.record?' ('+p.record+')':'')+' — enters at #'+p.rank+(p.discord?' | @'+p.discord:'')+'\n';});
+  }
+  if(dropped.length){
+    post+='\n📉 **DROPPED OUT**\n';
+    dropped.forEach(p=>{post+=p.team+(p.discord?' | @'+p.discord:'')+'\n';});
+  }
+
+  const risers=parsed.filter(p=>p.diff!==null&&p.diff>0).sort((a,b)=>b.diff-a.diff).slice(0,3);
+  const fallers=parsed.filter(p=>p.diff!==null&&p.diff<0).sort((a,b)=>a.diff-b.diff).slice(0,3);
+
+  if(risers.length||fallers.length){
+    post+='\n'+DIV+'\n';
+    if(risers.length){post+='**BIGGEST RISERS**\n';risers.forEach(p=>{post+='↑'+p.diff+' '+p.team+(p.record?' ('+p.record+')':'')+' — now #'+p.rank+'\n';});}
+    if(fallers.length){post+='\n**BIGGEST FALLERS**\n';fallers.forEach(p=>{post+='↓'+Math.abs(p.diff)+' '+p.team+(p.record?' ('+p.record+')':'')+' — now #'+p.rank+'\n';});}
+  }
+
+  if(recv.length){post+='\n'+DIV+'\n**RECEIVING VOTES**\n';recv.forEach(t=>{post+=t+'\n';});}
+
+  document.getElementById('t25Post').textContent=post;
+  document.getElementById('output').classList.remove('hidden');
+
+  try{
+    localStorage.setItem(LAST_KEY,JSON.stringify(parsed.map(p=>p.team)));
+    document.getElementById('last25').value=parsed.map(p=>p.team).join('\n');
+  }catch(e){}
+}
+
+function cp(id,btn){
+  const el=document.getElementById(id);
+  const txt=el.tagName==='TEXTAREA'?el.value:el.textContent;
+  navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);});
+}
+
+function cpBox(id,btn){
+  navigator.clipboard.writeText(document.getElementById(id).value).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);});
+}
+
+(function(){
+  try{const s=localStorage.getItem(LAST_KEY);if(s){const t=JSON.parse(s);if(t.length)document.getElementById('last25').value=t.join('\n');}}catch(e){}
+})();
+
+renderRoster();
+</script>
+</body>
+</html>
