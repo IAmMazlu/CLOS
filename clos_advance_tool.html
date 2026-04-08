@@ -160,8 +160,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 <div class="section">
   <div class="sec-title">Top 25 Rankings</div>
   <div style="background:#1C1C1E;border-radius:8px;padding:1rem;margin-bottom:1rem;border-left:3px solid #A8B2BB">
-    <p style="font-size:12px;font-weight:700;color:#F5F5F7;margin-bottom:6px">📸 HOW TO FILL IN THE TOP 25</p>
-    <p style="font-size:12px;color:#A8B2BB;line-height:1.6">Take three screenshots from the game: the top half of the rankings list, the bottom half, and the <strong style="color:#F5F5F7">More Information</strong> screen showing "Others Receiving Votes." Upload all three to Claude chat and say <strong style="color:#F5F5F7">"fill in my Top 25 from these."</strong> Claude will hand you back a formatted list ready to paste into the fields below.</p>
+    <p style="font-size:12px;font-weight:700;color:#F5F5F7;margin-bottom:8px">📸 HOW TO FILL IN THE TOP 25</p>
+    <p style="font-size:12px;color:#A8B2BB;line-height:1.6;margin-bottom:10px">Take three screenshots from the game: the top half of the rankings list, the bottom half, and the <strong style="color:#F5F5F7">More Information</strong> screen showing "Others Receiving Votes."</p>
+    <p style="font-size:12px;font-weight:700;color:#F5F5F7;margin-bottom:6px">Step 1 — Open Claude chat and paste this first:</p>
+    <textarea id="primerText" style="width:100%;font-size:12px;font-family:'Courier New',monospace;background:#0D1B2A;border:1px solid #2a2a2e;border-radius:6px;color:#F5F5F7;padding:.6rem;line-height:1.6;resize:none;margin-bottom:8px" rows="4">I help run CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league on EA Sports College Football. Please read the attached in-game Top 25 poll screenshots and return a clean ranked list formatted as "Team Record" one per line (e.g. Alabama 4-0), followed by a separate list of teams receiving votes. Extract team names and records only — nothing else.</textarea>
+    <button onclick="copyPrimer(this)" style="font-size:12px;padding:5px 12px;cursor:pointer;background:transparent;border:1px solid #A8B2BB;color:#A8B2BB;border-radius:5px;margin-bottom:10px">Copy primer</button>
+    <p style="font-size:12px;color:#A8B2BB;line-height:1.6"><strong style="color:#F5F5F7">Step 2</strong> — Upload all three screenshots to Claude chat.<br/><strong style="color:#F5F5F7">Step 3</strong> — Claude hands you back the formatted list. Paste it into the fields below.</p>
   </div>
   <div class="grid2">
     <div class="fg">
@@ -400,6 +404,11 @@ function cp(id,btn){
   const el=document.getElementById(id);
   const txt=el.tagName==='TEXTAREA'?el.value:el.textContent;
   navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);});
+}
+
+function copyPrimer(btn){
+  const txt=document.getElementById('primerText').value;
+  navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy primer',2000);});
 }
 
 function cpBox(id,btn){
