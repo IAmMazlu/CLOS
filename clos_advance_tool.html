@@ -10,15 +10,14 @@
 body{font-family:Inter,sans-serif;background:#0A0A0A;color:#F5F5F7;padding:1.5rem;max-width:960px;margin:0 auto;padding-top:5rem}
 h1{font-family:'Barlow Condensed',sans-serif;font-size:2.5rem;font-weight:700;letter-spacing:.05em;margin-bottom:.25rem;color:#F5F5F7}
 .sticky-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:#0A0A0A;border-bottom:1px solid #1C1C1E;padding:.75rem 1.5rem;display:flex;align-items:center;gap:20px;max-width:100%}
-.sticky-inner{display:flex;align-items:center;gap:16px;max-width:960px;margin:0 auto;width:100%}
+.sticky-inner{display:flex;align-items:center;gap:16px;max-width:960px;margin:0 auto;width:100%;flex-wrap:wrap}
 .sticky-label{font-size:11px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
 .sticky-input{background:#1C1C1E;border:1px solid #1C1C1E;border-radius:6px;color:#F5F5F7;font-size:13px;padding:5px 8px;width:70px;font-family:Inter,sans-serif}
-.sticky-select{background:#1C1C1E;border:1px solid #1C1C1E;border-radius:6px;color:#F5F5F7;font-size:13px;padding:5px 8px;font-family:Inter,sans-serif;flex:1}
+.sticky-select{background:#1C1C1E;border:1px solid #1C1C1E;border-radius:6px;color:#F5F5F7;font-size:13px;padding:5px 8px;font-family:Inter,sans-serif;flex:1;min-width:140px}
 .btn-clear{font-size:12px;padding:5px 12px;cursor:pointer;background:transparent;border:1px solid #1C1C1E;color:#A8B2BB;border-radius:6px;white-space:nowrap}
 .btn-clear:hover{border-color:#A8B2BB}
 .sub{font-size:13px;color:#A8B2BB;margin-bottom:2rem}
 .section{border:1px solid #1C1C1E;border-radius:12px;padding:1.25rem;margin-bottom:1.25rem;background:#0D1B2A}
-.sec-title{font-size:11px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem}
 .sec-sub{font-size:12px;color:#A8B2BB;margin-bottom:.75rem}
 .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
 .fg label{font-size:12px;color:#A8B2BB}
@@ -26,7 +25,7 @@ h1{font-family:'Barlow Condensed',sans-serif;font-size:2.5rem;font-weight:700;le
 input,select,textarea{background:#1C1C1E;border:1px solid #1C1C1E;border-radius:6px;color:#F5F5F7;font-size:13px;padding:8px 10px;width:100%;font-family:Inter,sans-serif}
 input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.week-row{display:grid;grid-template-columns:100px 1fr 1fr;gap:12px}
+@media(max-width:600px){.grid2{grid-template-columns:1fr}}
 .btn{width:100%;padding:12px;font-size:14px;font-weight:600;margin:8px 0;cursor:pointer;background:#F5F5F7;color:#0A0A0A;border:none;border-radius:8px;letter-spacing:.02em}
 .btn:hover{background:#ddd}
 .btn-sm{font-size:12px;padding:6px 12px;cursor:pointer;background:transparent;border:1px solid #1C1C1E;color:#A8B2BB;border-radius:6px}
@@ -38,8 +37,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 .out-label{font-size:11px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.08em}
 .copy-btn{font-size:12px;padding:4px 10px;cursor:pointer;background:transparent;border:1px solid #1C1C1E;color:#A8B2BB;border-radius:5px}
 .copy-btn:hover{border-color:#A8B2BB}
-.post-box{font-size:13px;color:#F5F5F7;white-space:pre-wrap;font-family:'Courier New',monospace;background:#1C1C1E;border-radius:8px;padding:.75rem;line-height:1.65}
 .paste-box{width:100%;font-size:13px;font-family:'Courier New',monospace;resize:vertical;line-height:1.65;padding:.75rem;background:#1C1C1E;border:1px solid #1C1C1E;border-radius:8px;color:#F5F5F7;margin-top:8px}
+.output-box{width:100%;font-size:13px;font-family:'Courier New',monospace;resize:vertical;line-height:1.65;padding:.75rem;background:#0A0A0A;border:1px solid #A8B2BB;border-radius:8px;color:#F5F5F7;margin-top:8px}
+.request-box{width:100%;font-size:13px;font-family:'Courier New',monospace;resize:vertical;line-height:1.65;padding:.75rem;background:#1C1C1E;border:1px dashed #A8B2BB;border-radius:8px;color:#F5F5F7;margin-top:8px}
+.post-box{font-size:13px;color:#F5F5F7;white-space:pre-wrap;font-family:'Courier New',monospace;background:#0A0A0A;border:1px solid #A8B2BB;border-radius:8px;padding:.75rem;line-height:1.65}
+.request-section{background:#0D1B2A;border:1px dashed #A8B2BB;border-radius:12px;padding:1.25rem;margin-bottom:1.25rem}
+.output-section{background:#0A0A0A;border:1px solid #A8B2BB;border-radius:12px;padding:1.25rem;margin-bottom:1.25rem}
 .hint{font-size:12px;color:#A8B2BB;margin-top:4px}
 .ok{font-size:12px;color:#4caf50;margin-top:6px}
 .hidden{display:none}
@@ -55,6 +58,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 .tool-header-bar{width:4px;height:36px;background:#A8B2BB;border-radius:2px;flex-shrink:0}
 .tool-header-text{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:#F5F5F7;letter-spacing:.03em;line-height:1}
 .tool-header-sub{font-size:12px;color:#A8B2BB;margin-top:3px}
+.section-label{font-size:10px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.dashed-hint{font-size:11px;color:#A8B2BB;margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -109,23 +114,23 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
     <div><div class="tool-header-text">01 — Advance Post</div><div class="tool-header-sub">Generate a fresh advance post for this week</div></div>
   </div>
   <button class="btn-req" onclick="requestAdvance()">Build advance post request ↗</button>
-</div>
-
-<div class="section" id="advRequestSection" style="display:none">
-  <div class="out-header">
-    <span class="out-label">Advance Post — Claude Request</span>
-    <button class="copy-btn" onclick="cpBox('advRequest',this)">Copy</button>
+  <div id="advRequestSection" style="display:none;margin-top:1rem">
+    <p class="dashed-hint">— Claude Request — copy and paste into Claude chat</p>
+    <div class="out-header">
+      <span class="out-label">Copy this into Claude</span>
+      <button class="copy-btn" onclick="cpBox('advRequest',this)">Copy</button>
+    </div>
+    <textarea class="request-box" id="advRequest" rows="5"></textarea>
+    <p class="hint" style="margin-top:6px">Then paste Claude's response below ↓</p>
   </div>
-  <textarea class="paste-box" id="advRequest" rows="6"></textarea>
-  <p class="hint" style="margin-top:8px">Copy this, paste it into Claude chat, then paste the response below.</p>
 </div>
 
-<div class="section">
+<div class="output-section">
   <div class="out-header">
-    <span class="out-label">Advance Post</span>
+    <span class="out-label">✓ Advance Post — Output</span>
     <button class="copy-btn" onclick="cpBox('advPaste',this)">Copy</button>
   </div>
-  <textarea class="paste-box" id="advPaste" rows="5" placeholder="Paste Claude's advance post here..."></textarea>
+  <textarea class="output-box" id="advPaste" rows="5" placeholder="Paste Claude's advance post here..."></textarea>
 </div>
 
 <hr class="divider"/>
@@ -166,23 +171,23 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
     <button class="btn-req" style="margin-top:0;flex:1" onclick="requestGOTW()">Build GOTW request ↗</button>
     <button class="btn-clear" onclick="clearGOTW()">Clear fields</button>
   </div>
-</div>
-
-<div class="section" id="gotwRequestSection" style="display:none">
-  <div class="out-header">
-    <span class="out-label">GOTW — Claude Request</span>
-    <button class="copy-btn" onclick="cpBox('gotwRequest',this)">Copy</button>
+  <div id="gotwRequestSection" style="display:none;margin-top:1rem">
+    <p class="dashed-hint">— Claude Request — copy and paste into Claude chat</p>
+    <div class="out-header">
+      <span class="out-label">Copy this into Claude</span>
+      <button class="copy-btn" onclick="cpBox('gotwRequest',this)">Copy</button>
+    </div>
+    <textarea class="request-box" id="gotwRequest" rows="10"></textarea>
+    <p class="hint" style="margin-top:6px">Then paste Claude's response below ↓</p>
   </div>
-  <textarea class="paste-box" id="gotwRequest" rows="10"></textarea>
-  <p class="hint" style="margin-top:8px">Copy this, paste it into Claude chat, then paste the response below.</p>
 </div>
 
-<div class="section">
+<div class="output-section">
   <div class="out-header">
-    <span class="out-label">Game of the Week Article</span>
+    <span class="out-label">✓ Game of the Week Article — Output</span>
     <button class="copy-btn" onclick="cpBox('gotwPaste',this)">Copy</button>
   </div>
-  <textarea class="paste-box" id="gotwPaste" rows="12" placeholder="Paste Claude's GOTW article here..."></textarea>
+  <textarea class="output-box" id="gotwPaste" rows="12" placeholder="Paste Claude's GOTW article here..."></textarea>
 </div>
 
 <hr class="divider"/>
@@ -213,16 +218,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   </div>
   <div class="fg" style="margin-top:10px">
     <label>Receiving votes (one per line)</label>
-    <textarea id="receiving" rows="5" style="width:100%;resize:vertical">Clemson
-Georgia State
-Northern Illinois
-San Jose State
-Duke
-BYU
-Colorado State
-Kansas State
-Purdue
-Tulane</textarea>
+    <textarea id="receiving" rows="5" style="width:100%;resize:vertical" placeholder="One team per line"></textarea>
   </div>
   <p class="hint">Teams receiving votes but not ranked in the Top 25 this week only.</p>
 </div>
@@ -230,9 +226,9 @@ Tulane</textarea>
 <button class="btn" onclick="generate()">Generate Top 25 post</button>
 
 <div id="output" class="hidden">
-  <div class="section">
+  <div class="output-section">
     <div class="out-header">
-      <span class="out-label">Top 25 Poll</span>
+      <span class="out-label">✓ Top 25 Poll — Output</span>
       <button class="copy-btn" onclick="cp('t25Post',this)">Copy</button>
     </div>
     <div class="post-box" id="t25Post"></div>
@@ -421,7 +417,6 @@ function clearAll(){
   document.getElementById('output').classList.add('hidden');
   document.getElementById('t25Post').textContent='';
 }
-
 function copyPrimer(btn){
   const txt=document.getElementById('primerText').value;
   navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy primer',2000);});
