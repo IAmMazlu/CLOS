@@ -72,7 +72,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <div class="week-row">
     <div class="fg" style="margin-bottom:0">
       <label>Week</label>
-      <input type="number" id="weekNum" min="1" max="20" value="14"/>
+      <input type="number" id="weekNum" min="0" max="20" value="14"/>
     </div>
     <div class="fg" style="margin-bottom:0">
       <label>Season / Year</label>
@@ -81,6 +81,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
     <div class="fg" style="margin-bottom:0">
       <label>Week type</label>
       <select id="weekType">
+        <option value="kickoff">Season Kickoff (Week 0)</option>
         <option value="early">Early Season (Wks 1–4)</option>
         <option value="mid">Midseason (Wks 5–8)</option>
         <option value="late" selected>Late Season (Wks 9–12)</option>
@@ -292,7 +293,7 @@ function addRow(team,discord){
 function toggleRoster(){document.getElementById('rosterPanel').classList.toggle('hidden');}
 
 function weekLabel(){
-  return{early:'Early Season',mid:'Midseason',late:'Late Season',rivalry:'Rivalry Week',confchamp:'Conference Championships',playoffs:'Playoffs / CFP'}[document.getElementById('weekType').value]||'';
+  return{kickoff:'Season Kickoff',early:'Early Season',mid:'Midseason',late:'Late Season',rivalry:'Rivalry Week',confchamp:'Conference Championships',playoffs:'Playoffs / CFP'}[document.getElementById('weekType').value]||'';
 }
 
 function requestBoth(){
