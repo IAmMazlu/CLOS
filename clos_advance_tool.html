@@ -125,7 +125,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <div class="fg"><label>Storyline / stakes</label><input type="text" id="gotwCtx" placeholder="Playoff semifinal, revenge game, undefeated on the line..."/></div>
   <div class="fg"><label>Home team</label><input type="text" id="gotwHome" placeholder="Oregon (or Neutral site)"/></div>
 
-  <button class="btn-req" onclick="requestBoth()">Request advance post + GOTW from Claude ↗</button>
+  <button class="btn-req" onclick="requestBoth()">Build Claude request ↗</button>
+</div>
+
+<div class="section" id="claudeRequestSection" style="display:none">
+  <div class="out-header">
+    <span class="out-label">Claude Request — Copy & paste into Claude chat</span>
+    <button class="copy-btn" onclick="cpBox('claudeRequest',this)">Copy</button>
+  </div>
+  <textarea class="paste-box" id="claudeRequest" rows="10" readonly></textarea>
+  <p class="hint" style="margin-top:8px">Copy this, paste it into Claude chat, then paste Claude's responses into the boxes below.</p>
 </div>
 
 <div class="section">
@@ -303,7 +312,10 @@ function requestBoth(){
   const ctx=document.getElementById('gotwCtx').value.trim();
   const home=document.getElementById('gotwHome').value.trim();
 
-  alert('Copy the request below and paste it into your Claude chat.\n\n---\n\nI need two things written for CLOS (Campus Legends of Saturday). Label them clearly as ADVANCE POST and GOTW ARTICLE.\n\nADVANCE POST: Week '+week+', Season '+season+' ('+wt+'). Voice of the dynasty — authoritative, not personal. Must tag @CLOS Coach, reference #scheduling and getting games booked, end with a good luck sendoff. 3-4 sentences max. Fresh and unique every week.\n\nGOTW ARTICLE: Full immersive match preview for a Discord forum thread.\nMatchup: '+g1t+(g1rk?' ('+g1rk+')':'')+' ('+g1r+') coached by '+g1c+' vs '+g2t+(g2rk?' ('+g2rk+')':'')+' ('+g2r+') coached by '+g2c+'\nHome: '+(home||'Neutral')+'\n'+(ctx?'Stakes: '+ctx+'\n':'')+(g1res?g1t+' last result: '+g1res+'\n':'')+(g1nar?g1t+' narrative: '+g1nar+'\n':'')+(g1pl?g1t+' key players: '+g1pl+'\n':'')+(g2res?g2t+' last result: '+g2res+'\n':'')+(g2nar?g2t+' narrative: '+g2nar+'\n':'')+(g2pl?g2t+' key players: '+g2pl+'\n':'')+'\nFormat: bold header, multi-paragraph breakdown, fabricated coach quotes, dramatic close, end with "Who wins Week '+week+'\'s Game of the Week? Vote below!"');
+  const req='I need two things written for CLOS (Campus Legends of Saturday). Label them clearly as ADVANCE POST and GOTW ARTICLE.\n\nADVANCE POST: Week '+week+', Season '+season+' ('+wt+'). Voice of the dynasty — authoritative, not personal. Must tag @CLOS Coach, reference #scheduling and getting games booked, end with a good luck sendoff. 3-4 sentences max. Fresh and unique every week.\n\nGOTW ARTICLE: Full immersive match preview for a Discord forum thread.\nMatchup: '+g1t+(g1rk?' ('+g1rk+')':'')+' ('+g1r+') coached by '+g1c+' vs '+g2t+(g2rk?' ('+g2rk+')':'')+' ('+g2r+') coached by '+g2c+'\nHome: '+(home||'Neutral site')+'\n'+(ctx?'Stakes: '+ctx+'\n':'')+(g1res?g1t+' last result: '+g1res+'\n':'')+(g1nar?g1t+' narrative: '+g1nar+'\n':'')+(g1pl?g1t+' key players:\n'+g1pl+'\n':'')+(g2res?g2t+' last result: '+g2res+'\n':'')+(g2nar?g2t+' narrative: '+g2nar+'\n':'')+(g2pl?g2t+' key players:\n'+g2pl+'\n':'')+'\nFormat the GOTW as: bold header with team names/rankings/records, multi-paragraph breakdown of both teams, fabricated but believable coach quotes for both coaches, dramatic closing lines, end with "Who wins Week '+week+'\'s Game of the Week? Vote below!"';
+  document.getElementById('claudeRequest').value=req;
+  document.getElementById('claudeRequestSection').style.display='block';
+  document.getElementById('claudeRequestSection').scrollIntoView({behavior:'smooth'});
 }
 
 function parseLine(line){
