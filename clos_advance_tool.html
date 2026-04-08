@@ -96,12 +96,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
     <button class="btn-sm" onclick="toggleRoster()">Show / Hide</button>
   </div>
   <div id="rosterPanel" class="hidden" style="margin-top:.75rem">
-    <p class="sec-sub">Map each user-controlled team to their Discord username. Save once per season — only update after the carousel.</p>
-    <div class="roster-head"><span>Team name</span><span>Discord username (no @)</span><span></span></div>
-    <div id="rosterRows"></div>
-    <button class="btn-sm" style="margin-top:4px" onclick="addRow('','')">+ Add team</button>
-    <button class="btn-save" onclick="saveRoster()">Save roster</button>
-    <div class="ok hidden" id="saveMsg">Roster saved.</div>
+    <p class="sec-sub">Pulled live from the Team Info Sheet. Update the Sheet after the carousel — the tool syncs automatically on load.</p>
+    <div class="roster-head"><span>Team name</span><span>Discord username</span><span></span></div>
+    <div id="rosterRows"><p style="font-size:12px;color:#A8B2BB;padding:4px 0">Loading roster...</p></div>
+    <button class="btn-sm" style="margin-top:8px" onclick="fetchRoster()">↻ Refresh from Sheet</button>
+    <div class="ok hidden" id="saveMsg">Roster refreshed.</div>
   </div>
 </div>
 
@@ -240,36 +239,41 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 
 <script>
 const DIV='━━━━━━━━━━━━━━━━━━━━';
-const ROSTER_KEY='clos_roster_v1';
 const LAST_KEY='clos_last_week_v1';
-const DEFAULT=[];
+const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzFNE1VvmzOA--kOJX06QzrcGLp9SZrHu3hG388Kudz_Fzr4YJC2w_-mPRpdrfAtGAgcA/exec';
 
-function loadRoster(){try{const s=localStorage.getItem(ROSTER_KEY);return s?JSON.parse(s):DEFAULT;}catch(e){return DEFAULT;}}
-function getRosterMap(){const m={};loadRoster().forEach(r=>{if(r.team&&r.discord)m[r.team.toLowerCase()]=r.discord;});return m;}
+let rosterCache={};
 
-function saveRoster(){
-  const data=[...document.querySelectorAll('.roster-row')].map(r=>{
-    const i=r.querySelectorAll('input');
-    return{team:i[0].value.trim(),discord:i[1].value.trim()};
-  }).filter(r=>r.team&&r.discord);
+async function fetchRoster(){
   try{
-    localStorage.setItem(ROSTER_KEY,JSON.stringify(data));
-    document.getElementById('saveMsg').classList.remove('hidden');
+    const resp=await fetch(APPS_SCRIPT_URL);
+    const data=await resp.json();
+    rosterCache={};
+    data.forEach(r=>{if(r.team&&r.discord)rosterCache[r.team.toLowerCase()]=r.discord;});
+    renderRoster(data);
     document.getElementById('savedBadge').classList.remove('hidden');
-    setTimeout(()=>document.getElementById('saveMsg').classList.add('hidden'),3000);
-  }catch(e){alert('Local storage unavailable — will work on hosted version.');}
+    document.getElementById('savedBadge').textContent='✓ Synced from Sheet';
+  }catch(e){
+    document.getElementById('savedBadge').classList.remove('hidden');
+    document.getElementById('savedBadge').textContent='⚠ Could not load roster';
+  }
 }
 
-function renderRoster(){
-  document.getElementById('rosterRows').innerHTML='';
-  loadRoster().forEach(r=>addRow(r.team,r.discord));
-}
+function getRosterMap(){return rosterCache;}
 
-function addRow(team,discord){
-  const d=document.createElement('div');
-  d.className='roster-row';
-  d.innerHTML=`<input type="text" placeholder="Alabama" value="${team||''}"/><input type="text" placeholder="GoodGameBro" value="${discord||''}"/><button class="remove-btn" onclick="this.closest('.roster-row').remove()">✕</button>`;
-  document.getElementById('rosterRows').appendChild(d);
+function renderRoster(data){
+  const container=document.getElementById('rosterRows');
+  container.innerHTML='';
+  if(data&&data.length){
+    data.forEach(r=>{
+      const d=document.createElement('div');
+      d.className='roster-row';
+      d.innerHTML=`<input type="text" value="${r.team||''}" readonly style="opacity:.6"/><input type="text" value="${r.discord||''}" readonly style="opacity:.6"/><span style="font-size:11px;color:#4caf50;padding:0 6px">✓</span>`;
+      container.appendChild(d);
+    });
+  } else {
+    container.innerHTML='<p style="font-size:12px;color:#A8B2BB;padding:4px 0">No coaches loaded.</p>';
+  }
 }
 
 function toggleRoster(){document.getElementById('rosterPanel').classList.toggle('hidden');}
@@ -431,7 +435,7 @@ function cpBox(id,btn){
   navigator.clipboard.writeText(document.getElementById(id).value).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);});
 }
 
-// Auto-load last week only if it was saved by the generate function, not example data
+// Auto-load last week only if saved by generate function
 (function(){
   try{
     const s=localStorage.getItem(LAST_KEY);
@@ -446,20 +450,7 @@ function cpBox(id,btn){
   }catch(e){}
 })();
 
-// Clear old example roster data if present
-(function(){
-  try{
-    const s=localStorage.getItem(ROSTER_KEY);
-    if(s){
-      const r=JSON.parse(s);
-      const exampleTeams=['alabama','ohio state','notre dame','oklahoma','texas'];
-      const isExample=r.length===5&&r.every(x=>exampleTeams.includes(x.team.toLowerCase()));
-      if(isExample)localStorage.removeItem(ROSTER_KEY);
-    }
-  }catch(e){}
-})();
-
-renderRoster();
+fetchRoster();
 </script>
 </body>
 </html>
