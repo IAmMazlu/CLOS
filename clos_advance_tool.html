@@ -223,7 +223,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <p class="hint">Teams receiving votes but not ranked in the Top 25 this week only.</p>
 </div>
 
-<button class="btn" onclick="generate()">Generate Top 25 post</button>
+<div style="display:flex;gap:10px">
+  <button class="btn" style="flex:1" onclick="generate()">Generate Top 25 post</button>
+  <button class="btn-clear" onclick="clearTop25()">Clear fields</button>
+</div>
 
 <div id="output" class="hidden">
   <div class="output-section">
@@ -417,6 +420,15 @@ function clearAll(){
   document.getElementById('output').classList.add('hidden');
   document.getElementById('t25Post').textContent='';
 }
+function clearTop25(){
+  document.getElementById('top25').value='';
+  document.getElementById('last25').value='';
+  document.getElementById('receiving').value='';
+  document.getElementById('output').classList.add('hidden');
+  document.getElementById('t25Post').textContent='';
+  try{localStorage.removeItem(LAST_KEY);}catch(e){}
+}
+
 function copyPrimer(btn){
   const txt=document.getElementById('primerText').value;
   navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy primer',2000);});
@@ -426,8 +438,19 @@ function cpBox(id,btn){
   navigator.clipboard.writeText(document.getElementById(id).value).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);});
 }
 
+// Auto-load last week only if it was saved by the generate function, not example data
 (function(){
-  try{const s=localStorage.getItem(LAST_KEY);if(s){const t=JSON.parse(s);if(t.length)document.getElementById('last25').value=t.join('\n');}}catch(e){}
+  try{
+    const s=localStorage.getItem(LAST_KEY);
+    if(s){
+      const t=JSON.parse(s);
+      if(t.length&&t[0]!=='Oklahoma'){
+        document.getElementById('last25').value=t.join('\n');
+      } else {
+        localStorage.removeItem(LAST_KEY);
+      }
+    }
+  }catch(e){}
 })();
 
 renderRoster();
