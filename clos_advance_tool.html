@@ -5,10 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CLOS Advance Tool</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Inter:wght@400;600;700&display=swap');
-body{font-family:Inter,sans-serif;background:#0A0A0A;color:#F5F5F7;padding:1.5rem;max-width:960px;margin:0 auto}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;background:#0A0A0A;color:#F5F5F7;padding:1.5rem;max-width:960px;margin:0 auto;padding-top:5rem}
 h1{font-family:'Barlow Condensed',sans-serif;font-size:2.5rem;font-weight:700;letter-spacing:.05em;margin-bottom:.25rem;color:#F5F5F7}
+.sticky-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:#0A0A0A;border-bottom:1px solid #1C1C1E;padding:.75rem 1.5rem;display:flex;align-items:center;gap:20px;max-width:100%}
+.sticky-inner{display:flex;align-items:center;gap:16px;max-width:960px;margin:0 auto;width:100%}
+.sticky-label{font-size:11px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+.sticky-input{background:#1C1C1E;border:1px solid #2a2a2e;border-radius:6px;color:#F5F5F7;font-size:13px;padding:5px 8px;width:70px;font-family:Inter,sans-serif}
+.sticky-select{background:#1C1C1E;border:1px solid #2a2a2e;border-radius:6px;color:#F5F5F7;font-size:13px;padding:5px 8px;font-family:Inter,sans-serif;flex:1}
+.btn-clear{font-size:12px;padding:5px 12px;cursor:pointer;background:transparent;border:1px solid #2a2a2e;color:#A8B2BB;border-radius:6px;white-space:nowrap}
+.btn-clear:hover{border-color:#A8B2BB}
 .sub{font-size:13px;color:#A8B2BB;margin-bottom:2rem}
 .section{border:1px solid #1C1C1E;border-radius:12px;padding:1.25rem;margin-bottom:1.25rem;background:#0D1B2A}
 .sec-title{font-size:11px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem}
@@ -52,8 +59,27 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 </head>
 <body>
 
+<div class="sticky-bar">
+  <div class="sticky-inner">
+    <span class="sticky-label">Week</span>
+    <input class="sticky-input" type="number" id="weekNum" min="0" max="20" value="0"/>
+    <span class="sticky-label">Season</span>
+    <input class="sticky-input" type="number" id="seasonNum" min="1" max="20" value="1"/>
+    <select class="sticky-select" id="weekType">
+      <option value="kickoff" selected>Season Kickoff (Week 0)</option>
+      <option value="early">Early Season (Wks 1–4)</option>
+      <option value="mid">Midseason (Wks 5–8)</option>
+      <option value="late">Late Season (Wks 9–12)</option>
+      <option value="rivalry">Rivalry Week</option>
+      <option value="confchamp">Conference Championships</option>
+      <option value="playoffs">Playoffs / CFP</option>
+    </select>
+    <button class="btn-clear" onclick="clearAll()">Clear all outputs</button>
+  </div>
+</div>
+
 <h1>CLOS ADVANCE TOOL</h1>
-<p class="sub">Campus Legends of Saturday — Advance Day Post Generator</p>
+<p class="sub">Campus Legends of Saturday — Advance Day Post Generator &nbsp;·&nbsp; Start by setting your Week, Season, and Week Type in the bar above — then work through each section top to bottom.</p>
 
 <!-- ROSTER -->
 <div class="section">
@@ -71,36 +97,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
     <button class="btn-sm" style="margin-top:4px" onclick="addRow('','')">+ Add team</button>
     <button class="btn-save" onclick="saveRoster()">Save roster</button>
     <div class="ok hidden" id="saveMsg">Roster saved.</div>
-  </div>
-</div>
-
-<!-- WEEK & SEASON -->
-<div class="section">
-  <div class="tool-header">
-    <div class="tool-header-bar"></div>
-    <div><div class="tool-header-text">Week & Season</div><div class="tool-header-sub">Set these before generating any posts</div></div>
-  </div>
-  <div class="week-row">
-    <div class="fg" style="margin-bottom:0">
-      <label>Week</label>
-      <input type="number" id="weekNum" min="0" max="20" value="0"/>
-    </div>
-    <div class="fg" style="margin-bottom:0">
-      <label>Season / Year</label>
-      <input type="number" id="seasonNum" min="1" max="20" value="1"/>
-    </div>
-    <div class="fg" style="margin-bottom:0">
-      <label>Week type</label>
-      <select id="weekType">
-        <option value="kickoff" selected>Season Kickoff (Week 0)</option>
-        <option value="early">Early Season (Wks 1–4)</option>
-        <option value="mid">Midseason (Wks 5–8)</option>
-        <option value="late">Late Season (Wks 9–12)</option>
-        <option value="rivalry">Rivalry Week</option>
-        <option value="confchamp">Conference Championships</option>
-        <option value="playoffs">Playoffs / CFP</option>
-      </select>
-    </div>
   </div>
 </div>
 
@@ -166,7 +162,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <div class="fg"><label>Storyline / stakes</label><input type="text" id="gotwCtx" placeholder="Playoff semifinal, revenge game, undefeated on the line..."/></div>
   <div class="fg"><label>Home team</label><input type="text" id="gotwHome" placeholder="Oregon (or Neutral site)"/></div>
 
-  <button class="btn-req" onclick="requestGOTW()">Build GOTW request ↗</button>
+  <div style="display:flex;gap:10px;margin-top:10px">
+    <button class="btn-req" style="margin-top:0;flex:1" onclick="requestGOTW()">Build GOTW request ↗</button>
+    <button class="btn-clear" onclick="clearGOTW()">Clear fields</button>
+  </div>
 </div>
 
 <div class="section" id="gotwRequestSection" style="display:none">
@@ -205,59 +204,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <div class="grid2">
     <div class="fg">
       <label>This week — "Team Record" one per line</label>
-      <textarea id="top25" rows="14" style="width:100%;resize:vertical">Oregon 15-1
-Ohio State 14-3
-Oklahoma 14-1
-Florida State 12-2
-Georgia Tech 11-3
-James Madison 12-3
-Memphis 11-3
-Notre Dame 10-4
-Texas A&M 10-4
-Nevada 11-3
-TCU 10-3
-Texas 9-4
-Penn State 10-3
-Michigan 10-3
-Louisiana Tech 12-2
-Florida Atlantic 11-2
-Alabama 10-4
-San Diego State 11-3
-Cincinnati 11-2
-Oregon State 11-3
-Iowa State 10-3
-Central Michigan 11-3
-UCF 12-2
-Washington 11-3
-Syracuse 9-4</textarea>
+      <textarea id="top25" rows="14" style="width:100%;resize:vertical" placeholder="Paste this week's rankings here — one team and record per line (e.g. Alabama 4-0)"></textarea>
     </div>
     <div class="fg">
       <label>Last week — team names only (auto-fills after generate)</label>
-      <textarea id="last25" rows="14" style="width:100%;resize:vertical">Oklahoma
-Oregon
-Florida State
-Georgia Tech
-Ohio State
-James Madison
-Notre Dame
-Texas A&M
-Memphis
-Nevada
-Texas
-Penn State
-Louisiana Tech
-TCU
-Michigan
-Florida Atlantic
-San Diego State
-Alabama
-Iowa State
-Cincinnati
-Central Michigan
-Oregon State
-Washington
-UCF
-San Jose State</textarea>
+      <textarea id="last25" rows="14" style="width:100%;resize:vertical" placeholder="Auto-fills after first generate — or paste last week's teams manually"></textarea>
     </div>
   </div>
   <div class="fg" style="margin-top:10px">
@@ -448,6 +399,27 @@ function cp(id,btn){
   const el=document.getElementById(id);
   const txt=el.tagName==='TEXTAREA'?el.value:el.textContent;
   navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);});
+}
+
+function clearGOTW(){
+  ['g1team','g1coach','g1rec','g1rank','g1result','g1narrative','g1players',
+   'g2team','g2coach','g2rec','g2rank','g2result','g2narrative','g2players',
+   'gotwCtx','gotwHome','gotwRequest','gotwPaste'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.value='';
+  });
+  document.getElementById('gotwRequestSection').style.display='none';
+}
+
+function clearAll(){
+  ['advRequest','advPaste','gotwRequest','gotwPaste'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.value='';
+  });
+  document.getElementById('advRequestSection').style.display='none';
+  document.getElementById('gotwRequestSection').style.display='none';
+  document.getElementById('output').classList.add('hidden');
+  document.getElementById('t25Post').textContent='';
 }
 
 function copyPrimer(btn){
