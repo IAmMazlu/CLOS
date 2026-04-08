@@ -242,13 +242,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 const DIV='━━━━━━━━━━━━━━━━━━━━';
 const ROSTER_KEY='clos_roster_v1';
 const LAST_KEY='clos_last_week_v1';
-const DEFAULT=[
-  {team:'Alabama',discord:'GoodGameBro'},
-  {team:'Ohio State',discord:'IAmMazlu'},
-  {team:'Notre Dame',discord:'GenieOfTheTrashCan'},
-  {team:'Oklahoma',discord:'DEppsRightSteps'},
-  {team:'Texas',discord:'ShaggyBlack'},
-];
+const DEFAULT=[];
 
 function loadRoster(){try{const s=localStorage.getItem(ROSTER_KEY);return s?JSON.parse(s):DEFAULT;}catch(e){return DEFAULT;}}
 function getRosterMap(){const m={};loadRoster().forEach(r=>{if(r.team&&r.discord)m[r.team.toLowerCase()]=r.discord;});return m;}
