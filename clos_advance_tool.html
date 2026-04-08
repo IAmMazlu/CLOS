@@ -263,7 +263,6 @@ function saveRoster(){
 function renderRoster(){
   document.getElementById('rosterRows').innerHTML='';
   loadRoster().forEach(r=>addRow(r.team,r.discord));
-  if(localStorage.getItem(ROSTER_KEY))document.getElementById('savedBadge').classList.remove('hidden');
 }
 
 function addRow(team,discord){
@@ -443,6 +442,19 @@ function cpBox(id,btn){
       } else {
         localStorage.removeItem(LAST_KEY);
       }
+    }
+  }catch(e){}
+})();
+
+// Clear old example roster data if present
+(function(){
+  try{
+    const s=localStorage.getItem(ROSTER_KEY);
+    if(s){
+      const r=JSON.parse(s);
+      const exampleTeams=['alabama','ohio state','notre dame','oklahoma','texas'];
+      const isExample=r.length===5&&r.every(x=>exampleTeams.includes(x.team.toLowerCase()));
+      if(isExample)localStorage.removeItem(ROSTER_KEY);
     }
   }catch(e){}
 })();
