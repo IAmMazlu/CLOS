@@ -70,12 +70,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
     <input class="sticky-input" type="number" id="seasonNum" min="1" max="20" value="1"/>
     <select class="sticky-select" id="weekType">
       <option value="kickoff" selected>Season Kickoff (Week 0)</option>
-      <option value="early">Early Season (Wks 1–4)</option>
-      <option value="mid">Midseason (Wks 5–8)</option>
-      <option value="late">Late Season (Wks 9–12)</option>
-      <option value="rivalry">Rivalry Week</option>
-      <option value="confchamp">Conference Championships</option>
-      <option value="playoffs">Playoffs / CFP</option>
+      <option value="early">Early Season (Weeks 1–4)</option>
+      <option value="mid">Midseason (Weeks 5–8)</option>
+      <option value="late">Late Season (Weeks 9–12)</option>
+      <option value="rivalry">Rivalry Week (Week 13)</option>
+      <option value="confchamp">Conference Championships (Week 14)</option>
+      <option value="playoffs">Playoffs / CFP (Weeks 15–16)</option>
+      <option value="natty">National Championship (Week 17)</option>
     </select>
     <button class="btn-clear" onclick="clearAll()">Clear all outputs</button>
   </div>
@@ -292,7 +293,7 @@ function renderRoster(data){
 function toggleRoster(){document.getElementById('rosterPanel').classList.toggle('hidden');}
 
 function weekLabel(){
-  return{kickoff:'Season Kickoff',early:'Early Season',mid:'Midseason',late:'Late Season',rivalry:'Rivalry Week',confchamp:'Conference Championships',playoffs:'Playoffs / CFP'}[document.getElementById('weekType').value]||'';
+  return{kickoff:'Season Kickoff',early:'Early Season',mid:'Midseason',late:'Late Season',rivalry:'Rivalry Week',confchamp:'Conference Championships',playoffs:'Playoffs / CFP',natty:'National Championship'}[document.getElementById('weekType').value]||'';
 }
 
 function requestAdvance(){
