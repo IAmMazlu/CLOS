@@ -12,7 +12,7 @@ This repository houses the web tools built for CLOS (Campus Legends of Saturday)
 
 Handles everything needed on advance day. Generates the weekly advance post, Game of the Week article, GOTW graphic prompt, and Top 25 poll — all formatted and ready to copy. Syncs coach and Discord data live from the Team Info Sheet.
 
-→ [View Advance Tool README](advance-tool/README_advance.md)
+→ [Open Advance Tool](https://iammazlu.github.io/CLOS/advance-tool/clos_advance_tool.html) &nbsp;·&nbsp; [View README](advance-tool/README.md)
 
 ---
 
@@ -21,7 +21,7 @@ Handles everything needed on advance day. Generates the weekly advance post, Gam
 
 Powers the live Wheel of Fortune coaching carousel show. Coaches spin for job offers by tier, tiebreakers resolve automatically on screen, and the full session runs from setup through results. Pulls eligible coaches and occupied schools automatically from the Form Response Sheet and Team Info Sheet.
 
-→ [View Wheel of Fortune README](wheel-of-fortune/README_wheel.md)
+→ [Open Wheel of Fortune](https://iammazlu.github.io/CLOS/wheel-of-fortune/clos_wheel_of_fortune.html) &nbsp;·&nbsp; [View README](wheel-of-fortune/README.md)
 
 ---
 
