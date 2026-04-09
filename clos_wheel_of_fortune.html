@@ -126,11 +126,7 @@ function renderSetup() {
 
     <div style="background:#0D1B2A;border-radius:10px;padding:20px;margin-bottom:28px">
       <div class="bc" style="font-size:17px;font-weight:700;color:#C9A84C;letter-spacing:2px;margin-bottom:4px">AUTO-LOAD FROM SHEET</div>
-      <div style="font-size:12px;color:#A8B2BB;margin-bottom:12px">Paste your Apps Script web app URL to pull coaches and occupied schools automatically.</div>
-      <div style="display:flex;gap:8px">
-        <input id="api-url" placeholder="https://script.google.com/macros/s/..." value="${esc(state.apiUrl)}" style="flex:1" onkeydown="if(event.key==='Enter')fetchData()">
-        <button onclick="fetchData()" id="fetch-btn" style="background:#C9A84C;color:#0A0A0A;padding:10px 18px;font-size:14px;white-space:nowrap">FETCH DATA</button>
-      </div>
+      <div style="font-size:12px;color:#A8B2BB">Pulls coaches and occupied schools automatically from your App Script web app.</div>
       ${fetchMsg}
     </div>
 
