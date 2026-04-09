@@ -359,6 +359,10 @@ function requestImagePrompt(){
 
 function requestGOTW(){
   const week=document.getElementById('weekNum').value;
+  const season=document.getElementById('seasonNum').value;
+  const wt=weekLabel();
+  const g1t=document.getElementById('g1team').value.trim();
+  const g1c=document.getElementById('g1coach').value.trim();
   const g1r=document.getElementById('g1rec').value.trim();
   const g1rk=document.getElementById('g1rank').value.trim();
   const g1res=document.getElementById('g1result').value.trim();
