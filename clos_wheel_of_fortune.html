@@ -288,9 +288,8 @@ function renderResults() {
 
 // ─── ACTIONS ──────────────────────────────────────────────────────────────────
 async function fetchData() {
-  const url = document.getElementById("api-url")?.value?.trim();
+  const url = state.apiUrl;
   if (!url) return;
-  state.apiUrl = url;
   state.fetchStatus = "loading";
   render();
   try {
