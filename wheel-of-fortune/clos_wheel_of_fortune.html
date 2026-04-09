@@ -26,18 +26,19 @@
   .scroll-list::-webkit-scrollbar-track { background: transparent; }
   .scroll-list::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 2px; }
   #app { max-width: 1100px; margin: 0 auto; }
-
-  /* SLOT ANIMATION */
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.7; } }
   .slot-spinning { animation: pulse 0.3s infinite; }
   .slot-settled { animation: none; }
+  @keyframes fadeIn { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
+  .fade-in { animation: fadeIn 0.4s ease forwards; }
+  details summary { cursor: pointer; list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
 </style>
 </head>
 <body>
 <div id="app"></div>
 
 <script>
-// ─── DATA ─────────────────────────────────────────────────────────────────────
 const SCHOOLS = {
   1: ["Alabama","Clemson","Georgia","Ohio State","Texas A&M","Oklahoma","LSU","Texas","Auburn","Florida","Penn State","Michigan","Florida State"],
   2: ["Miami","North Carolina","Oregon","Tennessee","Stanford","South Carolina","TCU","Ole Miss","Arizona State","Maryland","NC State","Notre Dame","Vanderbilt","Mississippi State","Georgia Tech","Virginia Tech","Kentucky","USC"],
@@ -47,56 +48,78 @@ const SCHOOLS = {
 };
 
 const TC = {
-  1: { bg:"#C9A84C", text:"#0A0A0A", label:"TIER 1" },
-  2: { bg:"#A8B2BB", text:"#0A0A0A", label:"TIER 2" },
-  3: { bg:"#0D1B2A", text:"#F5F5F7", label:"TIER 3" },
-  4: { bg:"#1A1A1A", text:"#F5F5F7", label:"TIER 4" },
-  5: { bg:"#2A2A2A", text:"#A8B2BB", label:"TIER 5" }
+  1: { bg:"#C9A84C", text:"#0A0A0A", label:"TIER 1", name:"T1 Round" },
+  2: { bg:"#A8B2BB", text:"#0A0A0A", label:"TIER 2", name:"T2 Round" },
+  3: { bg:"#0D1B2A", text:"#F5F5F7", label:"TIER 3", name:"T3 Round" },
+  4: { bg:"#1A1A1A", text:"#F5F5F7", label:"TIER 4", name:"T4 Round" },
+  5: { bg:"#2A2A2A", text:"#A8B2BB", label:"TIER 5", name:"T5 Round" }
 };
 
 const PO = ["A+","A","A-","B+","B","B-","C+","C","C-","D+","D","D-","F"];
 
-// ─── STATE ────────────────────────────────────────────────────────────────────
 let state = {
-  phase: "setup",
-  coaches: [],
-  occupied: [],
-  queue: [],
-  qi: 0,
-  assignments: {},
-  pools: {},
-  ss: "idle",
-  slotPool: [],
-  slotResult: null,
-  slotTimer: null,
-  conflict: null,
-  lastMsg: "",
+  phase: "setup", coaches: [], occupied: [], queue: [], qi: 0,
+  assignments: {}, pools: {}, ss: "idle", slotPool: [], slotResult: null,
+  slotTimer: null, conflict: null, lastMsg: "", undoSnapshot: null,
   apiUrl: "https://script.google.com/macros/s/AKfycbyfO4OeT8OHyEXar-6qHB2Y3nYZl5ZVRdlBj70cxbUVc45NsW-lXMvWEjD3SqDuSHfIQw/exec",
-  fetchStatus: "idle",
-  fetchError: "",
-  form: { name:"", tier:"3", prestige:"B", winPct:"", top25:"" },
-  occInput: ""
+  fetchStatus: "idle", fetchError: "",
+  form: { name:"", tier:"3", prestige:"B", winPct:"", top25:"" }, occInput: ""
 };
 
-// ─── TIEBREAKER ───────────────────────────────────────────────────────────────
+function esc(str) {
+  return String(str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function currentRoundInfo() {
+  const item = state.queue[state.qi];
+  if (!item) return { tier:1, spinInRound:0, totalInRound:0 };
+  const tier = item.tier;
+  const roundSpins = state.queue.filter(s => s.tier === tier && !s.isReroll);
+  const spinsBeforeThisRound = state.queue.slice(0, state.qi).filter(s => s.tier === tier && !s.isReroll).length;
+  return { tier, spinInRound: spinsBeforeThisRound + 1, totalInRound: roundSpins.length };
+}
+
+function saveUndo() {
+  state.undoSnapshot = {
+    qi: state.qi,
+    assignments: JSON.parse(JSON.stringify(state.assignments)),
+    pools: JSON.parse(JSON.stringify(state.pools)),
+    queue: JSON.parse(JSON.stringify(state.queue)),
+    lastMsg: state.lastMsg
+  };
+}
+
+function undoLast() {
+  if (!state.undoSnapshot) return;
+  state.qi = state.undoSnapshot.qi;
+  state.assignments = state.undoSnapshot.assignments;
+  state.pools = state.undoSnapshot.pools;
+  state.queue = state.undoSnapshot.queue;
+  state.lastMsg = state.undoSnapshot.lastMsg;
+  state.undoSnapshot = null;
+  state.ss = "idle";
+  state.conflict = null;
+  state.slotPool = [];
+  state.slotResult = null;
+  render();
+}
+
 function breakTie(a, b) {
-  const pA = PO.indexOf(a.prestige), pB = PO.indexOf(b.prestige);
-  if (pA !== pB) return { winner: pA<pB?a:b, loser: pA<pB?b:a, reason:"Coach Prestige", detail:`${a.name} (${a.prestige}) vs ${b.name} (${b.prestige})` };
-  if (a.winPct !== b.winPct) return { winner: a.winPct>b.winPct?a:b, loser: a.winPct>b.winPct?b:a, reason:"Win %", detail:`${a.name} (${(a.winPct*100).toFixed(1)}%) vs ${b.name} (${(b.winPct*100).toFixed(1)}%)` };
-  if (a.top25wins !== b.top25wins) return { winner: a.top25wins>b.top25wins?a:b, loser: a.top25wins>b.top25wins?b:a, reason:"Top 25 Wins", detail:`${a.name} (${a.top25wins}) vs ${b.name} (${b.top25wins})` };
-  const w = Math.random()<0.5?a:b;
+  const pA=PO.indexOf(a.prestige), pB=PO.indexOf(b.prestige);
+  if (pA!==pB) return { winner:pA<pB?a:b, loser:pA<pB?b:a, reason:"Coach Prestige", detail:`${a.name} (${a.prestige}) vs ${b.name} (${b.prestige})` };
+  if (a.winPct!==b.winPct) return { winner:a.winPct>b.winPct?a:b, loser:a.winPct>b.winPct?b:a, reason:"Win %", detail:`${a.name} (${(a.winPct*100).toFixed(1)}%) vs ${b.name} (${(b.winPct*100).toFixed(1)}%)` };
+  if (a.top25wins!==b.top25wins) return { winner:a.top25wins>b.top25wins?a:b, loser:a.top25wins>b.top25wins?b:a, reason:"Top 25 Wins", detail:`${a.name} (${a.top25wins}) vs ${b.name} (${b.top25wins})` };
+  const w=Math.random()<0.5?a:b;
   return { winner:w, loser:w===a?b:a, reason:"Coin Flip", detail:"Identical records — decided by random flip" };
 }
 
-// ─── RENDER ───────────────────────────────────────────────────────────────────
 function render() {
   const app = document.getElementById("app");
-  if (state.phase === "setup") app.innerHTML = renderSetup();
-  else if (state.phase === "show") app.innerHTML = renderShow();
+  if (state.phase==="setup") app.innerHTML = renderSetup();
+  else if (state.phase==="show") app.innerHTML = renderShow();
   else app.innerHTML = renderResults();
 }
 
-// ─── SETUP ────────────────────────────────────────────────────────────────────
 function renderSetup() {
   const coachList = state.coaches.map((c,i) => `
     <div style="display:flex;justify-content:space-between;align-items:center;background:#1A1A1A;border-left:3px solid ${TC[c.tier].bg};border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:5px">
@@ -112,10 +135,12 @@ function renderSetup() {
       ${esc(s)} <button class="remove-btn" onclick="removeOcc(${i})">✕</button>
     </div>`).join("");
 
-  const fetchMsg = state.fetchStatus === "success"
-    ? `<div style="margin-top:10px;font-size:12px;color:#4CAF50;font-weight:700">Loaded ${state.coaches.length} coaches and ${state.occupied.length} occupied schools from your Sheet.</div>`
-    : state.fetchStatus === "error"
+  const fetchMsg = state.fetchStatus==="success"
+    ? `<div style="margin-top:10px;font-size:12px;color:#4CAF50;font-weight:700">Loaded ${state.coaches.length} coaches and ${state.occupied.length} occupied schools.</div>`
+    : state.fetchStatus==="error"
     ? `<div style="margin-top:10px;font-size:12px;color:#E24B4A">${esc(state.fetchError)}</div>`
+    : state.fetchStatus==="loading"
+    ? `<div style="margin-top:10px;font-size:12px;color:#A8B2BB">Loading...</div>`
     : "";
 
   return `
@@ -125,7 +150,10 @@ function renderSetup() {
     </div>
 
     <div style="background:#0D1B2A;border-radius:10px;padding:20px;margin-bottom:28px">
-      <div class="bc" style="font-size:17px;font-weight:700;color:#C9A84C;letter-spacing:2px;margin-bottom:4px">AUTO-LOAD FROM SHEET</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div class="bc" style="font-size:17px;font-weight:700;color:#C9A84C;letter-spacing:2px">AUTO-LOAD FROM SHEET</div>
+        <button onclick="fetchData()" style="background:transparent;border:1px solid #A8B2BB;color:#A8B2BB;padding:5px 14px;font-size:12px;letter-spacing:1px">↻ REFRESH</button>
+      </div>
       <div style="font-size:12px;color:#A8B2BB">Pulls coaches and occupied schools automatically from your App Script web app.</div>
       ${fetchMsg}
     </div>
@@ -134,25 +162,28 @@ function renderSetup() {
       <div style="flex:1;min-width:280px">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
           <div class="bc" style="font-size:18px;font-weight:700;color:#C9A84C;letter-spacing:2px">ELIGIBLE COACHES</div>
-          ${state.coaches.length > 0 ? `<div style="font-size:11px;color:#555">${state.coaches.length} loaded</div>` : ""}
+          ${state.coaches.length>0?`<div style="font-size:11px;color:#555">${state.coaches.length} loaded</div>`:""}
         </div>
-        <div style="background:#1A1A1A;border-radius:10px;padding:18px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px">
-          <input id="c-name" placeholder="Discord Username" value="${esc(state.form.name)}" onkeydown="if(event.key==='Enter')addCoach()">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <select id="c-tier">${[1,2,3,4,5].map(t=>`<option value="${t}"${t==state.form.tier?' selected':''}>${TC[t].label}</option>`).join("")}</select>
-            <select id="c-prestige">${PO.map(p=>`<option${p===state.form.prestige?' selected':''}>${p}</option>`).join("")}</select>
-            <input id="c-winpct" type="number" step="0.01" min="0" max="1" placeholder="Win % (e.g. 0.68)" value="${state.form.winPct}">
-            <input id="c-top25" type="number" min="0" placeholder="Top 25 Wins" value="${state.form.top25}">
+        <details style="margin-bottom:14px">
+          <summary style="font-size:12px;color:#555;padding:8px 0">+ Add coach manually</summary>
+          <div style="background:#1A1A1A;border-radius:10px;padding:18px;margin-top:8px;display:flex;flex-direction:column;gap:8px">
+            <input id="c-name" placeholder="Discord Username" value="${esc(state.form.name)}" onkeydown="if(event.key==='Enter')addCoach()">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <select id="c-tier">${[1,2,3,4,5].map(t=>`<option value="${t}"${t==state.form.tier?' selected':''}>${TC[t].label}</option>`).join("")}</select>
+              <select id="c-prestige">${PO.map(p=>`<option${p===state.form.prestige?' selected':''}>${p}</option>`).join("")}</select>
+              <input id="c-winpct" type="number" step="0.01" min="0" max="1" placeholder="Win % (e.g. 0.68)" value="${state.form.winPct}">
+              <input id="c-top25" type="number" min="0" placeholder="Top 25 Wins" value="${state.form.top25}">
+            </div>
+            <button onclick="addCoach()" style="background:#C9A84C;color:#0A0A0A;padding:10px;font-size:14px;margin-top:2px">+ ADD COACH</button>
           </div>
-          <button onclick="addCoach()" style="background:#C9A84C;color:#0A0A0A;padding:10px;font-size:14px;margin-top:2px">+ ADD COACH</button>
-        </div>
-        ${state.coaches.length === 0 ? '<div style="color:#444;font-size:13px;font-style:italic">No coaches loaded yet.</div>' : coachList}
+        </details>
+        ${state.coaches.length===0?'<div style="color:#444;font-size:13px;font-style:italic">No coaches loaded yet.</div>':coachList}
       </div>
 
       <div style="width:230px">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
           <div class="bc" style="font-size:18px;font-weight:700;color:#A8B2BB;letter-spacing:2px">OCCUPIED</div>
-          ${state.occupied.length > 0 ? `<div style="font-size:11px;color:#555">${state.occupied.length} schools</div>` : ""}
+          ${state.occupied.length>0?`<div style="font-size:11px;color:#555">${state.occupied.length} schools</div>`:""}
         </div>
         <div style="background:#1A1A1A;border-radius:10px;padding:18px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px">
           <input id="occ-input" placeholder="School name" value="${esc(state.occInput)}" onkeydown="if(event.key==='Enter')addOcc()">
@@ -163,39 +194,50 @@ function renderSetup() {
       </div>
     </div>
 
-    ${state.coaches.length > 0 ? `
+    ${state.coaches.length>0?`
       <div style="text-align:center;margin-top:40px;padding-bottom:16px">
         <button onclick="startShow()" style="background:#C9A84C;color:#0A0A0A;font-size:20px;padding:16px 52px;letter-spacing:3px" class="bc">START THE WHEEL OF FORTUNE</button>
-      </div>` : ""}
+      </div>`:""}
   `;
 }
 
-// ─── SHOW ─────────────────────────────────────────────────────────────────────
 function renderShow() {
   const item = state.queue[state.qi];
-  if (!item) { state.phase = "results"; return renderResults(); }
+  if (!item) { state.phase="results"; return renderResults(); }
   const tc = TC[item.tier];
+  const { tier, spinInRound, totalInRound } = currentRoundInfo();
+
+  if (state.ss==="roundTransition") {
+    return `
+      <div class="fade-in" style="min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:24px">
+        <div style="background:${tc.bg};color:${tc.text};font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;letter-spacing:5px;padding:6px 28px;border-radius:4px">COMING UP</div>
+        <div class="bc" style="font-size:96px;font-weight:900;color:#F5F5F7;line-height:0.9;letter-spacing:2px">${tc.label}</div>
+        <div class="bc" style="font-size:24px;font-weight:700;color:#A8B2BB;letter-spacing:3px">${tc.name.toUpperCase()}</div>
+        <div style="font-size:13px;color:#444">${totalInRound} coach${totalInRound!==1?"es":""} eligible this round</div>
+        <button onclick="startRound()" style="background:${tc.bg};color:${tc.text};font-size:20px;padding:16px 52px;letter-spacing:3px;margin-top:16px" class="bc">START ${tc.label}</button>
+      </div>`;
+  }
 
   let center = "";
 
-  if (state.ss === "idle") {
-    const isLast = state.qi === state.queue.length - 1;
+  if (state.ss==="idle") {
+    const isLast = state.qi===state.queue.length-1;
     center = isLast
       ? `<button onclick="doSpin()" style="background:${tc.bg};color:${tc.text};font-size:22px;padding:18px 52px;letter-spacing:3px" class="bc">FINAL SPIN</button>`
       : `<button onclick="doSpin()" style="background:${tc.bg};color:${tc.text};font-size:22px;padding:18px 52px;letter-spacing:3px" class="bc">SPIN THE WHEEL</button>`;
   }
 
-  if (state.ss === "spinning") {
+  if (state.ss==="spinning") {
     center = `
       <div id="slot-box" style="background:#1A1A1A;border:3px solid #2A2A2A;border-radius:14px;padding:36px 56px;text-align:center;min-width:320px;transition:background 0.35s,border-color 0.35s">
         <div id="slot-val" class="bc slot-spinning" style="font-size:44px;font-weight:900;color:#F5F5F7;text-transform:uppercase;line-height:1.1;transition:all 0.3s"></div>
       </div>`;
   }
 
-  if (state.ss === "conflict" && state.conflict) {
+  if (state.ss==="conflict"&&state.conflict) {
     const res = state.conflict.resolution;
-    const rerollLoser = res.winner.name === item.coach.name && item.tier === state.conflict.other.tier;
-    const rerollCurrent = res.winner.name !== item.coach.name && item.tier === item.coach.tier;
+    const rerollLoser = res.winner.name===item.coach.name&&item.tier===state.conflict.other.tier;
+    const rerollCurrent = res.winner.name!==item.coach.name&&item.tier===item.coach.tier;
     center = `
       <div style="background:#1A1A1A;border:2px solid #C9A84C;border-radius:14px;padding:28px;max-width:460px;width:100%;text-align:center">
         <div class="bc" style="font-size:26px;font-weight:900;color:#C9A84C;letter-spacing:2px;margin-bottom:8px">TIEBREAKER</div>
@@ -207,28 +249,31 @@ function renderShow() {
           <div style="color:#A8B2BB;font-weight:700;letter-spacing:2px;font-size:11px;margin-bottom:7px">RESOLVED BY: ${res.reason.toUpperCase()}</div>
           <div style="color:#F5F5F7;font-size:13px;margin-bottom:10px">${esc(res.detail)}</div>
           <div class="bc" style="font-size:22px;font-weight:900;color:#C9A84C">${esc(res.winner.name).toUpperCase()} WINS</div>
-          ${rerollLoser ? `<div style="font-size:11px;color:#666;margin-top:5px">${esc(state.conflict.other.name)} gets a re-roll — highest eligible tier</div>` : ""}
-          ${rerollCurrent ? `<div style="font-size:11px;color:#666;margin-top:5px">${esc(item.coach.name)} gets a re-roll — highest eligible tier</div>` : ""}
+          ${rerollLoser?`<div style="font-size:11px;color:#666;margin-top:5px">${esc(state.conflict.other.name)} gets a re-roll — highest eligible tier</div>`:""}
+          ${rerollCurrent?`<div style="font-size:11px;color:#666;margin-top:5px">${esc(item.coach.name)} gets a re-roll — highest eligible tier</div>`:""}
         </div>
         <button onclick="confirmTiebreaker()" style="background:#C9A84C;color:#0A0A0A;width:100%;padding:12px;font-size:15px" class="bc">CONFIRM & CONTINUE</button>
       </div>`;
   }
 
-  if (state.ss === "confirmed") {
-    const isLast = state.qi === state.queue.length - 1;
+  if (state.ss==="confirmed") {
+    const isLast = state.qi===state.queue.length-1;
     center = `
       <div style="text-align:center">
-        ${state.lastMsg ? `<div class="bc" style="font-size:24px;font-weight:900;color:#C9A84C;margin-bottom:18px">${esc(state.lastMsg).toUpperCase()}</div>` : ""}
-        ${isLast
-          ? `<button onclick="nextSpin()" style="background:#C9A84C;color:#0A0A0A;font-size:17px;padding:12px 40px;letter-spacing:2px" class="bc">SEE RESULTS</button>`
-          : `<button onclick="nextSpin()" style="background:#F5F5F7;color:#0A0A0A;font-size:17px;padding:12px 40px;letter-spacing:2px" class="bc">NEXT SPIN</button>`
-        }
+        ${state.lastMsg?`<div class="bc" style="font-size:24px;font-weight:900;color:#C9A84C;margin-bottom:18px">${esc(state.lastMsg).toUpperCase()}</div>`:""}
+        <div style="display:flex;gap:12px;justify-content:center;align-items:center">
+          ${state.undoSnapshot?`<button onclick="undoLast()" style="background:transparent;border:1px solid #2A2A2A;color:#666;font-size:13px;padding:10px 20px;letter-spacing:1px" class="bc">↩ UNDO</button>`:""}
+          ${isLast
+            ? `<button onclick="nextSpin()" style="background:#C9A84C;color:#0A0A0A;font-size:17px;padding:12px 40px;letter-spacing:2px" class="bc">SEE RESULTS</button>`
+            : `<button onclick="nextSpin()" style="background:#F5F5F7;color:#0A0A0A;font-size:17px;padding:12px 40px;letter-spacing:2px" class="bc">NEXT SPIN</button>`
+          }
+        </div>
       </div>`;
   }
 
-  const aEntries = Object.entries(state.assignments).flatMap(([n,ts]) => Object.entries(ts).map(([t,s]) => ({n,t,s})));
+  const aEntries = Object.entries(state.assignments).flatMap(([n,ts])=>Object.entries(ts).map(([t,s])=>({n,t,s})));
   const aside = aEntries.length
-    ? aEntries.map(({n,t,s}) => `
+    ? aEntries.map(({n,t,s})=>`
         <div style="background:#1A1A1A;border-left:3px solid ${TC[t].bg};padding:7px 11px;border-radius:0 4px 4px 0;font-size:12px;margin-bottom:3px">
           <div style="font-weight:700;color:#F5F5F7;font-size:13px">${esc(n)}</div>
           <div style="color:#888">T${t}: ${esc(s)}</div>
@@ -238,13 +283,16 @@ function renderShow() {
   return `
     <div style="text-align:center;margin-bottom:20px;padding-top:8px">
       <div class="bc" style="font-size:36px;font-weight:900;color:#C9A84C;letter-spacing:3px">CLOS — WHEEL OF FORTUNE</div>
-      <div style="font-size:12px;color:#444;margin-top:4px">Spin ${state.qi + 1} of ${state.queue.length}</div>
+      <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-top:6px">
+        <div style="background:${tc.bg};color:${tc.text};font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:900;letter-spacing:3px;padding:3px 14px;border-radius:3px">${tc.label}</div>
+        <div style="font-size:12px;color:#555">Spin ${spinInRound} of ${totalInRound} this round &nbsp;·&nbsp; ${state.qi+1} of ${state.queue.length} overall</div>
+      </div>
     </div>
 
     <div style="display:flex;gap:20px">
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:18px">
         <div class="bc" style="background:${tc.bg};color:${tc.text};font-size:15px;font-weight:900;letter-spacing:4px;padding:5px 24px;border-radius:4px">
-          ${tc.label} OFFER${item.isReroll ? " — RE-ROLL" : ""}
+          ${tc.label} OFFER${item.isReroll?" — RE-ROLL":""}
         </div>
         <div class="bc" style="font-size:56px;font-weight:900;color:#F5F5F7;line-height:1;text-align:center">${esc(item.coach.name).toUpperCase()}</div>
         <div style="font-size:12px;color:#555">
@@ -261,23 +309,36 @@ function renderShow() {
   `;
 }
 
-// ─── RESULTS ──────────────────────────────────────────────────────────────────
 function renderResults() {
   const cards = state.coaches.map(coach => {
-    const rows = [1,2,3,4,5].filter(t => t >= coach.tier).map(t => {
-      const s = (state.assignments[coach.name] || {})[t];
+    const coachAssignments = state.assignments[coach.name] || {};
+    const topOffer = coachAssignments[coach.tier];
+    const otherTiers = [1,2,3,4,5].filter(t => t >= coach.tier && t !== coach.tier);
+    const otherOffers = otherTiers.map(t => {
+      const s = coachAssignments[t];
       return `
-        <div style="display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid #1A1A1A">
+        <div style="display:flex;align-items:center;padding:6px 14px;border-bottom:1px solid #111">
           <span class="tag" style="background:${TC[t].bg};color:${TC[t].text};margin-right:10px">T${t}</span>
-          <span style="font-size:13px;color:${s?"#F5F5F7":"#333"}">${s ? esc(s) : "—"}</span>
+          <span style="font-size:12px;color:${s?"#888":"#2A2A2A"}">${s?esc(s):"—"}</span>
         </div>`;
     }).join("");
+
     return `
       <div style="background:#1A1A1A;border-radius:10px;overflow:hidden">
-        <div style="background:#0D1B2A;padding:12px 16px">
+        <div style="background:#0D1B2A;padding:12px 16px;border-bottom:2px solid ${TC[coach.tier].bg}">
           <div class="bc" style="font-size:19px;font-weight:900;color:#F5F5F7">${esc(coach.name).toUpperCase()}</div>
-          <div style="font-size:11px;color:#A8B2BB">Base: T${coach.tier} · Prestige: ${coach.prestige}</div>
-        </div>${rows}
+          <div style="font-size:11px;color:#A8B2BB;margin-top:2px">Base: T${coach.tier} · Prestige: ${coach.prestige}</div>
+        </div>
+        <div style="padding:14px 16px;border-bottom:1px solid #111">
+          <div style="font-size:10px;font-weight:700;color:#A8B2BB;letter-spacing:2px;margin-bottom:6px">TOP OFFER</div>
+          <div class="bc" style="font-size:28px;font-weight:900;color:${TC[coach.tier].bg}">${topOffer?esc(topOffer).toUpperCase():"—"}</div>
+          <div style="font-size:11px;color:#555;margin-top:2px">${TC[coach.tier].label} offer</div>
+        </div>
+        ${otherTiers.length?`
+          <div style="padding:8px 0">
+            <div style="font-size:10px;font-weight:700;color:#333;letter-spacing:2px;padding:0 14px;margin-bottom:4px">OTHER OFFERS</div>
+            ${otherOffers}
+          </div>`:""}
       </div>`;
   }).join("");
 
@@ -293,7 +354,6 @@ function renderResults() {
   `;
 }
 
-// ─── ACTIONS ──────────────────────────────────────────────────────────────────
 async function fetchData() {
   const url = state.apiUrl;
   if (!url) return;
@@ -303,12 +363,12 @@ async function fetchData() {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    if (!data.coaches || !data.occupied) throw new Error("Unexpected response format");
+    if (!data.coaches||!data.occupied) throw new Error("Unexpected response format");
     state.coaches = data.coaches;
     state.occupied = data.occupied;
     state.fetchStatus = "success";
   } catch(err) {
-    state.fetchError = err.message || "Failed to fetch. Check the URL and try again.";
+    state.fetchError = err.message||"Failed to fetch. Check the URL and try again.";
     state.fetchStatus = "error";
   }
   render();
@@ -317,18 +377,12 @@ async function fetchData() {
 function addCoach() {
   const name = document.getElementById("c-name")?.value?.trim();
   if (!name) return;
-  state.coaches.push({
-    name,
-    tier: +document.getElementById("c-tier").value,
-    prestige: document.getElementById("c-prestige").value,
-    winPct: +document.getElementById("c-winpct").value || 0,
-    top25wins: +document.getElementById("c-top25").value || 0
-  });
-  state.form = { name:"", tier: document.getElementById("c-tier").value, prestige: document.getElementById("c-prestige").value, winPct:"", top25:"" };
+  state.coaches.push({ name, tier:+document.getElementById("c-tier").value, prestige:document.getElementById("c-prestige").value, winPct:+document.getElementById("c-winpct").value||0, top25wins:+document.getElementById("c-top25").value||0 });
+  state.form = { name:"", tier:document.getElementById("c-tier").value, prestige:document.getElementById("c-prestige").value, winPct:"", top25:"" };
   render();
 }
 
-function removeCoach(i) { state.coaches.splice(i, 1); render(); }
+function removeCoach(i) { state.coaches.splice(i,1); render(); }
 
 function addOcc() {
   const v = document.getElementById("occ-input")?.value?.trim();
@@ -338,32 +392,30 @@ function addOcc() {
   render();
 }
 
-function removeOcc(i) { state.occupied.splice(i, 1); render(); }
+function removeOcc(i) { state.occupied.splice(i,1); render(); }
 
 function startShow() {
   state.queue = [];
-  // Round by round like a draft — all T5 offers first, then T4, up to T1
-  // Within each round, coaches are ordered by base tier descending (T5 coaches first)
-  for (let offerTier = 5; offerTier >= 1; offerTier--) {
-    const eligible = state.coaches
-      .filter(c => parseInt(c.tier) <= offerTier)
-      .sort((a, b) => parseInt(b.tier) - parseInt(a.tier));
-    eligible.forEach(c => state.queue.push({ coach: c, tier: offerTier, isReroll: false }));
+  for (let offerTier=5; offerTier>=1; offerTier--) {
+    const eligible = state.coaches.filter(c=>parseInt(c.tier)<=offerTier).sort((a,b)=>parseInt(b.tier)-parseInt(a.tier));
+    eligible.forEach(c => state.queue.push({ coach:c, tier:offerTier, isReroll:false }));
   }
-  const occSet = new Set(state.occupied.map(s => s.toLowerCase()));
+  const occSet = new Set(state.occupied.map(s=>s.toLowerCase()));
   state.pools = {};
-  for (let t = 1; t <= 5; t++) state.pools[t] = SCHOOLS[t].filter(s => !occSet.has(s.toLowerCase()));
-  state.qi = 0; state.assignments = {}; state.ss = "idle";
-  state.slotPool = []; state.slotResult = null; state.conflict = null; state.lastMsg = "";
-  state.phase = "show";
+  for (let t=1; t<=5; t++) state.pools[t] = SCHOOLS[t].filter(s=>!occSet.has(s.toLowerCase()));
+  state.qi=0; state.assignments={}; state.ss="roundTransition";
+  state.slotPool=[]; state.slotResult=null; state.conflict=null; state.lastMsg=""; state.undoSnapshot=null;
+  state.phase="show";
   render();
 }
 
+function startRound() { state.ss="idle"; render(); }
+
 function doSpin() {
   const item = state.queue[state.qi];
-  const pool = state.pools[item.tier] || [];
-  if (!pool.length) { state.lastMsg = "No schools available — spin skipped"; state.ss = "confirmed"; render(); return; }
-  state.slotResult = pool[Math.floor(Math.random() * pool.length)];
+  const pool = state.pools[item.tier]||[];
+  if (!pool.length) { saveUndo(); state.lastMsg="No schools available — spin skipped"; state.ss="confirmed"; render(); return; }
+  state.slotResult = pool[Math.floor(Math.random()*pool.length)];
   state.slotPool = [...pool];
   state.ss = "spinning";
   render();
@@ -371,101 +423,98 @@ function doSpin() {
 }
 
 function runSlot() {
-  let count = 0, speed = 55;
-  const TOTAL = 44;
+  let count=0, speed=55;
+  const TOTAL=44;
   const item = state.queue[state.qi];
   const tc = TC[item.tier];
-
   const tick = () => {
     count++;
     const el = document.getElementById("slot-val");
     const box = document.getElementById("slot-box");
     if (!el) return;
-    if (count >= TOTAL) {
-      el.textContent = state.slotResult;
+    if (count>=TOTAL) {
+      el.textContent=state.slotResult;
       el.classList.remove("slot-spinning");
       el.classList.add("slot-settled");
-      el.style.fontSize = "56px";
-      el.style.color = tc.text;
-      if (box) { box.style.background = tc.bg; box.style.borderColor = tc.bg; }
-      setTimeout(() => afterSpin(), 1100);
+      el.style.fontSize="56px";
+      el.style.color=tc.text;
+      if (box) { box.style.background=tc.bg; box.style.borderColor=tc.bg; }
+      setTimeout(()=>afterSpin(), 1100);
       return;
     }
-    if (count > 28) speed = Math.min(260, speed + 16);
-    el.textContent = state.slotPool[Math.floor(Math.random() * state.slotPool.length)];
-    state.slotTimer = setTimeout(tick, speed);
+    if (count>28) speed=Math.min(260,speed+16);
+    el.textContent=state.slotPool[Math.floor(Math.random()*state.slotPool.length)];
+    state.slotTimer=setTimeout(tick,speed);
   };
-  state.slotTimer = setTimeout(tick, speed);
+  state.slotTimer=setTimeout(tick,speed);
 }
 
 function afterSpin() {
   const item = state.queue[state.qi];
   const result = state.slotResult;
   let conflictName = null;
-  for (const [n, ts] of Object.entries(state.assignments)) {
-    if (n !== item.coach.name && ts[item.tier] === result) { conflictName = n; break; }
+  for (const [n,ts] of Object.entries(state.assignments)) {
+    if (n!==item.coach.name&&ts[item.tier]===result) { conflictName=n; break; }
   }
   if (conflictName) {
-    const other = state.coaches.find(c => c.name === conflictName);
-    state.conflict = { result, other, resolution: breakTie(item.coach, other) };
+    const other = state.coaches.find(c=>c.name===conflictName);
+    state.conflict = { result, other, resolution:breakTie(item.coach,other) };
     state.ss = "conflict";
+    render();
   } else {
     doConfirm(result);
-    return;
   }
-  render();
 }
 
 function doConfirm(result) {
+  saveUndo();
   const item = state.queue[state.qi];
-  if (!state.assignments[item.coach.name]) state.assignments[item.coach.name] = {};
-  state.assignments[item.coach.name][item.tier] = result;
-  state.pools[item.tier] = state.pools[item.tier].filter(s => s !== result);
-  state.lastMsg = `${item.coach.name} — ${result}`;
-  state.conflict = null;
-  state.ss = "confirmed";
+  if (!state.assignments[item.coach.name]) state.assignments[item.coach.name]={};
+  state.assignments[item.coach.name][item.tier]=result;
+  state.pools[item.tier]=state.pools[item.tier].filter(s=>s!==result);
+  state.lastMsg=`${item.coach.name} — ${result}`;
+  state.conflict=null;
+  state.ss="confirmed";
   render();
 }
 
 function confirmTiebreaker() {
   const item = state.queue[state.qi];
   const { result, other, resolution } = state.conflict;
-  const winner = resolution.winner, loser = resolution.loser;
-  if (winner.name === item.coach.name) {
-    if (item.tier === loser.tier) state.queue.splice(state.qi + 1, 0, { coach: loser, tier: item.tier, isReroll: true });
+  const winner=resolution.winner, loser=resolution.loser;
+  if (winner.name===item.coach.name) {
+    if (item.tier===loser.tier) state.queue.splice(state.qi+1,0,{coach:loser,tier:item.tier,isReroll:true});
     doConfirm(result);
-    if (item.tier === loser.tier) state.lastMsg = `${winner.name} wins — ${result} confirmed. ${loser.name} re-rolls.`;
+    if (item.tier===loser.tier) state.lastMsg=`${winner.name} wins — ${result} confirmed. ${loser.name} re-rolls.`;
   } else {
-    const reroll = item.tier === item.coach.tier;
-    state.lastMsg = `${winner.name} wins tiebreaker.${reroll ? ` ${item.coach.name} gets a re-roll.` : ""}`;
-    if (reroll) state.queue.splice(state.qi + 1, 0, { coach: item.coach, tier: item.tier, isReroll: true });
-    state.conflict = null;
-    state.ss = "confirmed";
+    const reroll = item.tier===item.coach.tier;
+    state.lastMsg=`${winner.name} wins tiebreaker.${reroll?` ${item.coach.name} gets a re-roll.`:""}`;
+    if (reroll) state.queue.splice(state.qi+1,0,{coach:item.coach,tier:item.tier,isReroll:true});
+    saveUndo();
+    state.conflict=null;
+    state.ss="confirmed";
     render();
   }
 }
 
-function nextSpin(customMsg) {
-  if (customMsg) state.lastMsg = customMsg;
-  state.ss = "idle"; state.slotPool = []; state.slotResult = null; state.conflict = null;
+function nextSpin() {
+  state.ss="idle"; state.slotPool=[]; state.slotResult=null; state.conflict=null;
+  const prevTier = state.queue[state.qi]?.tier;
   state.qi++;
-  if (state.qi >= state.queue.length) state.phase = "results";
+  if (state.qi>=state.queue.length) { state.phase="results"; render(); return; }
+  const nextTier = state.queue[state.qi]?.tier;
+  if (nextTier!==prevTier) state.ss="roundTransition";
   render();
 }
 
 function resetAll() {
   state = { phase:"setup", coaches:[], occupied:[], queue:[], qi:0, assignments:{}, pools:{},
-    ss:"idle", slotPool:[], slotResult:null, slotTimer:null, conflict:null, lastMsg:"",
-    apiUrl: state.apiUrl, fetchStatus:"idle", fetchError:"",
-    form:{ name:"", tier:"3", prestige:"B", winPct:"", top25:"" }, occInput:"" };
+    ss:"idle", slotPool:[], slotResult:null, slotTimer:null, conflict:null, lastMsg:"", undoSnapshot:null,
+    apiUrl:state.apiUrl, fetchStatus:"idle", fetchError:"",
+    form:{name:"",tier:"3",prestige:"B",winPct:"",top25:""}, occInput:"" };
   render();
 }
 
-function esc(str) {
-  return String(str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
-
-// ─── INIT ─────────────────────────────────────────────────────────────────────
 render();
 if (state.apiUrl) fetchData();
 </script>
