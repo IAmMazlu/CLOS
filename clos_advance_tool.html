@@ -69,14 +69,26 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
     <span class="sticky-label">Season</span>
     <input class="sticky-input" type="number" id="seasonNum" min="1" max="20" value="1"/>
     <select class="sticky-select" id="weekType">
-      <option value="kickoff" selected>Season Kickoff (Week 0)</option>
-      <option value="early">Early Season (Weeks 1–4)</option>
-      <option value="mid">Midseason (Weeks 5–8)</option>
-      <option value="late">Late Season (Weeks 9–12)</option>
-      <option value="rivalry">Rivalry Week (Week 13)</option>
-      <option value="confchamp">Conference Championships (Week 14)</option>
-      <option value="playoffs">Playoffs / CFP (Weeks 15–16)</option>
-      <option value="natty">National Championship (Week 17)</option>
+      <option value="kickoff" selected>Week 0 — Season Kickoff</option>
+      <option value="week1">Week 1</option>
+      <option value="week2">Week 2</option>
+      <option value="week3">Week 3</option>
+      <option value="week4">Week 4</option>
+      <option value="week5">Week 5</option>
+      <option value="week6">Week 6</option>
+      <option value="week7">Week 7</option>
+      <option value="week8">Week 8</option>
+      <option value="week9">Week 9</option>
+      <option value="week10">Week 10</option>
+      <option value="week11">Week 11</option>
+      <option value="week12">Week 12</option>
+      <option value="week13">Week 13</option>
+      <option value="week14">Week 14</option>
+      <option value="confchamp">Conf Championships</option>
+      <option value="bowl1">Bowl Week 1</option>
+      <option value="bowl2">Bowl Week 2</option>
+      <option value="bowl3">Bowl Week 3</option>
+      <option value="natty">National Championship</option>
     </select>
     <button class="btn-clear" onclick="clearAll()">Clear all outputs</button>
   </div>
@@ -293,7 +305,17 @@ function renderRoster(data){
 function toggleRoster(){document.getElementById('rosterPanel').classList.toggle('hidden');}
 
 function weekLabel(){
-  return{kickoff:'Season Kickoff',early:'Early Season',mid:'Midseason',late:'Late Season',rivalry:'Rivalry Week',confchamp:'Conference Championships',playoffs:'Playoffs / CFP',natty:'National Championship'}[document.getElementById('weekType').value]||'';
+  const map={
+    kickoff:'Week 0 — Season Kickoff',
+    week1:'Week 1',week2:'Week 2',week3:'Week 3',week4:'Week 4',
+    week5:'Week 5',week6:'Week 6',week7:'Week 7',week8:'Week 8',
+    week9:'Week 9',week10:'Week 10',week11:'Week 11',week12:'Week 12',
+    week13:'Week 13',week14:'Week 14',
+    confchamp:'Conf Championships',
+    bowl1:'Bowl Week 1',bowl2:'Bowl Week 2',bowl3:'Bowl Week 3',
+    natty:'National Championship'
+  };
+  return map[document.getElementById('weekType').value]||'';
 }
 
 function requestAdvance(){
