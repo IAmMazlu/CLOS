@@ -318,11 +318,26 @@ function weekLabel(){
   return map[document.getElementById('weekType').value]||'';
 }
 
+function weekTone(){
+  const v=document.getElementById('weekType').value;
+  if(v==='kickoff')return'This is Week 0 — the season is brand new. Tone should feel like a fresh start: anticipation, potential, anything is possible. No pressure yet, just excitement.';
+  if(['week1','week2','week3','week4'].includes(v))return'Early season. Tone should feel like first impressions and early statement games. Who looks legit? Who is already surprising people? Expectations are being set.';
+  if(['week5','week6','week7','week8'].includes(v))return'Midseason. The real teams are starting to separate from the pretenders. Tone should feel like a turning point — who is actually built for this?';
+  if(['week9','week10','week11','week12'].includes(v))return'Late season. Every game has massive implications. Tone should feel urgent and high stakes — seasons are on the line, playoff spots are being won and lost.';
+  if(v==='week13')return'Week 13 — rivalry territory. Tone should feel personal, heated, historic. Records go out the window. These games are about pride and bragging rights.';
+  if(v==='week14')return'Week 14 — closing out the regular season. Tone should feel like last chances and desperation. Some teams are fighting for bowl eligibility, others for playoff positioning.';
+  if(v==='confchamp')return'Conference Championships. Tone should feel like a one-game season — winner takes the title, loser goes home with nothing. Legacy is on the line.';
+  if(['bowl1','bowl2','bowl3'].includes(v))return'Bowl season. Tone should feel like a reward — programs that earned it get one last shot to make a statement. Pride, momentum, and bragging rights heading into the offseason.';
+  if(v==='natty')return'National Championship. This is the biggest game of the season. Tone should feel dynasty-defining — once in a season, everything on the line, one team walks away as champions. Maximum drama, maximum stakes.';
+  return'';
+}
+
 function requestAdvance(){
   const week=document.getElementById('weekNum').value;
   const season=document.getElementById('seasonNum').value;
   const wt=weekLabel();
-  const req='Write an advance post for CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league.\n\nWeek '+week+', Season '+season+' ('+wt+'). Voice of the dynasty — authoritative, not personal. Must tag @CLOS Coach, reference #scheduling and getting games booked, end with a good luck sendoff. 3-4 sentences max. Fresh and unique — never the same post twice.';
+  const tone=weekTone();
+  const req='Write an advance post for CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league.\n\nWeek '+week+', Season '+season+' ('+wt+'). Voice of the dynasty — authoritative, not personal. Must tag @CLOS Coach, reference #scheduling and getting games booked, end with a good luck sendoff. 3-4 sentences max. Fresh and unique — never the same post twice.\n\nTone guidance: '+tone;
   document.getElementById('advRequest').value=req;
   document.getElementById('advRequestSection').style.display='block';
   document.getElementById('advRequestSection').scrollIntoView({behavior:'smooth'});
@@ -358,7 +373,8 @@ function requestGOTW(){
   const g2pl=document.getElementById('g2players').value.trim();
   const ctx=document.getElementById('gotwCtx').value.trim();
   const home=document.getElementById('gotwHome').value.trim();
-  const req='Write a full immersive Game of the Week match preview article for CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league. This goes in a Discord forum channel as a thread.\n\nWeek '+week+', Season '+season+' ('+wt+')\nMatchup: '+g1t+(g1rk?' ('+g1rk+')':'')+' ('+g1r+') coached by '+g1c+' vs '+g2t+(g2rk?' ('+g2rk+')':'')+' ('+g2r+') coached by '+g2c+'\nHome: '+(home||'Neutral site')+'\n'+(ctx?'Stakes: '+ctx+'\n':'')+(g1res?g1t+' last result: '+g1res+'\n':'')+(g1nar?g1t+' narrative: '+g1nar+'\n':'')+(g1pl?g1t+' key players:\n'+g1pl+'\n':'')+(g2res?g2t+' last result: '+g2res+'\n':'')+(g2nar?g2t+' narrative: '+g2nar+'\n':'')+(g2pl?g2t+' key players:\n'+g2pl+'\n':'')+'\nFormat: bold header with team names/rankings/records, multi-paragraph breakdown of both teams, fabricated but believable coach quotes for both coaches, dramatic closing lines, end with "Who wins Week '+week+'\'s Game of the Week? Vote below!"';
+  const tone=weekTone();
+  const req='Write a full immersive Game of the Week match preview article for CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league. This goes in a Discord forum channel as a thread.\n\nWeek '+week+', Season '+season+' ('+wt+')\nMatchup: '+g1t+(g1rk?' ('+g1rk+')':'')+' ('+g1r+') coached by '+g1c+' vs '+g2t+(g2rk?' ('+g2rk+')':'')+' ('+g2r+') coached by '+g2c+'\nHome: '+(home||'Neutral site')+'\n'+(ctx?'Stakes: '+ctx+'\n':'')+(g1res?g1t+' last result: '+g1res+'\n':'')+(g1nar?g1t+' narrative: '+g1nar+'\n':'')+(g1pl?g1t+' key players:\n'+g1pl+'\n':'')+(g2res?g2t+' last result: '+g2res+'\n':'')+(g2nar?g2t+' narrative: '+g2nar+'\n':'')+(g2pl?g2t+' key players:\n'+g2pl+'\n':'')+'\nTone guidance: '+tone+'\n\nFormat: bold header with team names/rankings/records, multi-paragraph breakdown of both teams, fabricated but believable coach quotes for both coaches, dramatic closing lines, end with "Who wins Week '+week+'\'s Game of the Week? Vote below!"';
   document.getElementById('gotwRequest').value=req;
   document.getElementById('gotwRequestSection').style.display='block';
   document.getElementById('gotwRequestSection').scrollIntoView({behavior:'smooth'});
