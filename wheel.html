@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLOS // Wheel of Fortune</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0A0A0A; color: #F5F5F7; font-family: 'Inter', sans-serif; min-height: 100vh; padding: 24px; }
+  .bc { font-family: 'Barlow Condensed', sans-serif; }
+  input, select {
+    background: #111; border: 1px solid #2A2A2A; border-radius: 6px;
+    padding: 9px 13px; color: #F5F5F7; font-family: 'Inter', sans-serif;
+    font-size: 13px; width: 100%; outline: none;
+  }
+  input:focus, select:focus { border-color: #A8B2BB; }
+  button { cursor: pointer; border: none; border-radius: 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 2px; transition: opacity 0.15s, transform 0.1s; }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .tag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 3px; font-family: 'Inter', sans-serif; min-width: 40px; text-align: center; display: inline-block; }
+  .remove-btn { background: none; border: none; color: #444; font-size: 16px; padding: 0 4px; cursor: pointer; letter-spacing: 0; }
+  .remove-btn:hover { color: #888; }
+  .scroll-list { max-height: 320px; overflow-y: auto; }
+  .scroll-list::-webkit-scrollbar { width: 4px; }
+  .scroll-list::-webkit-scrollbar-track { background: transparent; }
+  .scroll-list::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 2px; }
+  #app { max-width: 1100px; margin: 0 auto; }
+
+  /* SLOT ANIMATION */
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.7; } }
+  .slot-spinning { animation: pulse 0.3s infinite; }
+  .slot-settled { animation: none; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const SCHOOLS = {
+  1: ["Alabama","Clemson","Georgia","Ohio State","Texas A&M","Oklahoma","LSU","Texas","Auburn","Florida","Penn State","Michigan","Florida State"],
+  2: ["Miami","North Carolina","Oregon","Tennessee","Stanford","South Carolina","TCU","Ole Miss","Arizona State","Maryland","NC State","Notre Dame","Vanderbilt","Mississippi State","Georgia Tech","Virginia Tech","Kentucky","USC"],
+  3: ["Rutgers","Baylor","Arkansas","Arizona","UCLA","Washington","Texas Tech","Utah","Purdue","Oklahoma State","Pittsburgh","California","Missouri","Tulane","Army","Cincinnati","Indiana","Northwestern","West Virginia","Virginia","Minnesota"],
+  4: ["Rice","SMU","Illinois","Boston College","East Carolina","Wake Forest","Boise State","Old Dominion","Louisville","Michigan State","UCF","Syracuse","Colorado","Wisconsin","Washington State","USF","Arkansas State","San Diego State","Georgia State","App State","Louisiana","FIU","Nebraska","Duke","Kansas","Georgia Southern","FAU","Louisiana Tech","Marshall","Kent State","Memphis"],
+  5: ["Houston","Colorado State","UMass","Air Force","Oregon State","Southern Miss","Nevada","UNLV","Coastal Carolina","Western Kentucky","North Texas","Tulsa","Temple","Liberty","Navy","Kansas State","Charlotte","Middle Tennessee State","Wyoming","UConn","UAB","Buffalo","Central Michigan","Toledo","New Mexico State","UL Monroe","New Mexico","South Alabama","Akron","Ohio","Bowling Green","Ball State","San Jose State","Miami (Ohio)","Fresno State","Hawaii","Western Michigan","Utah State","BYU","UTSA","Iowa State","Iowa","Eastern Michigan","UTEP","Texas State","Troy","Northern Illinois","James Madison","Sam Houston","Jacksonville State","Kennesaw State"]
+};
+
+const TC = {
+  1: { bg:"#C9A84C", text:"#0A0A0A", label:"TIER 1" },
+  2: { bg:"#A8B2BB", text:"#0A0A0A", label:"TIER 2" },
+  3: { bg:"#0D1B2A", text:"#F5F5F7", label:"TIER 3" },
+  4: { bg:"#1A1A1A", text:"#F5F5F7", label:"TIER 4" },
+  5: { bg:"#2A2A2A", text:"#A8B2BB", label:"TIER 5" }
+};
+
+const PO = ["A+","A","A-","B+","B","B-","C+","C","C-","D+","D","D-","F"];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let state = {
+  phase: "setup",
+  coaches: [],
+  occupied: [],
+  queue: [],
+  qi: 0,
+  assignments: {},
+  pools: {},
+  ss: "idle",
+  slotPool: [],
+  slotResult: null,
+  slotTimer: null,
+  conflict: null,
+  lastMsg: "",
+  apiUrl: "",
+  fetchStatus: "idle",
+  fetchError: "",
+  form: { name:"", tier:"3", prestige:"B", winPct:"", top25:"" },
+  occInput: ""
+};
+
+// ─── TIEBREAKER ───────────────────────────────────────────────────────────────
+function breakTie(a, b) {
+  const pA = PO.indexOf(a.prestige), pB = PO.indexOf(b.prestige);
+  if (pA !== pB) return { winner: pA<pB?a:b, loser: pA<pB?b:a, reason:"Coach Prestige", detail:`${a.name} (${a.prestige}) vs ${b.name} (${b.prestige})` };
+  if (a.winPct !== b.winPct) return { winner: a.winPct>b.winPct?a:b, loser: a.winPct>b.winPct?b:a, reason:"Win %", detail:`${a.name} (${(a.winPct*100).toFixed(1)}%) vs ${b.name} (${(b.winPct*100).toFixed(1)}%)` };
+  if (a.top25wins !== b.top25wins) return { winner: a.top25wins>b.top25wins?a:b, loser: a.top25wins>b.top25wins?b:a, reason:"Top 25 Wins", detail:`${a.name} (${a.top25wins}) vs ${b.name} (${b.top25wins})` };
+  const w = Math.random()<0.5?a:b;
+  return { winner:w, loser:w===a?b:a, reason:"Coin Flip", detail:"Identical records — decided by random flip" };
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function render() {
+  const app = document.getElementById("app");
+  if (state.phase === "setup") app.innerHTML = renderSetup();
+  else if (state.phase === "show") app.innerHTML = renderShow();
+  else app.innerHTML = renderResults();
+}
+
+// ─── SETUP ────────────────────────────────────────────────────────────────────
+function renderSetup() {
+  const coachList = state.coaches.map((c,i) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;background:#1A1A1A;border-left:3px solid ${TC[c.tier].bg};border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:5px">
+      <div>
+        <span class="bc" style="font-size:17px;font-weight:900">${esc(c.name)}</span>
+        <span style="margin-left:10px;font-size:11px;color:#666">T${c.tier} · ${c.prestige} · ${(c.winPct*100).toFixed(1)}% · ${c.top25wins} T25W</span>
+      </div>
+      <button class="remove-btn" onclick="removeCoach(${i})">✕</button>
+    </div>`).join("");
+
+  const occList = state.occupied.map((s,i) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;background:#1A1A1A;border-radius:6px;padding:7px 12px;margin-bottom:4px;font-size:13px">
+      ${esc(s)} <button class="remove-btn" onclick="removeOcc(${i})">✕</button>
+    </div>`).join("");
+
+  const fetchMsg = state.fetchStatus === "success"
+    ? `<div style="margin-top:10px;font-size:12px;color:#4CAF50;font-weight:700">Loaded ${state.coaches.length} coaches and ${state.occupied.length} occupied schools from your Sheet.</div>`
+    : state.fetchStatus === "error"
+    ? `<div style="margin-top:10px;font-size:12px;color:#E24B4A">${esc(state.fetchError)}</div>`
+    : "";
+
+  return `
+    <div style="text-align:center;margin-bottom:32px;padding-top:8px">
+      <div class="bc" style="font-size:48px;font-weight:900;color:#C9A84C;letter-spacing:2px;line-height:1">CAMPUS LEGENDS OF SATURDAY</div>
+      <div class="bc" style="font-size:22px;font-weight:700;color:#A8B2BB;letter-spacing:4px;margin-top:4px">WHEEL OF FORTUNE — SETUP</div>
+    </div>
+
+    <div style="background:#0D1B2A;border-radius:10px;padding:20px;margin-bottom:28px">
+      <div class="bc" style="font-size:17px;font-weight:700;color:#C9A84C;letter-spacing:2px;margin-bottom:4px">AUTO-LOAD FROM SHEET</div>
+      <div style="font-size:12px;color:#A8B2BB;margin-bottom:12px">Paste your Apps Script web app URL to pull coaches and occupied schools automatically.</div>
+      <div style="display:flex;gap:8px">
+        <input id="api-url" placeholder="https://script.google.com/macros/s/..." value="${esc(state.apiUrl)}" style="flex:1" onkeydown="if(event.key==='Enter')fetchData()">
+        <button onclick="fetchData()" id="fetch-btn" style="background:#C9A84C;color:#0A0A0A;padding:10px 18px;font-size:14px;white-space:nowrap">FETCH DATA</button>
+      </div>
+      ${fetchMsg}
+    </div>
+
+    <div style="display:flex;gap:28px;flex-wrap:wrap">
+      <div style="flex:1;min-width:280px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+          <div class="bc" style="font-size:18px;font-weight:700;color:#C9A84C;letter-spacing:2px">ELIGIBLE COACHES</div>
+          ${state.coaches.length > 0 ? `<div style="font-size:11px;color:#555">${state.coaches.length} loaded</div>` : ""}
+        </div>
+        <div style="background:#1A1A1A;border-radius:10px;padding:18px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px">
+          <input id="c-name" placeholder="Discord Username" value="${esc(state.form.name)}" onkeydown="if(event.key==='Enter')addCoach()">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <select id="c-tier">${[1,2,3,4,5].map(t=>`<option value="${t}"${t==state.form.tier?' selected':''}>${TC[t].label}</option>`).join("")}</select>
+            <select id="c-prestige">${PO.map(p=>`<option${p===state.form.prestige?' selected':''}>${p}</option>`).join("")}</select>
+            <input id="c-winpct" type="number" step="0.01" min="0" max="1" placeholder="Win % (e.g. 0.68)" value="${state.form.winPct}">
+            <input id="c-top25" type="number" min="0" placeholder="Top 25 Wins" value="${state.form.top25}">
+          </div>
+          <button onclick="addCoach()" style="background:#C9A84C;color:#0A0A0A;padding:10px;font-size:14px;margin-top:2px">+ ADD COACH</button>
+        </div>
+        ${state.coaches.length === 0 ? '<div style="color:#444;font-size:13px;font-style:italic">No coaches loaded yet.</div>' : coachList}
+      </div>
+
+      <div style="width:230px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+          <div class="bc" style="font-size:18px;font-weight:700;color:#A8B2BB;letter-spacing:2px">OCCUPIED</div>
+          ${state.occupied.length > 0 ? `<div style="font-size:11px;color:#555">${state.occupied.length} schools</div>` : ""}
+        </div>
+        <div style="background:#1A1A1A;border-radius:10px;padding:18px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px">
+          <input id="occ-input" placeholder="School name" value="${esc(state.occInput)}" onkeydown="if(event.key==='Enter')addOcc()">
+          <button onclick="addOcc()" style="background:#A8B2BB;color:#0A0A0A;padding:9px;font-size:13px">+ ADD</button>
+        </div>
+        <div style="font-size:11px;color:#444;margin-bottom:8px">User-controlled schools — excluded from the wheel</div>
+        <div class="scroll-list">${occList}</div>
+      </div>
+    </div>
+
+    ${state.coaches.length > 0 ? `
+      <div style="text-align:center;margin-top:40px;padding-bottom:16px">
+        <button onclick="startShow()" style="background:#C9A84C;color:#0A0A0A;font-size:20px;padding:16px 52px;letter-spacing:3px" class="bc">START THE WHEEL OF FORTUNE</button>
+      </div>` : ""}
+  `;
+}
+
+// ─── SHOW ─────────────────────────────────────────────────────────────────────
+function renderShow() {
+  const item = state.queue[state.qi];
+  if (!item) { state.phase = "results"; return renderResults(); }
+  const tc = TC[item.tier];
+
+  let center = "";
+
+  if (state.ss === "idle") {
+    center = `<button onclick="doSpin()" style="background:${tc.bg};color:${tc.text};font-size:22px;padding:18px 52px;letter-spacing:3px" class="bc">SPIN THE WHEEL</button>`;
+  }
+
+  if (state.ss === "spinning") {
+    center = `
+      <div id="slot-box" style="background:#1A1A1A;border:3px solid #2A2A2A;border-radius:14px;padding:36px 56px;text-align:center;min-width:320px;transition:background 0.35s,border-color 0.35s">
+        <div id="slot-val" class="bc slot-spinning" style="font-size:44px;font-weight:900;color:#F5F5F7;text-transform:uppercase;line-height:1.1;transition:all 0.3s"></div>
+      </div>`;
+  }
+
+  if (state.ss === "conflict" && state.conflict) {
+    const res = state.conflict.resolution;
+    const rerollLoser = res.winner.name === item.coach.name && item.tier === state.conflict.other.tier;
+    const rerollCurrent = res.winner.name !== item.coach.name && item.tier === item.coach.tier;
+    center = `
+      <div style="background:#1A1A1A;border:2px solid #C9A84C;border-radius:14px;padding:28px;max-width:460px;width:100%;text-align:center">
+        <div class="bc" style="font-size:26px;font-weight:900;color:#C9A84C;letter-spacing:2px;margin-bottom:8px">TIEBREAKER</div>
+        <div style="font-size:14px;color:#A8B2BB;margin-bottom:14px">
+          <strong style="color:#F5F5F7">${esc(item.coach.name)}</strong> and <strong style="color:#F5F5F7">${esc(state.conflict.other.name)}</strong> both landed on:
+        </div>
+        <div class="bc" style="font-size:38px;font-weight:900;color:#F5F5F7;margin-bottom:20px">${esc(state.conflict.result).toUpperCase()}</div>
+        <div style="background:#0A0A0A;border-radius:8px;padding:16px;margin-bottom:16px">
+          <div style="color:#A8B2BB;font-weight:700;letter-spacing:2px;font-size:11px;margin-bottom:7px">RESOLVED BY: ${res.reason.toUpperCase()}</div>
+          <div style="color:#F5F5F7;font-size:13px;margin-bottom:10px">${esc(res.detail)}</div>
+          <div class="bc" style="font-size:22px;font-weight:900;color:#C9A84C">${esc(res.winner.name).toUpperCase()} WINS</div>
+          ${rerollLoser ? `<div style="font-size:11px;color:#666;margin-top:5px">${esc(state.conflict.other.name)} gets a re-roll — highest eligible tier</div>` : ""}
+          ${rerollCurrent ? `<div style="font-size:11px;color:#666;margin-top:5px">${esc(item.coach.name)} gets a re-roll — highest eligible tier</div>` : ""}
+        </div>
+        <button onclick="confirmTiebreaker()" style="background:#C9A84C;color:#0A0A0A;width:100%;padding:12px;font-size:15px" class="bc">CONFIRM & CONTINUE</button>
+      </div>`;
+  }
+
+  if (state.ss === "confirmed") {
+    center = `
+      <div style="text-align:center">
+        ${state.lastMsg ? `<div class="bc" style="font-size:24px;font-weight:900;color:#C9A84C;margin-bottom:18px">${esc(state.lastMsg).toUpperCase()}</div>` : ""}
+        <button onclick="nextSpin()" style="background:#F5F5F7;color:#0A0A0A;font-size:17px;padding:12px 40px;letter-spacing:2px" class="bc">NEXT SPIN</button>
+      </div>`;
+  }
+
+  const aEntries = Object.entries(state.assignments).flatMap(([n,ts]) => Object.entries(ts).map(([t,s]) => ({n,t,s})));
+  const aside = aEntries.length
+    ? aEntries.map(({n,t,s}) => `
+        <div style="background:#1A1A1A;border-left:3px solid ${TC[t].bg};padding:7px 11px;border-radius:0 4px 4px 0;font-size:12px;margin-bottom:3px">
+          <div style="font-weight:700;color:#F5F5F7;font-size:13px">${esc(n)}</div>
+          <div style="color:#888">T${t}: ${esc(s)}</div>
+        </div>`).join("")
+    : '<div style="color:#333;font-size:12px;font-style:italic">No assignments yet</div>';
+
+  return `
+    <div style="text-align:center;margin-bottom:20px;padding-top:8px">
+      <div class="bc" style="font-size:36px;font-weight:900;color:#C9A84C;letter-spacing:3px">CLOS — WHEEL OF FORTUNE</div>
+      <div style="font-size:12px;color:#444;margin-top:4px">Spin ${state.qi + 1} of ${state.queue.length}</div>
+    </div>
+
+    <div style="display:flex;gap:20px">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:18px">
+        <div class="bc" style="background:${tc.bg};color:${tc.text};font-size:15px;font-weight:900;letter-spacing:4px;padding:5px 24px;border-radius:4px">
+          ${tc.label} OFFER${item.isReroll ? " — RE-ROLL" : ""}
+        </div>
+        <div class="bc" style="font-size:56px;font-weight:900;color:#F5F5F7;line-height:1;text-align:center">${esc(item.coach.name).toUpperCase()}</div>
+        <div style="font-size:12px;color:#555">
+          Prestige: ${item.coach.prestige} &nbsp;·&nbsp; Win%: ${(item.coach.winPct*100).toFixed(1)}% &nbsp;·&nbsp; T25W: ${item.coach.top25wins}
+        </div>
+        ${center}
+      </div>
+
+      <div style="width:260px">
+        <div class="bc" style="font-size:15px;font-weight:700;color:#A8B2BB;letter-spacing:2px;margin-bottom:9px">ASSIGNMENTS</div>
+        <div style="max-height:520px;overflow-y:auto">${aside}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── RESULTS ──────────────────────────────────────────────────────────────────
+function renderResults() {
+  const cards = state.coaches.map(coach => {
+    const rows = [1,2,3,4,5].filter(t => t >= coach.tier).map(t => {
+      const s = (state.assignments[coach.name] || {})[t];
+      return `
+        <div style="display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid #1A1A1A">
+          <span class="tag" style="background:${TC[t].bg};color:${TC[t].text};margin-right:10px">T${t}</span>
+          <span style="font-size:13px;color:${s?"#F5F5F7":"#333"}">${s ? esc(s) : "—"}</span>
+        </div>`;
+    }).join("");
+    return `
+      <div style="background:#1A1A1A;border-radius:10px;overflow:hidden">
+        <div style="background:#0D1B2A;padding:12px 16px">
+          <div class="bc" style="font-size:19px;font-weight:900;color:#F5F5F7">${esc(coach.name).toUpperCase()}</div>
+          <div style="font-size:11px;color:#A8B2BB">Base: T${coach.tier} · Prestige: ${coach.prestige}</div>
+        </div>${rows}
+      </div>`;
+  }).join("");
+
+  return `
+    <div style="text-align:center;margin-bottom:36px;padding-top:8px">
+      <div class="bc" style="font-size:48px;font-weight:900;color:#C9A84C;letter-spacing:3px">WHEEL OF FORTUNE</div>
+      <div class="bc" style="font-size:24px;font-weight:700;color:#A8B2BB;letter-spacing:4px">FINAL RESULTS</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">${cards}</div>
+    <div style="text-align:center;margin-top:36px;padding-bottom:16px">
+      <button onclick="resetAll()" style="background:#A8B2BB;color:#0A0A0A;font-size:15px;padding:12px 32px;letter-spacing:2px" class="bc">NEW SESSION</button>
+    </div>
+  `;
+}
+
+// ─── ACTIONS ──────────────────────────────────────────────────────────────────
+async function fetchData() {
+  const url = document.getElementById("api-url")?.value?.trim();
+  if (!url) return;
+  state.apiUrl = url;
+  state.fetchStatus = "loading";
+  render();
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.coaches || !data.occupied) throw new Error("Unexpected response format");
+    state.coaches = data.coaches;
+    state.occupied = data.occupied;
+    state.fetchStatus = "success";
+  } catch(err) {
+    state.fetchError = err.message || "Failed to fetch. Check the URL and try again.";
+    state.fetchStatus = "error";
+  }
+  render();
+}
+
+function addCoach() {
+  const name = document.getElementById("c-name")?.value?.trim();
+  if (!name) return;
+  state.coaches.push({
+    name,
+    tier: +document.getElementById("c-tier").value,
+    prestige: document.getElementById("c-prestige").value,
+    winPct: +document.getElementById("c-winpct").value || 0,
+    top25wins: +document.getElementById("c-top25").value || 0
+  });
+  state.form = { name:"", tier: document.getElementById("c-tier").value, prestige: document.getElementById("c-prestige").value, winPct:"", top25:"" };
+  render();
+}
+
+function removeCoach(i) { state.coaches.splice(i, 1); render(); }
+
+function addOcc() {
+  const v = document.getElementById("occ-input")?.value?.trim();
+  if (!v) return;
+  state.occupied.push(v);
+  state.occInput = "";
+  render();
+}
+
+function removeOcc(i) { state.occupied.splice(i, 1); render(); }
+
+function startShow() {
+  state.queue = [];
+  for (let t = 1; t <= 5; t++)
+    state.coaches.filter(c => c.tier <= t).sort((a,b) => a.tier - b.tier).forEach(c => state.queue.push({ coach:c, tier:t, isReroll:false }));
+  const occSet = new Set(state.occupied.map(s => s.toLowerCase()));
+  state.pools = {};
+  for (let t = 1; t <= 5; t++) state.pools[t] = SCHOOLS[t].filter(s => !occSet.has(s.toLowerCase()));
+  state.qi = 0; state.assignments = {}; state.ss = "idle";
+  state.slotPool = []; state.slotResult = null; state.conflict = null; state.lastMsg = "";
+  state.phase = "show";
+  render();
+}
+
+function doSpin() {
+  const item = state.queue[state.qi];
+  const pool = state.pools[item.tier] || [];
+  if (!pool.length) { state.lastMsg = "No schools available — spin skipped"; state.ss = "confirmed"; render(); return; }
+  state.slotResult = pool[Math.floor(Math.random() * pool.length)];
+  state.slotPool = [...pool];
+  state.ss = "spinning";
+  render();
+  runSlot();
+}
+
+function runSlot() {
+  let count = 0, speed = 55;
+  const TOTAL = 44;
+  const item = state.queue[state.qi];
+  const tc = TC[item.tier];
+
+  const tick = () => {
+    count++;
+    const el = document.getElementById("slot-val");
+    const box = document.getElementById("slot-box");
+    if (!el) return;
+    if (count >= TOTAL) {
+      el.textContent = state.slotResult;
+      el.classList.remove("slot-spinning");
+      el.classList.add("slot-settled");
+      el.style.fontSize = "56px";
+      el.style.color = tc.text;
+      if (box) { box.style.background = tc.bg; box.style.borderColor = tc.bg; }
+      setTimeout(() => afterSpin(), 1100);
+      return;
+    }
+    if (count > 28) speed = Math.min(260, speed + 16);
+    el.textContent = state.slotPool[Math.floor(Math.random() * state.slotPool.length)];
+    state.slotTimer = setTimeout(tick, speed);
+  };
+  state.slotTimer = setTimeout(tick, speed);
+}
+
+function afterSpin() {
+  const item = state.queue[state.qi];
+  const result = state.slotResult;
+  let conflictName = null;
+  for (const [n, ts] of Object.entries(state.assignments)) {
+    if (n !== item.coach.name && ts[item.tier] === result) { conflictName = n; break; }
+  }
+  if (conflictName) {
+    const other = state.coaches.find(c => c.name === conflictName);
+    state.conflict = { result, other, resolution: breakTie(item.coach, other) };
+    state.ss = "conflict";
+  } else {
+    doConfirm(result);
+    return;
+  }
+  render();
+}
+
+function doConfirm(result) {
+  const item = state.queue[state.qi];
+  if (!state.assignments[item.coach.name]) state.assignments[item.coach.name] = {};
+  state.assignments[item.coach.name][item.tier] = result;
+  state.pools[item.tier] = state.pools[item.tier].filter(s => s !== result);
+  state.lastMsg = `${item.coach.name} — ${result}`;
+  state.conflict = null;
+  state.ss = "confirmed";
+  render();
+}
+
+function confirmTiebreaker() {
+  const item = state.queue[state.qi];
+  const { result, other, resolution } = state.conflict;
+  const winner = resolution.winner, loser = resolution.loser;
+  if (winner.name === item.coach.name) {
+    if (item.tier === loser.tier) state.queue.splice(state.qi + 1, 0, { coach: loser, tier: item.tier, isReroll: true });
+    doConfirm(result);
+    if (item.tier === loser.tier) state.lastMsg = `${winner.name} wins — ${result} confirmed. ${loser.name} re-rolls.`;
+  } else {
+    const reroll = item.tier === item.coach.tier;
+    state.lastMsg = `${winner.name} wins tiebreaker.${reroll ? ` ${item.coach.name} gets a re-roll.` : ""}`;
+    if (reroll) state.queue.splice(state.qi + 1, 0, { coach: item.coach, tier: item.tier, isReroll: true });
+    state.conflict = null;
+    state.ss = "confirmed";
+    render();
+  }
+}
+
+function nextSpin(customMsg) {
+  if (customMsg) state.lastMsg = customMsg;
+  state.ss = "idle"; state.slotPool = []; state.slotResult = null; state.conflict = null;
+  state.qi++;
+  if (state.qi >= state.queue.length) state.phase = "results";
+  render();
+}
+
+function resetAll() {
+  state = { phase:"setup", coaches:[], occupied:[], queue:[], qi:0, assignments:{}, pools:{},
+    ss:"idle", slotPool:[], slotResult:null, slotTimer:null, conflict:null, lastMsg:"",
+    apiUrl: state.apiUrl, fetchStatus:"idle", fetchError:"",
+    form:{ name:"", tier:"3", prestige:"B", winPct:"", top25:"" }, occInput:"" };
+  render();
+}
+
+function esc(str) {
+  return String(str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
