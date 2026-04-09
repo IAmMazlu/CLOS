@@ -335,8 +335,12 @@ function removeOcc(i) { state.occupied.splice(i, 1); render(); }
 
 function startShow() {
   state.queue = [];
-  for (let t = 1; t <= 5; t++)
-    state.coaches.filter(c => c.tier <= t).sort((a,b) => a.tier - b.tier).forEach(c => state.queue.push({ coach:c, tier:t, isReroll:false }));
+  for (let t = 5; t >= 1; t--) {
+    const eligible = state.coaches
+      .filter(c => parseInt(c.tier) <= t)
+      .sort((a, b) => parseInt(b.tier) - parseInt(a.tier));
+    eligible.forEach(c => state.queue.push({ coach: c, tier: t, isReroll: false }));
+  }
   const occSet = new Set(state.occupied.map(s => s.toLowerCase()));
   state.pools = {};
   for (let t = 1; t <= 5; t++) state.pools[t] = SCHOOLS[t].filter(s => !occSet.has(s.toLowerCase()));
