@@ -335,11 +335,15 @@ function removeOcc(i) { state.occupied.splice(i, 1); render(); }
 
 function startShow() {
   state.queue = [];
-  for (let t = 5; t >= 1; t--) {
-    const eligible = state.coaches
-      .filter(c => parseInt(c.tier) <= t)
-      .sort((a, b) => parseInt(b.tier) - parseInt(a.tier));
-    eligible.forEach(c => state.queue.push({ coach: c, tier: t, isReroll: false }));
+  // Group by coach base tier, T5 coaches first through T1 coaches last
+  // Within each group, each coach does all their spins together (T5 offer → down to their highest tier)
+  for (let baseTier = 5; baseTier >= 1; baseTier--) {
+    const group = state.coaches.filter(c => parseInt(c.tier) === baseTier);
+    group.forEach(coach => {
+      for (let offerTier = 5; offerTier >= parseInt(coach.tier); offerTier--) {
+        state.queue.push({ coach, tier: offerTier, isReroll: false });
+      }
+    });
   }
   const occSet = new Set(state.occupied.map(s => s.toLowerCase()));
   state.pools = {};
