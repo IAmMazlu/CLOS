@@ -31,13 +31,4 @@ Both tools are single HTML files hosted on GitHub Pages. They connect to Google 
 
 ---
 
-## League Links
-
-| Resource | Link |
-|---|---|
-| **Discord** | [MNY Server](http://discord.gg/MNY) |
-| **REQ League Membership** | [store.goodgamebro.com](http://store.goodgamebro.com/supporters/pricing) |
-
----
-
 *Campus Legends of Saturday // A MNY Community // Internal Tools*
