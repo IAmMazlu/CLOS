@@ -71,7 +71,7 @@ let state = {
   slotTimer: null,
   conflict: null,
   lastMsg: "",
-  apiUrl: "",
+  apiUrl: "https://script.google.com/macros/s/AKfycbyfO4OeT8OHyEXar-6qHB2Y3nYZl5ZVRdlBj70cxbUVc45NsW-lXMvWEjD3SqDuSHfIQw/exec",
   fetchStatus: "idle",
   fetchError: "",
   form: { name:"", tier:"3", prestige:"B", winPct:"", top25:"" },
@@ -459,6 +459,7 @@ function esc(str) {
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 render();
+if (state.apiUrl) fetchData();
 </script>
 </body>
 </html>
