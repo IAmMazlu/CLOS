@@ -179,7 +179,10 @@ function renderShow() {
   let center = "";
 
   if (state.ss === "idle") {
-    center = `<button onclick="doSpin()" style="background:${tc.bg};color:${tc.text};font-size:22px;padding:18px 52px;letter-spacing:3px" class="bc">SPIN THE WHEEL</button>`;
+    const isLast = state.qi === state.queue.length - 1;
+    center = isLast
+      ? `<button onclick="doSpin()" style="background:${tc.bg};color:${tc.text};font-size:22px;padding:18px 52px;letter-spacing:3px" class="bc">FINAL SPIN</button>`
+      : `<button onclick="doSpin()" style="background:${tc.bg};color:${tc.text};font-size:22px;padding:18px 52px;letter-spacing:3px" class="bc">SPIN THE WHEEL</button>`;
   }
 
   if (state.ss === "spinning") {
@@ -212,10 +215,14 @@ function renderShow() {
   }
 
   if (state.ss === "confirmed") {
+    const isLast = state.qi === state.queue.length - 1;
     center = `
       <div style="text-align:center">
         ${state.lastMsg ? `<div class="bc" style="font-size:24px;font-weight:900;color:#C9A84C;margin-bottom:18px">${esc(state.lastMsg).toUpperCase()}</div>` : ""}
-        <button onclick="nextSpin()" style="background:#F5F5F7;color:#0A0A0A;font-size:17px;padding:12px 40px;letter-spacing:2px" class="bc">NEXT SPIN</button>
+        ${isLast
+          ? `<button onclick="nextSpin()" style="background:#C9A84C;color:#0A0A0A;font-size:17px;padding:12px 40px;letter-spacing:2px" class="bc">SEE RESULTS</button>`
+          : `<button onclick="nextSpin()" style="background:#F5F5F7;color:#0A0A0A;font-size:17px;padding:12px 40px;letter-spacing:2px" class="bc">NEXT SPIN</button>`
+        }
       </div>`;
   }
 
