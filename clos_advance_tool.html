@@ -177,6 +177,21 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
     <textarea class="request-box" id="gotwRequest" rows="10"></textarea>
     <p class="hint" style="margin-top:6px">Then paste Claude's response below ↓</p>
   </div>
+
+  <div style="margin-top:1rem;border-top:1px solid #1C1C1E;padding-top:1rem">
+    <p style="font-size:11px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">🎨 GOTW Graphic Prompt</p>
+    <p style="font-size:12px;color:#A8B2BB;margin-bottom:8px">Generates a Gemini image prompt based on your matchup. Open Claude chat, paste this in, and Claude will look up the correct stadiums and mascots and return a ready-to-use image prompt.</p>
+    <button class="btn-req" style="margin-top:0" onclick="requestImagePrompt()">Build image prompt request ↗</button>
+    <div id="imgRequestSection" style="display:none;margin-top:1rem">
+      <p class="dashed-hint">— Claude Request — copy and paste into Claude chat</p>
+      <div class="out-header">
+        <span class="out-label">Copy this into Claude</span>
+        <button class="copy-btn" onclick="cpBox('imgRequest',this)">Copy</button>
+      </div>
+      <textarea class="request-box" id="imgRequest" rows="6"></textarea>
+      <p class="hint" style="margin-top:6px">Claude will search for the correct stadiums and mascots and return the full Gemini prompt. Attach your reference image in Gemini when you paste it.</p>
+    </div>
+  </div>
 </div>
 
 <div class="output-section">
@@ -290,12 +305,22 @@ function requestAdvance(){
   document.getElementById('advRequestSection').scrollIntoView({behavior:'smooth'});
 }
 
-function requestGOTW(){
+function requestImagePrompt(){
   const week=document.getElementById('weekNum').value;
   const season=document.getElementById('seasonNum').value;
-  const wt=weekLabel();
   const g1t=document.getElementById('g1team').value.trim();
-  const g1c=document.getElementById('g1coach').value.trim();
+  const g2t=document.getElementById('g2team').value.trim();
+  const home=document.getElementById('gotwHome').value.trim();
+
+  const req='Write a GOTW image prompt for CLOS (Campus Legends of Saturday) using the vintage college football poster style described below.\n\nMatchup: '+g1t+' vs '+g2t+'\nWeek '+week+' | Season '+season+'\n'+(home?'Home team: '+home+'\n':'')+'\nUsing web search, look up:\n- The correct home stadium name for '+g1t+'\n- The correct home stadium name for '+g2t+'\n- The correct mascot or primary visual symbol for '+g1t+'\n- The correct mascot or primary visual symbol for '+g2t+'\n\nThen write a complete Gemini image prompt in this exact format:\n\nVintage college football game day poster illustration, 16:9 widescreen landscape format, for CLOS (Campus Legends of Saturday). [TEAM 1] vs [TEAM 2]. Bold retro poster art style — flat colors, strong graphic shapes, vintage typography, no photorealism. Left half: [TEAM 1 colors], [TEAM 1 STADIUM] illustrated in the background. Right half: [TEAM 2 colors], [TEAM 2 STADIUM] illustrated in the background. Both stadiums split down the center, each half belonging to its team. [TEAM 1 MASCOT] on the left side, [TEAM 2 MASCOT] on the right side, both facing each other at the center split, illustrated in bold vintage flat art style. Large bold retro text at the top reads "GAME OF THE WEEK." Below that: "[TEAM 1] vs [TEAM 2]." Bottom reads "CAMPUS LEGENDS OF SATURDAY" in small caps. Corner text: "WK [X] | S[X]." Feels like a 1950s college football game program cover brought to life. Output as 16:9 widescreen aspect ratio, horizontal orientation only.';
+
+  document.getElementById('imgRequest').value=req;
+  document.getElementById('imgRequestSection').style.display='block';
+  document.getElementById('imgRequestSection').scrollIntoView({behavior:'smooth'});
+}
+
+function requestGOTW(){
+  const week=document.getElementById('weekNum').value;
   const g1r=document.getElementById('g1rec').value.trim();
   const g1rk=document.getElementById('g1rank').value.trim();
   const g1res=document.getElementById('g1result').value.trim();
@@ -398,11 +423,12 @@ function cp(id,btn){
 function clearGOTW(){
   ['g1team','g1coach','g1rec','g1rank','g1result','g1narrative','g1players',
    'g2team','g2coach','g2rec','g2rank','g2result','g2narrative','g2players',
-   'gotwCtx','gotwHome','gotwRequest','gotwPaste'].forEach(id=>{
+   'gotwCtx','gotwHome','gotwRequest','gotwPaste','imgRequest'].forEach(id=>{
     const el=document.getElementById(id);
     if(el)el.value='';
   });
   document.getElementById('gotwRequestSection').style.display='none';
+  document.getElementById('imgRequestSection').style.display='none';
 }
 
 function clearAll(){
