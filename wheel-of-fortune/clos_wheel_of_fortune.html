@@ -45,13 +45,6 @@
     flex: 1; overflow-y: auto; padding: 12px;
   }
 
-  /* ROUND TRANSITION — full viewport centered */
-  .page-transition {
-    width: 100vw; height: 100vh;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center; text-align: center; gap: 28px;
-  }
-
   input, select {
     background: #111; border: 1px solid #2A2A2A; border-radius: 6px;
     padding: 9px 13px; color: #F5F5F7; font-family: 'Inter', sans-serif;
@@ -110,7 +103,7 @@
     border-radius: 4px; font-size: clamp(11px,1.2vw,15px);
   }
 
-  /* Sidebar assignment entries */
+  /* Sidebar offer entries */
   .sidebar-entry {
     background: #1A1A1A; padding: 7px 11px; border-radius: 0 4px 4px 0;
     font-size: 12px; margin-bottom: 3px;
@@ -180,11 +173,6 @@
   .btn-row { display: flex; gap: 16px; justify-content: center; align-items: center; }
 
   /* Round transition */
-  .transition-logo {
-    position: absolute; top: 20px; left: 40px;
-    font-family: 'Barlow Condensed', sans-serif; font-size: 20px;
-    font-weight: 700; color: #2A2A2A; letter-spacing: 3px;
-  }
   .transition-tier {
     font-size: clamp(72px,14vw,160px); font-weight: 900;
     color: #F5F5F7; line-height: 0.9; letter-spacing: 2px;
@@ -238,8 +226,11 @@
 
   /* Setup page components */
   .setup-section {
-    background: #0D1B2A; border-radius: 10px; padding: 20px; margin-bottom: 28px;
+    border-radius: 10px; padding: 20px; margin-bottom: 28px;
+    background: linear-gradient(135deg, #0D1B2A 0%, #111827 100%);
+    border: 1px solid #1A2A3A; transition: border-color 0.2s ease;
   }
+  .setup-section:hover { border-color: #2A3A4A; }
   .setup-section-title {
     font-size: 17px; font-weight: 700; color: #C9A84C; letter-spacing: 2px;
   }
@@ -390,11 +381,6 @@
   .setup-columns { display: flex; gap: 28px; flex-wrap: wrap; }
   .setup-col-main { flex: 1; min-width: 280px; }
   .setup-col-side { width: 240px; }
-  .setup-section {
-    background: linear-gradient(135deg, #0D1B2A 0%, #111827 100%);
-    border: 1px solid #1A2A3A;
-  }
-  .setup-section:hover { border-color: #2A3A4A; }
   .setup-coach-item {
     transition: background 0.2s ease;
   }
@@ -537,7 +523,7 @@
   }
   .board-cell.is-occupied .board-cell-name { color: #555; }
 
-  /* Assigned — lit up in school colors */
+  /* Offered — lit up in school colors */
   .board-cell.is-assigned {
     border-width: 2px;
   }
@@ -571,6 +557,57 @@
     background: transparent; border: 1px solid #2A2A2A; color: #555;
     padding: 8px 16px; font-size: 13px; letter-spacing: 1px; white-space: nowrap;
   }
+
+  /* Keyboard cheat sheet overlay */
+  .hotkey-overlay {
+    position: fixed; inset: 0; z-index: 950;
+    background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    animation: fadeIn 0.2s ease forwards;
+  }
+  .hotkey-card {
+    background: #1A1A1A; border: 1px solid #2A2A2A; border-radius: 12px;
+    padding: 28px 36px; max-width: 360px; width: 100%;
+  }
+  .hotkey-title {
+    font-size: 18px; font-weight: 900; color: #C9A84C;
+    letter-spacing: 3px; margin-bottom: 16px;
+  }
+  .hotkey-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0; border-bottom: 1px solid #111;
+  }
+  .hotkey-key {
+    background: #111; border: 1px solid #333; border-radius: 4px;
+    padding: 2px 10px; font-size: 13px; font-weight: 700; color: #A8B2BB;
+    font-family: 'Inter', sans-serif;
+  }
+  .hotkey-desc { font-size: 13px; color: #888; }
+  .hotkey-dismiss { font-size: 11px; color: #333; text-align: center; margin-top: 14px; }
+
+  /* Results card school color treatment */
+  .result-card {
+    position: relative; overflow: hidden;
+  }
+  .result-card-color-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .result-card-glow {
+    position: absolute; inset: 0; border-radius: 10px;
+    pointer-events: none; opacity: 0.06;
+  }
+
+  /* Offer board upgraded cells */
+  .board-cell.is-assigned .board-cell-accent-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: 6px 6px 0 0;
+  }
+
+  /* Crossfade for round transitions */
+  @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
+  .show-main-crossfade-out {
+    animation: fadeOut 0.3s ease forwards;
+  }
 </style>
 </head>
 <body>
@@ -586,13 +623,7 @@ const SCHOOLS = {
   5: ["Houston","Colorado State","UMass","Air Force","Oregon State","Southern Miss","Nevada","UNLV","Coastal Carolina","Western Kentucky","North Texas","Tulsa","Temple","Liberty","Navy","Kansas State","Charlotte","Middle Tennessee State","Wyoming","UConn","UAB","Buffalo","Central Michigan","Toledo","New Mexico State","UL Monroe","New Mexico","South Alabama","Akron","Ohio","Bowling Green","Ball State","San Jose State","Miami (Ohio)","Fresno State","Hawaii","Western Michigan","Utah State","BYU","UTSA","Iowa State","Iowa","Eastern Michigan","UTEP","Texas State","Troy","Northern Illinois","James Madison","Sam Houston","Jacksonville State","Kennesaw State"]
 };
 
-const TC = {
-  1: { bg:"#C9A84C", text:"#0A0A0A", label:"TIER 1", border:"none" },
-  2: { bg:"#A8B2BB", text:"#0A0A0A", label:"TIER 2", border:"none" },
-  3: { bg:"#0D1B2A", text:"#F5F5F7", label:"TIER 3", border:"none" },
-  4: { bg:"#1A1A1A", text:"#F5F5F7", label:"TIER 4", border:"1px solid #3A3A3A" },
-  5: { bg:"#2A2A2A", text:"#A8B2BB", label:"TIER 5", border:"none" }
-};
+const TIER_LABEL = { 1:"TIER 1", 2:"TIER 2", 3:"TIER 3", 4:"TIER 4", 5:"TIER 5" };
 
 const SCHOOL_COLORS = {
   // TIER 1
@@ -600,7 +631,7 @@ const SCHOOL_COLORS = {
   "Clemson":       { p:"#F56600", s:"#522D80" },
   "Georgia":       { p:"#BA0C2F", s:"#000000" },
   "Ohio State":    { p:"#BB0000", s:"#666666" },
-  "Texas A&M":     { p:"#5C0025", s:"#FFFFFF" },
+  "Texas A&M":     { p:"#500000", s:"#FFFFFF" },
   "Oklahoma":      { p:"#841617", s:"#FDF9D8" },
   "LSU":           { p:"#461D7C", s:"#FDD023" },
   "Texas":         { p:"#BF5700", s:"#FFFFFF" },
@@ -611,7 +642,7 @@ const SCHOOL_COLORS = {
   "Florida State": { p:"#782F40", s:"#CEB888" },
   // TIER 2
   "Miami":             { p:"#005030", s:"#F47321" },
-  "North Carolina":    { p:"#13294B", s:"#4B9CD3" },
+  "North Carolina":    { p:"#4B9CD3", s:"#13294B" },
   "Oregon":            { p:"#154733", s:"#FEE123" },
   "Tennessee":         { p:"#FF8200", s:"#FFFFFF" },
   "Stanford":          { p:"#8C1515", s:"#FFFFFF" },
@@ -621,10 +652,10 @@ const SCHOOL_COLORS = {
   "Arizona State":     { p:"#8C1D40", s:"#FFC627" },
   "Maryland":          { p:"#E03A3E", s:"#FFD520" },
   "NC State":          { p:"#CC0000", s:"#FFFFFF" },
-  "Notre Dame":        { p:"#0C1A4B", s:"#C99700" },
+  "Notre Dame":        { p:"#0C2340", s:"#C99700" },
   "Vanderbilt":        { p:"#000000", s:"#CFAE70" },
   "Mississippi State": { p:"#660000", s:"#FFFFFF" },
-  "Georgia Tech":      { p:"#FDB813", s:"#003057" },
+  "Georgia Tech":      { p:"#B3A369", s:"#003057" },
   "Virginia Tech":     { p:"#630031", s:"#CF4420" },
   "Kentucky":          { p:"#0033A0", s:"#FFFFFF" },
   "USC":               { p:"#990000", s:"#FFC72C" },
@@ -633,11 +664,11 @@ const SCHOOL_COLORS = {
   "Baylor":         { p:"#154734", s:"#FFB81C" },
   "Arkansas":       { p:"#9D2235", s:"#FFFFFF" },
   "Arizona":        { p:"#AB0520", s:"#001C48" },
-  "UCLA":           { p:"#2D68C4", s:"#F2A900" },
+  "UCLA":           { p:"#2774AE", s:"#F2A900" },
   "Washington":     { p:"#4B2E83", s:"#B7A57A" },
   "Texas Tech":     { p:"#CC0000", s:"#000000" },
   "Utah":           { p:"#CC0000", s:"#000000" },
-  "Purdue":         { p:"#CEB888", s:"#000000" },
+  "Purdue":         { p:"#CFB991", s:"#000000" },
   "Oklahoma State": { p:"#FF6600", s:"#000000" },
   "Pittsburgh":     { p:"#003594", s:"#FFB81C" },
   "California":     { p:"#003262", s:"#FDB515" },
@@ -653,16 +684,16 @@ const SCHOOL_COLORS = {
   // TIER 4
   "Rice":             { p:"#003D7D", s:"#5B6770" },
   "SMU":              { p:"#0033A0", s:"#C8102E" },
-  "Illinois":         { p:"#1B4178", s:"#F5873C" },
-  "Boston College":   { p:"#8B0000", s:"#BD985A" },
-  "East Carolina":    { p:"#4A1F68", s:"#FFD51D" },
+  "Illinois":         { p:"#E84A27", s:"#13294B" },
+  "Boston College":   { p:"#98002E", s:"#BC9B6A" },
+  "East Carolina":    { p:"#592A8A", s:"#FFD51D" },
   "Wake Forest":      { p:"#000000", s:"#C49544" },
-  "Boise State":      { p:"#2D4492", s:"#F27E34" },
+  "Boise State":      { p:"#0033A0", s:"#D64309" },
   "Old Dominion":     { p:"#003A7D", s:"#A0A0A0" },
   "Louisville":       { p:"#AD0000", s:"#000000" },
   "Michigan State":   { p:"#18453B", s:"#FFFFFF" },
-  "UCF":              { p:"#000000", s:"#BA9B37" },
-  "Syracuse":         { p:"#D44500", s:"#002D62" },
+  "UCF":              { p:"#000000", s:"#FFC904" },
+  "Syracuse":         { p:"#F76900", s:"#000E54" },
   "Colorado":         { p:"#CFB87C", s:"#000000" },
   "Wisconsin":        { p:"#C5050C", s:"#FFFFFF" },
   "Washington State": { p:"#981E32", s:"#5E6A71" },
@@ -673,7 +704,7 @@ const SCHOOL_COLORS = {
   "App State":        { p:"#000000", s:"#FFC520" },
   "Louisiana":        { p:"#C10230", s:"#F4A42A" },
   "FIU":              { p:"#002D62", s:"#C5960B" },
-  "Nebraska":         { p:"#E41C38", s:"#FFFFFF" },
+  "Nebraska":         { p:"#D00000", s:"#FFFFFF" },
   "Duke":             { p:"#003087", s:"#FFFFFF" },
   "Kansas":           { p:"#0051BA", s:"#E8000D" },
   "Georgia Southern": { p:"#011E41", s:"#9B8A59" },
@@ -681,59 +712,59 @@ const SCHOOL_COLORS = {
   "Louisiana Tech":   { p:"#002F8B", s:"#E31837" },
   "Marshall":         { p:"#009E60", s:"#000000" },
   "Kent State":       { p:"#002664", s:"#E9B227" },
-  "Memphis":          { p:"#2A2A9B", s:"#FEC003" },
+  "Memphis":          { p:"#003087", s:"#FEC003" },
   // TIER 5
   "Houston":               { p:"#C90822", s:"#012259" },
-  "Colorado State":        { p:"#008C75", s:"#000000" },
+  "Colorado State":        { p:"#1E4D2B", s:"#C8C372" },
   "UMass":                 { p:"#9F011A", s:"#FFFFFF" },
   "Air Force":             { p:"#0061AA", s:"#FFFFFF" },
   "Oregon State":          { p:"#DC4405", s:"#000000" },
   "Southern Miss":         { p:"#000000", s:"#FFAA3C" },
   "Nevada":                { p:"#003366", s:"#FFFFFF" },
   "UNLV":                  { p:"#D50026", s:"#FFFFFF" },
-  "Coastal Carolina":      { p:"#009297", s:"#D59C3A" },
+  "Coastal Carolina":      { p:"#006F71", s:"#D59C3A" },
   "Western Kentucky":      { p:"#F32026", s:"#000000" },
   "North Texas":           { p:"#00853D", s:"#000000" },
   "Tulsa":                 { p:"#002D72", s:"#C5B783" },
-  "Temple":                { p:"#9D2235", s:"#000000" },
+  "Temple":                { p:"#9D2235", s:"#FFFFFF" },
   "Liberty":               { p:"#A70F00", s:"#02298A" },
-  "Navy":                  { p:"#131630", s:"#FCBA29" },
+  "Navy":                  { p:"#00205B", s:"#FCBA29" },
   "Kansas State":          { p:"#512888", s:"#FFFFFF" },
   "Charlotte":             { p:"#006331", s:"#FFFFFF" },
   "Middle Tennessee State":{ p:"#0079C2", s:"#FFFFFF" },
   "Wyoming":               { p:"#492F24", s:"#FFC425" },
   "UConn":                 { p:"#0A1D5A", s:"#B2B2AE" },
-  "UAB":                   { p:"#054338", s:"#E7BD05" },
+  "UAB":                   { p:"#1E6B52", s:"#E7BD05" },
   "Buffalo":               { p:"#0068B4", s:"#FFFFFF" },
   "Central Michigan":      { p:"#780006", s:"#E2A253" },
   "Toledo":                { p:"#00488F", s:"#FFD51D" },
   "New Mexico State":      { p:"#891216", s:"#FFFFFF" },
   "UL Monroe":             { p:"#98012E", s:"#B38807" },
-  "New Mexico":            { p:"#D41045", s:"#C4C4C4" },
+  "New Mexico":            { p:"#BA0C2F", s:"#A7A8AA" },
   "South Alabama":         { p:"#003E7E", s:"#D11241" },
   "Akron":                 { p:"#000E41", s:"#C29C41" },
   "Ohio":                  { p:"#295A29", s:"#CDB97B" },
-  "Bowling Green":         { p:"#4E2400", s:"#F5793F" },
-  "Ball State":            { p:"#DA0000", s:"#000000" },
+  "Bowling Green":         { p:"#FE5000", s:"#4F2C1D" },
+  "Ball State":            { p:"#DA0000", s:"#FFFFFF" },
   "San Jose State":        { p:"#005893", s:"#E5A823" },
-  "Miami (Ohio)":          { p:"#C60808", s:"#3F7D91" },
+  "Miami (Ohio)":          { p:"#C41230", s:"#000000" },
   "Fresno State":          { p:"#E32F38", s:"#00427A" },
   "Hawaii":                { p:"#004231", s:"#000000" },
-  "Western Michigan":      { p:"#7E3E09", s:"#B59966" },
+  "Western Michigan":      { p:"#603311", s:"#FFC82E" },
   "Utah State":            { p:"#003263", s:"#FFFFFF" },
   "BYU":                   { p:"#002D62", s:"#FFFFFF" },
   "UTSA":                  { p:"#002A5C", s:"#F47321" },
-  "Iowa State":            { p:"#840A2C", s:"#FEC938" },
+  "Iowa State":            { p:"#C8102E", s:"#F1BE48" },
   "Iowa":                  { p:"#000000", s:"#FFD700" },
   "Eastern Michigan":      { p:"#0B5F24", s:"#FFFFFF" },
   "UTEP":                  { p:"#002843", s:"#F9783B" },
   "Texas State":           { p:"#501214", s:"#9B8449" },
   "Troy":                  { p:"#AE0210", s:"#000000" },
   "Northern Illinois":     { p:"#CC0000", s:"#000000" },
-  "James Madison":         { p:"#263997", s:"#D5A10E" },
-  "Sam Houston":           { p:"#F78F1E", s:"#231F20" },
-  "Jacksonville State":    { p:"#E53F40", s:"#FFFFFF" },
-  "Kennesaw State":        { p:"#231F20", s:"#F0B410" },
+  "James Madison":         { p:"#450084", s:"#D5A10E" },
+  "Sam Houston":           { p:"#F58025", s:"#FFFFFF" },
+  "Jacksonville State":    { p:"#CC0000", s:"#FFFFFF" },
+  "Kennesaw State":        { p:"#231F20", s:"#FDBB30" },
 };
 
 // ─── UTILITIES ───────────────────────────────────────────────────────────────
@@ -750,7 +781,7 @@ function getTextColor(hex) {
 }
 
 function getTierAccent(tier) {
-  return { 1:"#C9A84C", 2:"#A8B2BB", 3:"#8B7355", 4:"#666666", 5:"#444444" }[tier] || "#444444";
+  return (TIER_BADGE[tier] || TIER_BADGE[5]).bg;
 }
 
 function schoolAccentColor(school, tierFallback) {
@@ -907,6 +938,31 @@ const AUDIO = (() => {
     return ctx;
   }
 
+  let reverbNode = null;
+
+  function getReverbDest() {
+    if (!reverbNode) {
+      const ac = init();
+      reverbNode = ac.createConvolver();
+      // Generate a short synthetic impulse response (~1.2s hall)
+      const rate = ac.sampleRate;
+      const len = rate * 1.2;
+      const buf = ac.createBuffer(2, len, rate);
+      for (let ch = 0; ch < 2; ch++) {
+        const d = buf.getChannelData(ch);
+        for (let i = 0; i < len; i++) {
+          d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+        }
+      }
+      reverbNode.buffer = buf;
+      const wet = ac.createGain();
+      wet.gain.value = 0.3;
+      reverbNode.connect(wet);
+      wet.connect(ac.destination);
+    }
+    return reverbNode;
+  }
+
   function mute(on) { muted = on; }
   function isMuted() { return muted; }
 
@@ -978,11 +1034,15 @@ const AUDIO = (() => {
     const dur   = DURS[tier]   || 0.5;
     const fanfareAt = now + 0.95;
 
+    // Route T1-T3 fanfares through reverb for stadium depth
+    const reverbDest = tier <= 3 ? getReverbDest() : null;
+
     freqs.forEach((freq, i) => {
       const osc = ac.createOscillator();
       const g   = ac.createGain();
       osc.type = "sine"; osc.frequency.value = freq;
       osc.connect(g); g.connect(ac.destination);
+      if (reverbDest) g.connect(reverbDest);
       const t = fanfareAt + i * 0.055;
       g.gain.setValueAtTime(0, t);
       g.gain.linearRampToValueAtTime(vol, t + 0.07);
@@ -1150,7 +1210,8 @@ function renderOccupiedList() {
     </div>`).join("");
 }
 
-function renderTransitionPage(tier, tc) {
+function renderTransitionContent(tier, tierLabel) {
+  const tb = TIER_BADGE[tier];
   const upcomingCoaches = state.queue.filter(q => q.tier === tier && !q.isReroll).map(q => q.coach.name);
   const MAX_SHOW = 8;
   const coachPreview = upcomingCoaches.length === 0 ? "" :
@@ -1162,17 +1223,16 @@ function renderTransitionPage(tier, tc) {
       ${upcomingCoaches.length > MAX_SHOW ? `<span style="color:#333;margin-left:12px;font-size:14px">+${upcomingCoaches.length - MAX_SHOW} more</span>` : ""}
     </div>`;
   return `
-    <div class="page-transition fade-in">
-      <div class="transition-logo">CLOS // WHEEL OF FORTUNE</div>
-      <div class="bc transition-coming-up" style="background:${getTierAccent(tier)};color:${luminance(getTierAccent(tier))>0.5?'#0A0A0A':'#F5F5F7'}">${tc.label} — ROUND ${6-tier} OF 5</div>
-      <div class="bc transition-tier">${tc.label}</div>
+    <div class="fade-in" style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:20px">
+      <div class="bc transition-coming-up" style="background:${tb.bg};color:${tb.text}">${tierLabel} — ROUND ${6-tier} OF 5</div>
+      <div class="bc transition-tier">${tierLabel}</div>
       ${coachPreview}
-      <button id="main-action-btn" onclick="startRound()" class="bc btn-next" style="background:${tc.bg};color:${tc.text};border:${tc.border};margin-top:24px">START ${tc.label}</button>
-      <div class="spacebar-hint" style="margin-top:-12px">press spacebar to continue</div>
+      <button id="main-action-btn" onclick="startRound()" class="bc btn-next" style="background:${tb.bg};color:${tb.text};margin-top:16px">START ${tierLabel}</button>
+      <div class="spacebar-hint" style="margin-top:-8px">press spacebar to continue</div>
     </div>`;
 }
 
-function renderShowCoachCard(item, tc) {
+function renderShowCoachCard(item) {
   // Only play the flip animation once per qi — not on every re-render
   let cardClass = "coach-card-static";
   if (state.ss === "idle" && state.lastRevealedQi !== state.qi) {
@@ -1181,8 +1241,8 @@ function renderShowCoachCard(item, tc) {
   }
   return `
     <div class="coach-card ${cardClass}">
-      <div class="bc tier-pill" style="background:${tc.bg};color:${tc.text};border:${tc.border}">
-        ${tc.label} OFFER${item.isReroll?" — RE-ROLL":""}
+      <div class="bc tier-pill" style="background:${TIER_BADGE[item.tier].bg};color:${TIER_BADGE[item.tier].text}">
+        ${TIER_LABEL[item.tier]} OFFER${item.isReroll?" — RE-ROLL":""}
       </div>
       <div class="bc coach-name-hero">${esc(item.coach.name).toUpperCase()}</div>
       <div class="coach-stats">
@@ -1191,11 +1251,12 @@ function renderShowCoachCard(item, tc) {
     </div>`;
 }
 
-function renderSpinButton(tc, isLast) {
+function renderSpinButton(tier, isLast) {
+  const tb = TIER_BADGE[tier];
   const label = isLast ? "FINAL SPIN" : "SPIN THE WHEEL";
   return `
     <div style="text-align:center">
-      <button onclick="doSpin()" class="bc btn-spin" style="background:${tc.bg};color:${tc.text};border:${tc.border}">${label}</button>
+      <button onclick="doSpin()" class="bc btn-spin" style="background:${tb.bg};color:${tb.text}">${label}</button>
       <div class="spacebar-hint" style="margin-top:10px">press spacebar</div>
     </div>`;
 }
@@ -1216,11 +1277,11 @@ function renderTiebreakerPanel(item, conflict) {
     </div>`;
 }
 
-function renderEmptyPoolCard(tc, isLast) {
+function renderEmptyPoolCard(tierLabel, isLast) {
   return `
     <div class="empty-pool-card">
       <div class="bc empty-pool-title">NO SCHOOLS AVAILABLE</div>
-      <div class="empty-pool-sub">This ${tc.label} offer was skipped — pool is empty.</div>
+      <div class="empty-pool-sub">This ${tierLabel} offer was skipped — pool is empty.</div>
       <div class="btn-row">
         ${state.undoSnapshot ? `<button onclick="undoLast()" class="bc btn-undo">↩ UNDO</button>` : ""}
         ${isLast
@@ -1250,7 +1311,6 @@ function renderDraftBoard() {
   const availableCount = totalSchools - assignedCount - occupiedCount;
 
   const tierSections = [1,2,3,4,5].map(t => {
-    const tc = TC[t];
     const schools = SCHOOLS[t];
     const poolLeft = (state.pools[t] || []).length;
     const cells = schools.map(school => {
@@ -1264,10 +1324,12 @@ function renderDraftBoard() {
         </div>`;
       }
       if (assigned) {
-        const borderColor = sc ? (luminance(sc.p) >= luminance(sc.s) ? sc.p : sc.s) : getTierAccent(t);
+        const pair = sc ? schoolColorPair(sc.p, sc.s) : { bright: getTierAccent(t), dark: "#111" };
         const washColor = sc ? sc.p : getTierAccent(t);
-        return `<div class="board-cell is-assigned" style="border-color:${borderColor}">
-          <div class="board-cell-color-wash" style="background:${washColor}"></div>
+        const barGrad = sc ? `linear-gradient(90deg,${sc.p},${sc.s})` : pair.bright;
+        return `<div class="board-cell is-assigned" style="border-color:${pair.bright};box-shadow:0 0 8px ${pair.bright}22">
+          <div class="board-cell-color-wash" style="background:${washColor};opacity:0.12"></div>
+          <div class="board-cell-accent-bar" style="background:${barGrad}"></div>
           <div class="board-cell-name">${esc(school)}</div>
           <div class="board-cell-coach">${esc(assigned.coach)}</div>
         </div>`;
@@ -1280,7 +1342,7 @@ function renderDraftBoard() {
     return `
       <div class="board-tier-section">
         <div class="board-tier-header">
-          <div class="bc board-tier-badge" style="background:${TIER_BADGE[t].bg};color:${TIER_BADGE[t].text}">${tc.label}</div>
+          <div class="bc board-tier-badge" style="background:${TIER_BADGE[t].bg};color:${TIER_BADGE[t].text}">${TIER_LABEL[t]}</div>
           <div class="board-tier-count">${schools.length} schools · ${poolLeft} available</div>
         </div>
         <div class="board-grid">${cells}</div>
@@ -1309,15 +1371,15 @@ function renderDraftBoard() {
     </div>`;
 }
 
-function renderNowSpinning(item, tc) {
+function renderNowSpinning(item) {
   const isActive = state.ss === "idle" || state.ss === "spinning" || state.ss === "tiebreaker-drama";
   if (!isActive && state.ss !== "pendingConfirm" && state.ss !== "conflict") return "";
   const statusText = state.ss === "spinning" ? "SPINNING" :
     (state.ss === "tiebreaker-drama" || state.ss === "conflict") ? "TIEBREAKER" :
     state.ss === "pendingConfirm" ? "LANDED" : "UP NEXT";
   return `
-    <div class="sidebar-now-spinning ${isActive ? 'is-active' : ''}" style="border-left:3px solid ${tc.bg}">
-      <div><span class="sidebar-spinning-dot"></span>${statusText} — ${tc.label}</div>
+    <div class="sidebar-now-spinning ${isActive ? 'is-active' : ''}" style="border-left:3px solid ${TIER_BADGE[item.tier].bg}">
+      <div><span class="sidebar-spinning-dot"></span>${statusText} — ${TIER_LABEL[item.tier]}</div>
       <div class="bc sidebar-now-spinning-name">${esc(item.coach.name)}</div>
     </div>`;
 }
@@ -1330,11 +1392,11 @@ function renderSidebar() {
   })).filter(g => g.entries.length > 0);
 
   if (!grouped.length)
-    return '<div class="no-assignments" style="color:#333;font-size:12px;font-style:italic;padding:8px">No offers yet</div>';
+    return '<div class="no-offers" style="color:#333;font-size:12px;font-style:italic;padding:8px">No offers yet</div>';
 
   return grouped.map(g => `
     <div style="margin-bottom:12px" data-tier="${g.tier}">
-      <div class="sidebar-tier-label">${TC[g.tier].label}</div>
+      <div class="sidebar-tier-label">${TIER_LABEL[g.tier]}</div>
       ${g.entries.map(({n,t,s}) => `
         <div class="sidebar-entry" style="border-left:3px solid ${schoolAccentColor(s, t)}">
           <div class="sidebar-entry-name">${esc(n)}</div>
@@ -1350,7 +1412,7 @@ function renderResultCard(coach, i) {
   const topSC = topOffer && SCHOOL_COLORS[topOffer] ? SCHOOL_COLORS[topOffer] : null;
   const topBg = topSC ? topSC.p : "#111";
   const topTxt = topSC ? getTextColor(topSC.p) : "#F5F5F7";
-  const topAccent = topSC ? topSC.s : TC[coach.tier].bg;
+  const topAccent = topSC ? topSC.s : TIER_BADGE[coach.tier].bg;
   const topSubTxt = topSC ? (topTxt === "#F5F5F7" ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.45)") : "#555";
 
   const otherOffers = otherTiers.map(t => {
@@ -1364,16 +1426,20 @@ function renderResultCard(coach, i) {
       </div>`;
   }).join("");
 
+  const cardBorder = topSC ? schoolColorPair(topSC.p, topSC.s).bright : TIER_BADGE[coach.tier].bg;
+
   return `
-    <div class="result-card" style="opacity:0;animation:cardFadeIn 0.5s ease forwards;animation-delay:${i*0.09}s">
-      <div class="result-card-header" style="border-bottom:2px solid ${topSC ? topSC.s : TC[coach.tier].bg}">
+    <div class="result-card" style="opacity:0;animation:cardFadeIn 0.5s ease forwards;animation-delay:${i*0.09}s;border:1px solid ${cardBorder}33">
+      ${topSC ? `<div class="result-card-color-bar" style="background:linear-gradient(90deg,${topSC.p},${topSC.s})"></div>` : ""}
+      ${topSC ? `<div class="result-card-glow" style="background:${topSC.p}"></div>` : ""}
+      <div class="result-card-header" style="border-bottom:2px solid ${topSC ? topSC.s : TIER_BADGE[coach.tier].bg}">
         <div class="bc result-card-name">${esc(coach.name).toUpperCase()}</div>
         <div class="result-card-meta">Base: T${coach.tier} · Prestige: ${coach.prestige}</div>
       </div>
       <div class="result-top-offer" style="background:${topBg}">
         <div class="result-top-label" style="color:${topSubTxt}">TOP OFFER</div>
         <div class="bc result-top-school" style="color:${topAccent}">${topOffer?esc(topOffer).toUpperCase():"—"}</div>
-        <div class="result-top-tier" style="color:${topSubTxt}">${TC[coach.tier].label} offer</div>
+        <div class="result-top-tier" style="color:${topSubTxt}">${TIER_LABEL[coach.tier]} offer</div>
       </div>
       ${otherTiers.length ? `
         <div style="padding:8px 0">
@@ -1444,7 +1510,7 @@ function renderSetup() {
           <div class="setup-form">
             <input id="c-name" placeholder="Discord Username" value="${esc(state.form.name)}" onkeydown="if(event.key==='Enter')addCoach()">
             <div class="setup-form-grid">
-              <select id="c-tier">${[1,2,3,4,5].map(t=>`<option value="${t}"${t==state.form.tier?' selected':''}>${TC[t].label}</option>`).join("")}</select>
+              <select id="c-tier">${[1,2,3,4,5].map(t=>`<option value="${t}"${t==state.form.tier?' selected':''}>${TIER_LABEL[t]}</option>`).join("")}</select>
               <select id="c-prestige">${PO.map(p=>`<option${p===state.form.prestige?' selected':''}>${p}</option>`).join("")}</select>
               <input id="c-winpct" type="number" step="0.01" min="0" max="1" placeholder="Win % (e.g. 0.68)" value="${state.form.winPct}">
               <input id="c-top25" type="number" min="0" placeholder="Top 25 Wins" value="${state.form.top25}">
@@ -1481,22 +1547,23 @@ function renderShow() {
   document.body.style.overflow = "hidden";
   const item = state.queue[state.qi];
   if (!item) { state.phase="results"; clearSavedShow(); return renderResults(); }
-  const tc = TC[item.tier];
+  const tierLabel = TIER_LABEL[item.tier];
   const { tier, spinInRound, totalInRound } = currentRoundInfo();
-
-  if (state.ss==="roundTransition") return renderTransitionPage(tier, tc);
 
   // Build center content based on show state
   let center = "";
+  if (state.ss==="roundTransition") {
+    center = renderTransitionContent(tier, tierLabel);
+  }
   if (state.ss==="idle") {
-    center = renderSpinButton(tc, state.qi===state.queue.length-1);
+    center = renderSpinButton(item.tier, state.qi===state.queue.length-1);
   }
   // spinning: slot-box is injected via DOM by doSpin() — no render needed
   if ((state.ss==="tiebreaker-drama"||state.ss==="conflict") && state.conflict) {
     center = renderTiebreakerPanel(item, state.conflict);
   }
   if (state.ss==="confirmed") {
-    center = renderEmptyPoolCard(tc, state.qi===state.queue.length-1);
+    center = renderEmptyPoolCard(tierLabel, state.qi===state.queue.length-1);
   }
 
   return `
@@ -1511,7 +1578,7 @@ function renderShow() {
       <div class="show-header">
         <div class="bc show-logo">CLOS // WHEEL OF FORTUNE</div>
         <div style="display:flex;align-items:center;gap:16px">
-          <div class="bc show-tier-badge" style="background:${TIER_BADGE[item.tier].bg};color:${TIER_BADGE[item.tier].text}">${tc.label}</div>
+          <div class="bc show-tier-badge" style="background:${TIER_BADGE[item.tier].bg};color:${TIER_BADGE[item.tier].text}">${tierLabel}</div>
           <div class="show-spin-count">Spin ${spinInRound} of ${totalInRound} this round &nbsp;·&nbsp; ${state.qi+1} of ${state.queue.length} overall</div>
           <button onclick="toggleBoard()" class="btn-pause" title="Offer Board (B)">▦</button>
           <button onclick="togglePause()" class="btn-pause" title="Pause (P)">⏸</button>
@@ -1524,7 +1591,7 @@ function renderShow() {
 
       <div class="show-body">
         <div class="show-main">
-          ${renderShowCoachCard(item, tc)}
+          ${state.ss !== "roundTransition" ? renderShowCoachCard(item) : ""}
           ${center}
         </div>
 
@@ -1533,7 +1600,7 @@ function renderShow() {
             <div class="bc" style="font-size:16px;font-weight:700;color:#A8B2BB;letter-spacing:2px">OFFERS</div>
           </div>
           <div class="sidebar-list">
-            ${renderNowSpinning(item, tc)}
+            ${renderNowSpinning(item)}
             ${renderSidebar()}
           </div>
         </div>
@@ -1552,9 +1619,10 @@ function renderResults() {
     </div>
     <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:12px">${cards}</div>
     <div style="text-align:center;margin-top:36px;padding-bottom:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-      <button onclick="toggleBoard()" style="background:#0D1B2A;color:#A8B2BB;font-size:15px;padding:12px 32px;letter-spacing:2px;border:1px solid #2A2A2A" class="bc">OFFER BOARD</button>
-      <button id="copy-results-btn" onclick="copyResults()" style="background:#C9A84C;color:#0A0A0A;font-size:15px;padding:12px 32px;letter-spacing:2px" class="bc">COPY RESULTS</button>
-      <button onclick="resetAll()" style="background:#A8B2BB;color:#0A0A0A;font-size:15px;padding:12px 32px;letter-spacing:2px" class="bc">NEW SESSION</button>
+      <button onclick="toggleBoard()" style="background:transparent;color:#A8B2BB;font-size:15px;padding:12px 32px;letter-spacing:2px;border:1px solid #333" class="bc">OFFER BOARD</button>
+      <button id="share-results-btn" onclick="shareResults()" style="background:#C9A84C;color:#0A0A0A;font-size:15px;padding:12px 32px;letter-spacing:2px" class="bc">SHARE LINK</button>
+      <button id="copy-results-btn" onclick="copyResults()" style="background:transparent;color:#A8B2BB;font-size:15px;padding:12px 32px;letter-spacing:2px;border:1px solid #333" class="bc">COPY TEXT</button>
+      <button onclick="resetAll()" style="background:transparent;color:#A8B2BB;font-size:15px;padding:12px 32px;letter-spacing:2px;border:1px solid #333" class="bc">NEW SESSION</button>
     </div>
   </div>`;
 }
@@ -1693,7 +1761,6 @@ function doSpin() {
 function runSlot(gen) {
   let count = 0, speed = TIMING.SLOT_BASE_SPEED;
   const item = state.queue[state.qi];
-  const tc = TC[item.tier];
 
   const tick = () => {
     if (state.spinGen !== gen) return; // abort if spin was invalidated
@@ -1704,9 +1771,10 @@ function runSlot(gen) {
 
     if (count >= TIMING.SLOT_TICKS) {
       const sc = SCHOOL_COLORS[state.slotResult];
-      const sbg = sc ? sc.p : tc.bg;
-      const stxt = sc ? getTextColor(sc.p) : tc.text;
-      const sborder = sc ? sc.s : tc.bg;
+      const tbFallback = TIER_BADGE[item.tier];
+      const sbg = sc ? sc.p : tbFallback.bg;
+      const stxt = sc ? getTextColor(sc.p) : tbFallback.text;
+      const sborder = sc ? sc.s : tbFallback.bg;
       el.textContent = state.slotResult;
       el.classList.remove("slot-spinning");
       el.classList.add("slot-settled");
@@ -1969,14 +2037,14 @@ function injectSidebarEntry() {
   const accentColor = schoolAccentColor(result, item.tier);
   const sidebarList = document.querySelector(".sidebar-list");
   if (!sidebarList) return;
-  const placeholder = sidebarList.querySelector(".no-assignments");
+  const placeholder = sidebarList.querySelector(".no-offers");
   if (placeholder) placeholder.remove();
   let tierGroup = sidebarList.querySelector(`[data-tier="${item.tier}"]`);
   if (!tierGroup) {
     tierGroup = document.createElement("div");
     tierGroup.dataset.tier = String(item.tier);
     tierGroup.style.marginBottom = "12px";
-    tierGroup.innerHTML = `<div class="sidebar-tier-label">${TC[item.tier].label}</div>`;
+    tierGroup.innerHTML = `<div class="sidebar-tier-label">${TIER_LABEL[item.tier]}</div>`;
     const existingGroups = Array.from(sidebarList.querySelectorAll("[data-tier]"));
     let inserted = false;
     for (const g of existingGroups) {
@@ -2045,7 +2113,16 @@ function nextSpin() {
   state.qi++;
   if (state.qi>=state.queue.length) { state.phase="results"; render(); return; }
   const nextTier = state.queue[state.qi]?.tier;
-  if (nextTier!==prevTier) state.ss="roundTransition";
+  if (nextTier!==prevTier) {
+    // Crossfade: fade out current show-main content, then render transition
+    state.ss="roundTransition";
+    const showMain = document.querySelector(".show-main");
+    if (showMain) {
+      showMain.classList.add("show-main-crossfade-out");
+      setTimeout(() => render(), 300);
+      return;
+    }
+  }
   render();
   // Pulse the progress bar on each advance
   const bar = document.getElementById("progress-bar");
@@ -2054,6 +2131,26 @@ function nextSpin() {
     void bar.offsetWidth; // force reflow to restart animation
     bar.classList.add("progress-fill-pulse");
   }
+}
+
+function toggleHotkeys() {
+  const existing = document.querySelector(".hotkey-overlay");
+  if (existing) { existing.remove(); return; }
+  const overlay = document.createElement("div");
+  overlay.className = "hotkey-overlay";
+  overlay.onclick = () => overlay.remove();
+  overlay.innerHTML = `
+    <div class="hotkey-card" onclick="event.stopPropagation()">
+      <div class="bc hotkey-title">KEYBOARD SHORTCUTS</div>
+      <div class="hotkey-row"><span class="hotkey-desc">Spin / Advance / Confirm</span><span class="hotkey-key">Space</span></div>
+      <div class="hotkey-row"><span class="hotkey-desc">Undo last spin</span><span class="hotkey-key">U</span></div>
+      <div class="hotkey-row"><span class="hotkey-desc">Undo last spin</span><span class="hotkey-key">Ctrl+Z</span></div>
+      <div class="hotkey-row"><span class="hotkey-desc">Pause / Resume</span><span class="hotkey-key">P</span></div>
+      <div class="hotkey-row"><span class="hotkey-desc">Offer Board</span><span class="hotkey-key">B</span></div>
+      <div class="hotkey-row"><span class="hotkey-desc">This help</span><span class="hotkey-key">?</span></div>
+      <div class="hotkey-dismiss">press any key or click to dismiss</div>
+    </div>`;
+  document.body.appendChild(overlay);
 }
 
 function togglePause() {
@@ -2075,6 +2172,34 @@ function toggleBoard() {
     const overlay = document.querySelector(".board-overlay");
     if (overlay) overlay.remove();
   }
+}
+
+function shareResults() {
+  // Encode coaches + offers into a compact URL hash
+  const data = state.coaches.map(c => {
+    const offers = state.assignments[c.name] || {};
+    return { n:c.name, t:c.tier, p:c.prestige, o:offers };
+  });
+  const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+  const url = location.origin + location.pathname + "#results=" + encoded;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById("share-results-btn");
+    if (btn) { btn.textContent = "LINK COPIED ✓"; setTimeout(() => btn.textContent = "SHARE LINK", 2000); }
+  });
+}
+
+function loadFromHash() {
+  const hash = location.hash;
+  if (!hash.startsWith("#results=")) return false;
+  try {
+    const data = JSON.parse(decodeURIComponent(atob(hash.slice(9))));
+    if (!Array.isArray(data) || !data.length) return false;
+    state.coaches = data.map(d => ({ name:d.n, tier:d.t, prestige:d.p, winPct:0, top25wins:0 }));
+    state.assignments = {};
+    data.forEach(d => { if (Object.keys(d.o).length) state.assignments[d.n] = d.o; });
+    state.phase = "results";
+    return true;
+  } catch(e) { return false; }
 }
 
 function copyResults() {
@@ -2172,13 +2297,22 @@ function resetAll() {
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
+if (!loadFromHash()) {
+  if (state.apiUrl) fetchData();
+}
 render();
-if (state.apiUrl) fetchData();
 
 // ─── KEYBOARD ────────────────────────────────────────────────────────────────
 document.addEventListener("keydown", e => {
   if (e.target.tagName === "INPUT") return;
   if (state.phase !== "show") return;
+
+  // Dismiss hotkey overlay on any key
+  const hotkeyOverlay = document.querySelector(".hotkey-overlay");
+  if (hotkeyOverlay && e.key !== "?") { hotkeyOverlay.remove(); return; }
+
+  // Hotkey cheat sheet — ? key (works always)
+  if (e.key === "?") { e.preventDefault(); toggleHotkeys(); return; }
 
   // Pause toggle — P key (works even when paused)
   if (e.code === "KeyP") { e.preventDefault(); togglePause(); return; }
