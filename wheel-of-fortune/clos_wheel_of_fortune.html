@@ -92,6 +92,7 @@
     display: flex; flex-direction: column; align-items: center; gap: 16px;
     text-align: center; background: #111; border: 1px solid #1A1A1A;
     border-radius: 20px; padding: 32px 56px; min-width: 420px;
+    position: relative; overflow: hidden;
   }
   .coach-name-hero {
     font-size: clamp(52px,9vw,120px); font-weight: 900; color: #F5F5F7;
@@ -256,6 +257,7 @@
   /* Results page */
   .result-card {
     background: #1A1A1A; border-radius: 10px; overflow: hidden;
+    position: relative;
   }
   .result-card-header { background: #0D1B2A; padding: 12px 16px; }
   .result-card-name { font-size: 19px; font-weight: 700; color: #F5F5F7; }
@@ -404,9 +406,6 @@
   }
 
   /* School color takeover on coach card after reveal */
-  .coach-card {
-    position: relative; overflow: hidden;
-  }
   .coach-card-accented {
     transition: border-color 0.7s ease, box-shadow 0.9s ease;
   }
@@ -532,7 +531,7 @@
   }
   .board-cell-color-wash {
     position: absolute; inset: 0; border-radius: 6px;
-    opacity: 0.15; pointer-events: none;
+    opacity: 0.12; pointer-events: none;
   }
 
   /* Available — default subtle state */
@@ -586,9 +585,6 @@
   .hotkey-dismiss { font-size: 11px; color: #333; text-align: center; margin-top: 14px; }
 
   /* Results card school color treatment */
-  .result-card {
-    position: relative; overflow: hidden;
-  }
   .result-card-color-bar {
     position: absolute; top: 0; left: 0; right: 0; height: 3px;
   }
@@ -603,10 +599,96 @@
     border-radius: 6px 6px 0 0;
   }
 
+  /* Results reveal sequence */
+  @keyframes resultCardReveal {
+    0%   { opacity: 0; transform: translateY(24px) scale(0.97); }
+    60%  { opacity: 1; transform: translateY(-4px) scale(1.01); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .result-card-hidden { opacity: 0; }
+  .result-card-revealing {
+    animation: resultCardReveal 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  @keyframes resultsTitleReveal {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .results-title-reveal {
+    animation: resultsTitleReveal 0.5s ease forwards;
+  }
+  @keyframes resultsButtonsReveal {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .results-buttons-hidden { opacity: 0; }
+  .results-buttons-reveal {
+    animation: resultsButtonsReveal 0.5s ease forwards;
+  }
+
+  /* Final spin special treatment */
+  @keyframes finalSpinPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(201,168,76,0.3); }
+    50% { box-shadow: 0 0 40px rgba(201,168,76,0.6); }
+  }
+  .btn-final-spin {
+    animation: finalSpinPulse 1.5s ease infinite;
+    font-size: clamp(24px,3vw,40px) !important;
+    padding: 26px 80px !important;
+    background: linear-gradient(135deg, #C9A84C 0%, #A8872E 100%) !important;
+    color: #0A0A0A !important;
+  }
+  .final-spin-label {
+    font-size: 14px; color: #C9A84C; letter-spacing: 4px;
+    font-weight: 700; margin-bottom: 8px;
+  }
+
   /* Crossfade for round transitions */
   @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
   .show-main-crossfade-out {
     animation: fadeOut 0.3s ease forwards;
+  }
+
+  /* ─── Responsive ────────────────────────────────────────────────────────── */
+  @media (max-width: 1024px) {
+    .show-sidebar { width: 240px; }
+    .coach-card { min-width: 320px; padding: 24px 36px; }
+    .slot-box { min-width: 320px; padding: 36px 48px; }
+    .board-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  }
+  @media (max-width: 768px) {
+    .show-header { padding: 10px 12px 8px; flex-wrap: wrap; gap: 6px; }
+    .show-logo { font-size: 16px !important; letter-spacing: 1px; }
+    .show-spin-count { display: none; }
+    .show-sidebar { display: none; }
+    .show-main { padding: 20px 16px; gap: 16px; }
+    .coach-card { min-width: 0; width: 100%; padding: 20px 24px; border-radius: 14px; }
+    .coach-name-hero { font-size: clamp(36px, 10vw, 64px); }
+    .slot-box { min-width: 0; width: 100%; padding: 28px 24px; border-radius: 12px; }
+    .slot-val { font-size: clamp(32px, 8vw, 56px); }
+    .tb-slot-box { min-width: 0; width: 90%; padding: 24px 20px; }
+    .btn-spin { padding: 18px 48px; font-size: clamp(18px, 5vw, 28px); }
+    .btn-next { padding: 16px 36px; font-size: clamp(16px, 4vw, 24px); }
+    .page-setup, .page-results { padding: 16px; }
+    .page-title { font-size: 32px; }
+    .page-subtitle { font-size: 16px; }
+    .setup-columns { flex-direction: column; }
+    .setup-col-side { width: 100%; }
+    .setup-hero { padding: 28px 16px 24px; }
+    .board-inner { padding: 16px; }
+    .board-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 4px; }
+    .board-cell { padding: 8px 10px; }
+    .result-card-header { padding: 10px 12px; }
+    .result-top-offer { padding: 10px 12px; }
+    .transition-tier { font-size: clamp(48px, 14vw, 100px); }
+    .btn-final-spin { padding: 20px 48px !important; font-size: clamp(20px, 5vw, 32px) !important; }
+  }
+  @media (max-width: 480px) {
+    .show-logo { font-size: 16px; letter-spacing: 1px; }
+    .show-spin-count { font-size: 11px; }
+    .show-tier-badge { font-size: 11px; padding: 3px 10px; }
+    .coach-name-hero { font-size: clamp(28px, 9vw, 48px); }
+    .coach-card { padding: 16px; border-radius: 12px; }
+    .board-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
   }
 </style>
 </head>
@@ -786,7 +868,7 @@ function getTierAccent(tier) {
 
 function schoolAccentColor(school, tierFallback) {
   const sc = SCHOOL_COLORS[school];
-  return sc ? (luminance(sc.p) >= luminance(sc.s) ? sc.p : sc.s) : getTierAccent(tierFallback);
+  return sc ? schoolColorPair(sc.p, sc.s).bright : getTierAccent(tierFallback);
 }
 
 // Given two hex colors, returns { bright, dark } — the brighter one always readable on #111
@@ -841,6 +923,12 @@ const TIMING = {
 
   SLOT_OPEN_DELAY:   60,    // ms before slot wrapper expands
   BTN_FADE_MS:       260,   // ms for spin button fade-out before removal
+
+  // Final spin overrides
+  FINAL_TICKS:       60,    // more ticks = longer spin
+  FINAL_EASE_START:  38,    // easing starts later
+  FINAL_BASE_SPEED:  50,    // slightly faster base
+  FINAL_AFTER_DELAY: 4500,  // longer pause after settle
 };
 
 /*
@@ -942,23 +1030,24 @@ const AUDIO = (() => {
 
   function getReverbDest() {
     if (!reverbNode) {
-      const ac = init();
-      reverbNode = ac.createConvolver();
-      // Generate a short synthetic impulse response (~1.2s hall)
-      const rate = ac.sampleRate;
-      const len = rate * 1.2;
-      const buf = ac.createBuffer(2, len, rate);
-      for (let ch = 0; ch < 2; ch++) {
-        const d = buf.getChannelData(ch);
-        for (let i = 0; i < len; i++) {
-          d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+      try {
+        const ac = init();
+        reverbNode = ac.createConvolver();
+        const rate = ac.sampleRate;
+        const len = rate * 1.2;
+        const buf = ac.createBuffer(2, len, rate);
+        for (let ch = 0; ch < 2; ch++) {
+          const d = buf.getChannelData(ch);
+          for (let i = 0; i < len; i++) {
+            d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+          }
         }
-      }
-      reverbNode.buffer = buf;
-      const wet = ac.createGain();
-      wet.gain.value = 0.3;
-      reverbNode.connect(wet);
-      wet.connect(ac.destination);
+        reverbNode.buffer = buf;
+        const wet = ac.createGain();
+        wet.gain.value = 0.3;
+        reverbNode.connect(wet);
+        wet.connect(ac.destination);
+      } catch(e) { reverbNode = null; return null; }
     }
     return reverbNode;
   }
@@ -1034,15 +1123,12 @@ const AUDIO = (() => {
     const dur   = DURS[tier]   || 0.5;
     const fanfareAt = now + 0.95;
 
-    // Route T1-T3 fanfares through reverb for stadium depth
-    const reverbDest = tier <= 3 ? getReverbDest() : null;
-
     freqs.forEach((freq, i) => {
       const osc = ac.createOscillator();
       const g   = ac.createGain();
       osc.type = "sine"; osc.frequency.value = freq;
       osc.connect(g); g.connect(ac.destination);
-      if (reverbDest) g.connect(reverbDest);
+      if (tier <= 3) connectReverb(g);
       const t = fanfareAt + i * 0.055;
       g.gain.setValueAtTime(0, t);
       g.gain.linearRampToValueAtTime(vol, t + 0.07);
@@ -1085,6 +1171,117 @@ const AUDIO = (() => {
     }
   }
 
+  // Tension riser before the final spin
+  function finalSpinIntro() {
+    if (muted) return;
+    const ac = init();
+    const now = ac.currentTime;
+    // Rising filtered noise + escalating drum hits
+    const HITS = 12;
+    for (let i = 0; i < HITS; i++) {
+      const t = now + i * 0.06;
+      const vol = 0.06 + (i / HITS) * 0.3;
+      const freq = 60 + (i / HITS) * 40;
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, t);
+      osc.frequency.exponentialRampToValueAtTime(30, t + 0.1);
+      osc.connect(g); g.connect(ac.destination);
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      osc.start(t); osc.stop(t + 0.14);
+    }
+    // Rising sweep underneath
+    const sweep = ac.createOscillator();
+    const sweepG = ac.createGain();
+    sweep.type = "sawtooth";
+    sweep.frequency.setValueAtTime(80, now);
+    sweep.frequency.exponentialRampToValueAtTime(400, now + 0.7);
+    const filt = ac.createBiquadFilter();
+    filt.type = "lowpass"; filt.frequency.value = 1200;
+    sweep.connect(filt); filt.connect(sweepG); sweepG.connect(ac.destination);
+    sweepG.gain.setValueAtTime(0, now);
+    sweepG.gain.linearRampToValueAtTime(0.1, now + 0.5);
+    sweepG.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
+    sweep.start(now); sweep.stop(now + 0.8);
+  }
+
+  // Helper: safely connect to reverb if available
+  function connectReverb(gainNode) {
+    try { const rv = getReverbDest(); if (rv) gainNode.connect(rv); } catch(e) {}
+  }
+
+  // Descending close when a tier round wraps up — bookend to roundStart
+  function roundEnd() {
+    if (muted) return;
+    const ac = init();
+    const now = ac.currentTime;
+    // Low thud to mark the close
+    const thud = ac.createOscillator();
+    const thudG = ac.createGain();
+    thud.type = "sine";
+    thud.frequency.setValueAtTime(100, now);
+    thud.frequency.exponentialRampToValueAtTime(35, now + 0.15);
+    thud.connect(thudG); thudG.connect(ac.destination);
+    thudG.gain.setValueAtTime(0.35, now);
+    thudG.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    thud.start(now); thud.stop(now + 0.25);
+    // Descending three-note resolution: G4 → E4 → C4
+    [392, 329.63, 261.63].forEach((freq, i) => {
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.type = "sine"; osc.frequency.value = freq;
+      osc.connect(g); g.connect(ac.destination);
+      connectReverb(g);
+      const t = now + 0.05 + i * 0.2;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.22, t + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+      osc.start(t); osc.stop(t + 0.75);
+    });
+  }
+
+  // Grand reveal stinger for the final results page
+  function resultsReveal() {
+    if (muted) return;
+    const ac = init();
+    const now = ac.currentTime;
+    const arp = [261.63, 329.63, 392, 523.25];
+    arp.forEach((freq, i) => {
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.type = "sine"; osc.frequency.value = freq;
+      osc.connect(g); g.connect(ac.destination);
+      connectReverb(g);
+      const t = now + i * 0.12;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.12, t + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+      osc.start(t); osc.stop(t + 0.85);
+    });
+    const chordAt = now + arp.length * 0.12 + 0.1;
+    [523.25, 659.25, 783.99, 1046.5].forEach((freq) => {
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.type = "sine"; osc.frequency.value = freq;
+      osc.connect(g); g.connect(ac.destination);
+      connectReverb(g);
+      g.gain.setValueAtTime(0, chordAt);
+      g.gain.linearRampToValueAtTime(0.16, chordAt + 0.06);
+      g.gain.exponentialRampToValueAtTime(0.001, chordAt + 2.5);
+      osc.start(chordAt); osc.stop(chordAt + 2.6);
+    });
+    const sub = ac.createOscillator();
+    const subG = ac.createGain();
+    sub.type = "sine"; sub.frequency.value = 65;
+    sub.connect(subG); subG.connect(ac.destination);
+    subG.gain.setValueAtTime(0, chordAt);
+    subG.gain.linearRampToValueAtTime(0.25, chordAt + 0.06);
+    subG.gain.exponentialRampToValueAtTime(0.001, chordAt + 1.5);
+    sub.start(chordAt); sub.stop(chordAt + 1.6);
+  }
+
   // Descending two-note cue for undo
   function undo() {
     if (muted) return;
@@ -1102,7 +1299,7 @@ const AUDIO = (() => {
     });
   }
 
-  return { init, mute, isMuted, tick, settle, reveal, roundStart, undo };
+  return { init, mute, isMuted, tick, settle, reveal, roundStart, roundEnd, resultsReveal, finalSpinIntro, undo };
 })();
 
 
@@ -1180,6 +1377,13 @@ function launchConfetti(tier, primaryColor, secondaryColor, originEl) {
 
 // ─── RENDER COMPONENTS ───────────────────────────────────────────────────────
 
+function allSchoolOptions() {
+  const occSet = new Set(state.occupied.map(s => s.toLowerCase()));
+  return Object.values(SCHOOLS).flat()
+    .filter(s => !occSet.has(s.toLowerCase()))
+    .map(s => `<option value="${esc(s)}">`).join("");
+}
+
 function renderFetchStatus() {
   if (state.fetchStatus === "success")
     return `<div class="fetch-msg fetch-success">Loaded ${state.coaches.length} coaches and ${state.occupied.length} occupied schools.</div>`;
@@ -1253,10 +1457,17 @@ function renderShowCoachCard(item) {
 
 function renderSpinButton(tier, isLast) {
   const tb = TIER_BADGE[tier];
-  const label = isLast ? "FINAL SPIN" : "SPIN THE WHEEL";
+  if (isLast) {
+    return `
+      <div style="text-align:center">
+        <div class="bc final-spin-label">THE LAST OFFER</div>
+        <button onclick="doSpin()" class="bc btn-spin btn-final-spin">FINAL SPIN</button>
+        <div class="spacebar-hint" style="margin-top:10px">press spacebar</div>
+      </div>`;
+  }
   return `
     <div style="text-align:center">
-      <button onclick="doSpin()" class="bc btn-spin" style="background:${tb.bg};color:${tb.text}">${label}</button>
+      <button onclick="doSpin()" class="bc btn-spin" style="background:${tb.bg};color:${tb.text}">SPIN THE WHEEL</button>
       <div class="spacebar-hint" style="margin-top:10px">press spacebar</div>
     </div>`;
 }
@@ -1328,7 +1539,7 @@ function renderDraftBoard() {
         const washColor = sc ? sc.p : getTierAccent(t);
         const barGrad = sc ? `linear-gradient(90deg,${sc.p},${sc.s})` : pair.bright;
         return `<div class="board-cell is-assigned" style="border-color:${pair.bright};box-shadow:0 0 8px ${pair.bright}22">
-          <div class="board-cell-color-wash" style="background:${washColor};opacity:0.12"></div>
+          <div class="board-cell-color-wash" style="background:${washColor}"></div>
           <div class="board-cell-accent-bar" style="background:${barGrad}"></div>
           <div class="board-cell-name">${esc(school)}</div>
           <div class="board-cell-coach">${esc(assigned.coach)}</div>
@@ -1429,7 +1640,7 @@ function renderResultCard(coach, i) {
   const cardBorder = topSC ? schoolColorPair(topSC.p, topSC.s).bright : TIER_BADGE[coach.tier].bg;
 
   return `
-    <div class="result-card" style="opacity:0;animation:cardFadeIn 0.5s ease forwards;animation-delay:${i*0.09}s;border:1px solid ${cardBorder}33">
+    <div class="result-card result-card-hidden" data-result-idx="${i}" style="border:1px solid ${cardBorder}33">
       ${topSC ? `<div class="result-card-color-bar" style="background:linear-gradient(90deg,${topSC.p},${topSC.s})"></div>` : ""}
       ${topSC ? `<div class="result-card-glow" style="background:${topSC.p}"></div>` : ""}
       <div class="result-card-header" style="border-bottom:2px solid ${topSC ? topSC.s : TIER_BADGE[coach.tier].bg}">
@@ -1528,7 +1739,8 @@ function renderSetup() {
           ${state.occupied.length>0?`<div class="setup-count">${state.occupied.length} schools</div>`:""}
         </div>
         <div style="background:#1A1A1A;border-radius:10px;padding:18px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px">
-          <input id="occ-input" placeholder="School name" onkeydown="if(event.key==='Enter')addOcc()">
+          <input id="occ-input" placeholder="School name" list="school-datalist" onkeydown="if(event.key==='Enter')addOcc()" autocomplete="off">
+          <datalist id="school-datalist">${allSchoolOptions()}</datalist>
           <button onclick="addOcc()" style="background:#A8B2BB;color:#0A0A0A;padding:9px;font-size:13px">+ ADD</button>
         </div>
         <div class="setup-occ-hint">User-controlled schools — excluded from the wheel</div>
@@ -1546,7 +1758,7 @@ function renderSetup() {
 function renderShow() {
   document.body.style.overflow = "hidden";
   const item = state.queue[state.qi];
-  if (!item) { state.phase="results"; clearSavedShow(); return renderResults(); }
+  if (!item) { state.phase="results"; clearSavedShow(); setTimeout(revealResults, 50); return renderResults(); }
   const tierLabel = TIER_LABEL[item.tier];
   const { tier, spinInRound, totalInRound } = currentRoundInfo();
 
@@ -1613,15 +1825,14 @@ function renderResults() {
   const cards = state.coaches.map((coach, i) => renderResultCard(coach, i)).join("");
   const cols = Math.min(state.coaches.length, 4);
   return `<div class="page-results">
-    <div style="text-align:center;margin-bottom:36px;padding-top:8px">
+    <div id="results-title" class="results-title-reveal" style="text-align:center;margin-bottom:36px;padding-top:8px">
       <div class="bc" style="font-size:48px;font-weight:900;color:#C9A84C;letter-spacing:3px">WHEEL OF FORTUNE</div>
       <div class="bc" style="font-size:24px;font-weight:700;color:#A8B2BB;letter-spacing:4px">FINAL RESULTS</div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:12px">${cards}</div>
-    <div style="text-align:center;margin-top:36px;padding-bottom:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <div id="results-grid" style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:12px">${cards}</div>
+    <div id="results-buttons" class="results-buttons-hidden" style="text-align:center;margin-top:36px;padding-bottom:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
       <button onclick="toggleBoard()" style="background:transparent;color:#A8B2BB;font-size:15px;padding:12px 32px;letter-spacing:2px;border:1px solid #333" class="bc">OFFER BOARD</button>
       <button id="share-results-btn" onclick="shareResults()" style="background:#C9A84C;color:#0A0A0A;font-size:15px;padding:12px 32px;letter-spacing:2px" class="bc">SHARE LINK</button>
-      <button id="copy-results-btn" onclick="copyResults()" style="background:transparent;color:#A8B2BB;font-size:15px;padding:12px 32px;letter-spacing:2px;border:1px solid #333" class="bc">COPY TEXT</button>
       <button onclick="resetAll()" style="background:transparent;color:#A8B2BB;font-size:15px;padding:12px 32px;letter-spacing:2px;border:1px solid #333" class="bc">NEW SESSION</button>
     </div>
   </div>`;
@@ -1717,10 +1928,12 @@ function doSpin() {
   state.slotPool = [...pool];
   state.ss = "spinning";
   state.spinGen++;
+  const isFinalSpin = state.qi === state.queue.length - 1;
+  if (isFinalSpin) AUDIO.finalSpinIntro();
   const gen = state.spinGen;
 
   const showMain = document.querySelector(".show-main");
-  if (!showMain) { render(); runSlot(gen); return; }
+  if (!showMain) { render(); runSlot(gen, isFinalSpin); return; }
 
   // Fade out spin button
   const spinBtn = showMain.lastElementChild;
@@ -1754,12 +1967,16 @@ function doSpin() {
     if (state.spinGen !== gen) return;
     wrapper.style.maxHeight = "320px";
     wrapper.style.opacity = "1";
-    runSlot(gen);
+    runSlot(gen, isFinalSpin);
   }, TIMING.SLOT_OPEN_DELAY);
 }
 
-function runSlot(gen) {
-  let count = 0, speed = TIMING.SLOT_BASE_SPEED;
+function runSlot(gen, isFinal) {
+  const totalTicks = isFinal ? TIMING.FINAL_TICKS : TIMING.SLOT_TICKS;
+  const easeStart = isFinal ? TIMING.FINAL_EASE_START : TIMING.SLOT_EASE_START;
+  const baseSpeed = isFinal ? TIMING.FINAL_BASE_SPEED : TIMING.SLOT_BASE_SPEED;
+  const afterDelay = isFinal ? TIMING.FINAL_AFTER_DELAY : TIMING.AFTER_SPIN_DELAY;
+  let count = 0, speed = baseSpeed;
   const item = state.queue[state.qi];
 
   const tick = () => {
@@ -1769,7 +1986,7 @@ function runSlot(gen) {
     const box = document.getElementById("slot-box");
     if (!el) return;
 
-    if (count >= TIMING.SLOT_TICKS) {
+    if (count >= totalTicks) {
       const sc = SCHOOL_COLORS[state.slotResult];
       const tbFallback = TIER_BADGE[item.tier];
       const sbg = sc ? sc.p : tbFallback.bg;
@@ -1782,8 +1999,9 @@ function runSlot(gen) {
       el.style.color = "#F5F5F7";
       el.style.transform = "scale(1)";
       AUDIO.settle();
-      AUDIO.reveal(item.tier);
-      setTimeout(() => { if (state.spinGen === gen) launchConfetti(item.tier, sbg, sborder, document.getElementById("slot-box")); }, TIMING.CONFETTI_DELAY);
+      AUDIO.reveal(isFinal ? 1 : item.tier); // Final spin always gets T1-level fanfare
+      const confettiTier = isFinal ? Math.max(1, item.tier - 1) : item.tier; // Boost confetti for final
+      setTimeout(() => { if (state.spinGen === gen) launchConfetti(confettiTier, sbg, sborder, document.getElementById("slot-box")); }, TIMING.CONFETTI_DELAY);
       // School takeover — color wave washes from slot box up into coach card
       const coachCard = document.querySelector(".coach-card");
       if (coachCard && sc) {
@@ -1905,15 +2123,15 @@ function runSlot(gen) {
           }, 700);
         }, TIMING.COLOR_SWEEP_DELAY);
       }
-      setTimeout(() => { if (state.spinGen === gen) afterSpin(); }, TIMING.AFTER_SPIN_DELAY);
+      setTimeout(() => { if (state.spinGen === gen) afterSpin(); }, afterDelay);
       return;
     }
 
-    if (count > TIMING.SLOT_EASE_START) {
-      const t = (count - TIMING.SLOT_EASE_START) / (TIMING.SLOT_TICKS - TIMING.SLOT_EASE_START);
-      speed = Math.min(TIMING.SLOT_BASE_SPEED + Math.pow(t, TIMING.SLOT_EASE_POWER) * TIMING.SLOT_EASE_RANGE, TIMING.SLOT_MAX_SPEED);
+    if (count > easeStart) {
+      const t = (count - easeStart) / (totalTicks - easeStart);
+      speed = Math.min(baseSpeed + Math.pow(t, TIMING.SLOT_EASE_POWER) * TIMING.SLOT_EASE_RANGE, TIMING.SLOT_MAX_SPEED);
     }
-    if (count <= TIMING.SLOT_EASE_START ? count % 2 === 0 : true) AUDIO.tick(speed);
+    if (count <= easeStart ? count % 2 === 0 : true) AUDIO.tick(speed);
     el.textContent = state.slotPool[Math.floor(Math.random()*state.slotPool.length)];
     state.slotTimer = setTimeout(tick, speed);
   };
@@ -2068,8 +2286,15 @@ function injectSidebarEntry() {
 function confirmAndAdvance() {
   doConfirm(state.slotResult);
   const isLast = state.qi === state.queue.length - 1;
-  if (isLast) { state.phase = "results"; render(); }
+  if (isLast) { goToResults(); }
   else { nextSpin(); }
+}
+
+function goToResults() {
+  state.phase = "results";
+  clearSavedShow();
+  render();
+  revealResults();
 }
 
 function doConfirm(result) {
@@ -2111,26 +2336,65 @@ function nextSpin() {
   state.ss="idle"; state.slotPool=[]; state.slotResult=null; state.conflict=null;
   const prevTier = state.queue[state.qi]?.tier;
   state.qi++;
-  if (state.qi>=state.queue.length) { state.phase="results"; render(); return; }
+  if (state.qi>=state.queue.length) { goToResults(); return; }
   const nextTier = state.queue[state.qi]?.tier;
+  // Pulse the progress bar on every advance (before potential crossfade return)
+  const pulseBar = () => {
+    const bar = document.getElementById("progress-bar");
+    if (bar) {
+      bar.classList.remove("progress-fill-pulse");
+      void bar.offsetWidth;
+      bar.classList.add("progress-fill-pulse");
+    }
+  };
+
   if (nextTier!==prevTier) {
     // Crossfade: fade out current show-main content, then render transition
     state.ss="roundTransition";
     const showMain = document.querySelector(".show-main");
     if (showMain) {
       showMain.classList.add("show-main-crossfade-out");
-      setTimeout(() => render(), 300);
+      pulseBar();
+      setTimeout(() => { render(); AUDIO.roundEnd(); }, 300);
       return;
     }
   }
   render();
-  // Pulse the progress bar on each advance
-  const bar = document.getElementById("progress-bar");
-  if (bar) {
-    bar.classList.remove("progress-fill-pulse");
-    void bar.offsetWidth; // force reflow to restart animation
-    bar.classList.add("progress-fill-pulse");
-  }
+  pulseBar();
+}
+
+function revealResults() {
+  AUDIO.resultsReveal();
+  const cards = document.querySelectorAll(".result-card-hidden");
+  const STAGGER = 350; // ms between each card reveal
+  const INITIAL_DELAY = 600; // ms after page renders before first card
+
+  cards.forEach((card, i) => {
+    setTimeout(() => {
+      card.classList.remove("result-card-hidden");
+      card.classList.add("result-card-revealing");
+
+      // Fire a small confetti burst for T1 top offers
+      const coach = state.coaches[i];
+      if (coach) {
+        const topOffer = (state.assignments[coach.name] || {})[coach.tier];
+        const sc = topOffer && SCHOOL_COLORS[topOffer] ? SCHOOL_COLORS[topOffer] : null;
+        if (sc && coach.tier <= 2) {
+          setTimeout(() => launchConfetti(coach.tier + 1, sc.p, sc.s, card), 200);
+        }
+      }
+    }, INITIAL_DELAY + i * STAGGER);
+  });
+
+  // Reveal buttons after all cards are shown
+  const totalTime = INITIAL_DELAY + cards.length * STAGGER + 400;
+  setTimeout(() => {
+    const btns = document.getElementById("results-buttons");
+    if (btns) {
+      btns.classList.remove("results-buttons-hidden");
+      btns.classList.add("results-buttons-reveal");
+    }
+  }, totalTime);
 }
 
 function toggleHotkeys() {
@@ -2178,7 +2442,7 @@ function shareResults() {
   // Encode coaches + offers into a compact URL hash
   const data = state.coaches.map(c => {
     const offers = state.assignments[c.name] || {};
-    return { n:c.name, t:c.tier, p:c.prestige, o:offers };
+    return { n:c.name, t:c.tier, p:c.prestige, w:c.winPct, t25:c.top25wins, o:offers };
   });
   const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
   const url = location.origin + location.pathname + "#results=" + encoded;
@@ -2194,7 +2458,7 @@ function loadFromHash() {
   try {
     const data = JSON.parse(decodeURIComponent(atob(hash.slice(9))));
     if (!Array.isArray(data) || !data.length) return false;
-    state.coaches = data.map(d => ({ name:d.n, tier:d.t, prestige:d.p, winPct:0, top25wins:0 }));
+    state.coaches = data.map(d => ({ name:d.n, tier:d.t, prestige:d.p, winPct:d.w||0, top25wins:d.t25||0 }));
     state.assignments = {};
     data.forEach(d => { if (Object.keys(d.o).length) state.assignments[d.n] = d.o; });
     state.phase = "results";
@@ -2215,10 +2479,7 @@ function copyResults() {
     if (extras.length) line += `  [${extras.join(", ")}]`;
     lines.push(line);
   });
-  navigator.clipboard.writeText(lines.join("\n")).then(() => {
-    const btn = document.getElementById("copy-results-btn");
-    if (btn) { btn.textContent = "COPIED ✓"; setTimeout(() => btn.textContent = "COPY RESULTS", 2000); }
-  });
+  navigator.clipboard.writeText(lines.join("\n"));
 }
 
 function toggleMute() {
@@ -2297,28 +2558,33 @@ function resetAll() {
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
-if (!loadFromHash()) {
+const loadedFromHash = loadFromHash();
+if (!loadedFromHash) {
   if (state.apiUrl) fetchData();
 }
 render();
+if (loadedFromHash) setTimeout(revealResults, 50);
 
 // ─── KEYBOARD ────────────────────────────────────────────────────────────────
 document.addEventListener("keydown", e => {
   if (e.target.tagName === "INPUT") return;
-  if (state.phase !== "show") return;
+  if (state.phase !== "show" && state.phase !== "results") return;
 
   // Dismiss hotkey overlay on any key
   const hotkeyOverlay = document.querySelector(".hotkey-overlay");
   if (hotkeyOverlay && e.key !== "?") { hotkeyOverlay.remove(); return; }
 
-  // Hotkey cheat sheet — ? key (works always)
+  // Hotkey cheat sheet — ? key (works in show + results)
   if (e.key === "?") { e.preventDefault(); toggleHotkeys(); return; }
+
+  // Offer board toggle — B key (works in show + results)
+  if (e.code === "KeyB") { e.preventDefault(); toggleBoard(); return; }
+
+  // Everything below is show-phase only
+  if (state.phase !== "show") return;
 
   // Pause toggle — P key (works even when paused)
   if (e.code === "KeyP") { e.preventDefault(); togglePause(); return; }
-
-  // Offer board toggle — B key (works even when paused)
-  if (e.code === "KeyB") { e.preventDefault(); toggleBoard(); return; }
 
   // Block all other show keys while paused or board is open
   if (state.paused || state.showBoard) return;
