@@ -7,8 +7,51 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0A0A0A; color: #F5F5F7; font-family: 'Inter', sans-serif; min-height: 100vh; padding: 24px; }
+  html, body { height: 100%; }
+  body { background: #0A0A0A; color: #F5F5F7; font-family: 'Inter', sans-serif; }
   .bc { font-family: 'Barlow Condensed', sans-serif; }
+
+  /* SETUP + RESULTS — scrollable, padded */
+  .page-setup, .page-results {
+    max-width: 1100px; margin: 0 auto; padding: 24px;
+  }
+
+  /* SHOW PHASE — full viewport, no scroll */
+  .page-show {
+    width: 100vw; height: 100vh; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .show-header {
+    padding: 20px 40px 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #1A1A1A; flex-shrink: 0;
+  }
+  .show-body {
+    flex: 1; display: flex; overflow: hidden;
+  }
+  .show-main {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 28px;
+    padding: 32px 48px;
+  }
+  .show-sidebar {
+    width: 300px; border-left: 1px solid #1A1A1A;
+    display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+  }
+  .sidebar-header {
+    padding: 16px 20px; border-bottom: 1px solid #1A1A1A; flex-shrink: 0;
+  }
+  .sidebar-list {
+    flex: 1; overflow-y: auto; padding: 12px;
+  }
+
+  /* ROUND TRANSITION — full viewport centered */
+  .page-transition {
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; gap: 28px;
+  }
+
   input, select {
     background: #111; border: 1px solid #2A2A2A; border-radius: 6px;
     padding: 9px 13px; color: #F5F5F7; font-family: 'Inter', sans-serif;
@@ -18,19 +61,29 @@
   button { cursor: pointer; border: none; border-radius: 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 2px; transition: opacity 0.15s, transform 0.1s; }
   button:active { transform: scale(0.97); }
   button:disabled { opacity: 0.5; cursor: not-allowed; }
-  .tag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 3px; font-family: 'Inter', sans-serif; min-width: 40px; text-align: center; display: inline-block; }
+  .tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 3px; font-family: 'Inter', sans-serif; min-width: 44px; text-align: center; display: inline-block; }
   .remove-btn { background: none; border: none; color: #444; font-size: 16px; padding: 0 4px; cursor: pointer; letter-spacing: 0; }
   .remove-btn:hover { color: #888; }
   .scroll-list { max-height: 320px; overflow-y: auto; }
-  .scroll-list::-webkit-scrollbar { width: 4px; }
-  .scroll-list::-webkit-scrollbar-track { background: transparent; }
-  .scroll-list::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 2px; }
-  #app { max-width: 1100px; margin: 0 auto; }
+  .scroll-list::-webkit-scrollbar,
+  .sidebar-list::-webkit-scrollbar { width: 4px; }
+  .scroll-list::-webkit-scrollbar-track,
+  .sidebar-list::-webkit-scrollbar-track { background: transparent; }
+  .scroll-list::-webkit-scrollbar-thumb,
+  .sidebar-list::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 2px; }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.7; } }
   .slot-spinning { animation: pulse 0.3s infinite; }
   .slot-settled { animation: none; }
   @keyframes fadeIn { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
   .fade-in { animation: fadeIn 0.4s ease forwards; }
+  @keyframes cardFadeIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes cardFlipIn {
+    0%   { transform: perspective(1000px) rotateY(-90deg); opacity: 0; }
+    35%  { opacity: 1; }
+    100% { transform: perspective(1000px) rotateY(0deg);   opacity: 1; }
+  }
+  .coach-card-reveal { animation: cardFlipIn 1.1s cubic-bezier(0.25,0.8,0.25,1) forwards; }
+  .coach-card-static { opacity: 1; }
   details summary { cursor: pointer; list-style: none; }
   details summary::-webkit-details-marker { display: none; }
 </style>
@@ -48,11 +101,179 @@ const SCHOOLS = {
 };
 
 const TC = {
-  1: { bg:"#C9A84C", text:"#0A0A0A", label:"TIER 1", name:"T1 Round" },
-  2: { bg:"#A8B2BB", text:"#0A0A0A", label:"TIER 2", name:"T2 Round" },
-  3: { bg:"#0D1B2A", text:"#F5F5F7", label:"TIER 3", name:"T3 Round" },
-  4: { bg:"#1A1A1A", text:"#F5F5F7", label:"TIER 4", name:"T4 Round" },
-  5: { bg:"#2A2A2A", text:"#A8B2BB", label:"TIER 5", name:"T5 Round" }
+  1: { bg:"#C9A84C", text:"#0A0A0A", label:"TIER 1", border:"none" },
+  2: { bg:"#A8B2BB", text:"#0A0A0A", label:"TIER 2", border:"none" },
+  3: { bg:"#0D1B2A", text:"#F5F5F7", label:"TIER 3", border:"none" },
+  4: { bg:"#1A1A1A", text:"#F5F5F7", label:"TIER 4", border:"1px solid #3A3A3A" },
+  5: { bg:"#2A2A2A", text:"#A8B2BB", label:"TIER 5", border:"none" }
+};
+
+// Medal-style colors for results page tier badges — see TIER_BADGE below
+
+const SCHOOL_COLORS = {
+  // TIER 1
+  "Alabama":       { p:"#9E1B32", s:"#828A8F" },
+  "Clemson":       { p:"#F56600", s:"#522D80" },
+  "Georgia":       { p:"#BA0C2F", s:"#000000" },
+  "Ohio State":    { p:"#BB0000", s:"#666666" },
+  "Texas A&M":     { p:"#5C0025", s:"#FFFFFF" },
+  "Oklahoma":      { p:"#841617", s:"#FDF9D8" },
+  "LSU":           { p:"#461D7C", s:"#FDD023" },
+  "Texas":         { p:"#BF5700", s:"#FFFFFF" },
+  "Auburn":        { p:"#0C2340", s:"#E87722" },
+  "Florida":       { p:"#0021A5", s:"#FA4616" },
+  "Penn State":    { p:"#001E44", s:"#FFFFFF" },
+  "Michigan":      { p:"#00274C", s:"#FFCB05" },
+  "Florida State": { p:"#782F40", s:"#CEB888" },
+  // TIER 2
+  "Miami":             { p:"#005030", s:"#F47321" },
+  "North Carolina":    { p:"#13294B", s:"#4B9CD3" },
+  "Oregon":            { p:"#154733", s:"#FEE123" },
+  "Tennessee":         { p:"#FF8200", s:"#FFFFFF" },
+  "Stanford":          { p:"#8C1515", s:"#FFFFFF" },
+  "South Carolina":    { p:"#73000A", s:"#000000" },
+  "TCU":               { p:"#4D1979", s:"#FFFFFF" },
+  "Ole Miss":          { p:"#14213D", s:"#CE1126" },
+  "Arizona State":     { p:"#8C1D40", s:"#FFC627" },
+  "Maryland":          { p:"#E03A3E", s:"#FFD520" },
+  "NC State":          { p:"#CC0000", s:"#FFFFFF" },
+  "Notre Dame":        { p:"#0C1A4B", s:"#C99700" },
+  "Vanderbilt":        { p:"#000000", s:"#CFAE70" },
+  "Mississippi State": { p:"#660000", s:"#FFFFFF" },
+  "Georgia Tech":      { p:"#FDB813", s:"#003057" },
+  "Virginia Tech":     { p:"#630031", s:"#CF4420" },
+  "Kentucky":          { p:"#0033A0", s:"#FFFFFF" },
+  "USC":               { p:"#990000", s:"#FFC72C" },
+  // TIER 3
+  "Rutgers":        { p:"#CC0033", s:"#FFFFFF" },
+  "Baylor":         { p:"#154734", s:"#FFB81C" },
+  "Arkansas":       { p:"#9D2235", s:"#FFFFFF" },
+  "Arizona":        { p:"#AB0520", s:"#001C48" },
+  "UCLA":           { p:"#2D68C4", s:"#F2A900" },
+  "Washington":     { p:"#4B2E83", s:"#B7A57A" },
+  "Texas Tech":     { p:"#CC0000", s:"#000000" },
+  "Utah":           { p:"#CC0000", s:"#000000" },
+  "Purdue":         { p:"#CEB888", s:"#000000" },
+  "Oklahoma State": { p:"#FF6600", s:"#000000" },
+  "Pittsburgh":     { p:"#003594", s:"#FFB81C" },
+  "California":     { p:"#003262", s:"#FDB515" },
+  "Missouri":       { p:"#F1B82D", s:"#000000" },
+  "Tulane":         { p:"#006747", s:"#418FDE" },
+  "Army":           { p:"#000000", s:"#D4AF37" },
+  "Cincinnati":     { p:"#E00122", s:"#000000" },
+  "Indiana":        { p:"#990000", s:"#FFFFFF" },
+  "Northwestern":   { p:"#4E2A84", s:"#FFFFFF" },
+  "West Virginia":  { p:"#002855", s:"#EAAA00" },
+  "Virginia":       { p:"#232D4B", s:"#EA4B0F" },
+  "Minnesota":      { p:"#7A0019", s:"#FFCC33" },
+  // TIER 4
+  "Rice":             { p:"#003D7D", s:"#5B6770" },
+  "SMU":              { p:"#0033A0", s:"#C8102E" },
+  "Illinois":         { p:"#1B4178", s:"#F5873C" },
+  "Boston College":   { p:"#8B0000", s:"#BD985A" },
+  "East Carolina":    { p:"#4A1F68", s:"#FFD51D" },
+  "Wake Forest":      { p:"#000000", s:"#C49544" },
+  "Boise State":      { p:"#2D4492", s:"#F27E34" },
+  "Old Dominion":     { p:"#003A7D", s:"#A0A0A0" },
+  "Louisville":       { p:"#AD0000", s:"#000000" },
+  "Michigan State":   { p:"#18453B", s:"#FFFFFF" },
+  "UCF":              { p:"#000000", s:"#BA9B37" },
+  "Syracuse":         { p:"#D44500", s:"#002D62" },
+  "Colorado":         { p:"#CFB87C", s:"#000000" },
+  "Wisconsin":        { p:"#C5050C", s:"#FFFFFF" },
+  "Washington State": { p:"#981E32", s:"#5E6A71" },
+  "USF":              { p:"#006747", s:"#CCA130" },
+  "Arkansas State":   { p:"#CC0000", s:"#000000" },
+  "San Diego State":  { p:"#A6192E", s:"#231F20" },
+  "Georgia State":    { p:"#0039A6", s:"#CC0000" },
+  "App State":        { p:"#000000", s:"#FFC520" },
+  "Louisiana":        { p:"#C10230", s:"#F4A42A" },
+  "FIU":              { p:"#002D62", s:"#C5960B" },
+  "Nebraska":         { p:"#E41C38", s:"#FFFFFF" },
+  "Duke":             { p:"#003087", s:"#FFFFFF" },
+  "Kansas":           { p:"#0051BA", s:"#E8000D" },
+  "Georgia Southern": { p:"#011E41", s:"#9B8A59" },
+  "FAU":              { p:"#003FA7", s:"#CC0000" },
+  "Louisiana Tech":   { p:"#002F8B", s:"#E31837" },
+  "Marshall":         { p:"#009E60", s:"#000000" },
+  "Kent State":       { p:"#002664", s:"#E9B227" },
+  "Memphis":          { p:"#2A2A9B", s:"#FEC003" },
+  // TIER 5
+  "Houston":               { p:"#C90822", s:"#012259" },
+  "Colorado State":        { p:"#008C75", s:"#000000" },
+  "UMass":                 { p:"#9F011A", s:"#FFFFFF" },
+  "Air Force":             { p:"#0061AA", s:"#FFFFFF" },
+  "Oregon State":          { p:"#DC4405", s:"#000000" },
+  "Southern Miss":         { p:"#000000", s:"#FFAA3C" },
+  "Nevada":                { p:"#003366", s:"#FFFFFF" },
+  "UNLV":                  { p:"#D50026", s:"#FFFFFF" },
+  "Coastal Carolina":      { p:"#009297", s:"#D59C3A" },
+  "Western Kentucky":      { p:"#F32026", s:"#000000" },
+  "North Texas":           { p:"#00853D", s:"#000000" },
+  "Tulsa":                 { p:"#002D72", s:"#C5B783" },
+  "Temple":                { p:"#9D2235", s:"#000000" },
+  "Liberty":               { p:"#A70F00", s:"#02298A" },
+  "Navy":                  { p:"#131630", s:"#FCBA29" },
+  "Kansas State":          { p:"#512888", s:"#FFFFFF" },
+  "Charlotte":             { p:"#006331", s:"#FFFFFF" },
+  "Middle Tennessee State":{ p:"#0079C2", s:"#FFFFFF" },
+  "Wyoming":               { p:"#492F24", s:"#FFC425" },
+  "UConn":                 { p:"#0A1D5A", s:"#B2B2AE" },
+  "UAB":                   { p:"#054338", s:"#E7BD05" },
+  "Buffalo":               { p:"#0068B4", s:"#FFFFFF" },
+  "Central Michigan":      { p:"#780006", s:"#E2A253" },
+  "Toledo":                { p:"#00488F", s:"#FFD51D" },
+  "New Mexico State":      { p:"#891216", s:"#FFFFFF" },
+  "UL Monroe":             { p:"#98012E", s:"#B38807" },
+  "New Mexico":            { p:"#D41045", s:"#C4C4C4" },
+  "South Alabama":         { p:"#003E7E", s:"#D11241" },
+  "Akron":                 { p:"#000E41", s:"#C29C41" },
+  "Ohio":                  { p:"#295A29", s:"#CDB97B" },
+  "Bowling Green":         { p:"#4E2400", s:"#F5793F" },
+  "Ball State":            { p:"#DA0000", s:"#000000" },
+  "San Jose State":        { p:"#005893", s:"#E5A823" },
+  "Miami (Ohio)":          { p:"#C60808", s:"#3F7D91" },
+  "Fresno State":          { p:"#E32F38", s:"#00427A" },
+  "Hawaii":                { p:"#004231", s:"#000000" },
+  "Western Michigan":      { p:"#7E3E09", s:"#B59966" },
+  "Utah State":            { p:"#003263", s:"#FFFFFF" },
+  "BYU":                   { p:"#002D62", s:"#FFFFFF" },
+  "UTSA":                  { p:"#002A5C", s:"#F47321" },
+  "Iowa State":            { p:"#840A2C", s:"#FEC938" },
+  "Iowa":                  { p:"#000000", s:"#FFD700" },
+  "Eastern Michigan":      { p:"#0B5F24", s:"#FFFFFF" },
+  "UTEP":                  { p:"#002843", s:"#F9783B" },
+  "Texas State":           { p:"#501214", s:"#9B8449" },
+  "Troy":                  { p:"#AE0210", s:"#000000" },
+  "Northern Illinois":     { p:"#CC0000", s:"#000000" },
+  "James Madison":         { p:"#263997", s:"#D5A10E" },
+  "Sam Houston":           { p:"#F78F1E", s:"#231F20" },
+  "Jacksonville State":    { p:"#E53F40", s:"#FFFFFF" },
+  "Kennesaw State":        { p:"#231F20", s:"#F0B410" },
+};
+
+function luminance(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return (0.299*r + 0.587*g + 0.114*b) / 255;
+}
+
+function getTextColor(hex) {
+  return luminance(hex) > 0.5 ? "#0A0A0A" : "#F5F5F7";
+}
+
+function getTierAccent(tier) {
+  return { 1:"#C9A84C", 2:"#A8B2BB", 3:"#8B7355", 4:"#666666", 5:"#444444" }[tier] || "#444444";
+}
+
+// Prestige-themed badge colors for results page
+const TIER_BADGE = {
+  1: { bg:"#C9A84C", text:"#0A0A0A" }, // Gold
+  2: { bg:"#A8B2BB", text:"#0A0A0A" }, // Silver
+  3: { bg:"#B87333", text:"#0A0A0A" }, // Bronze
+  4: { bg:"#708090", text:"#0A0A0A" }, // Steel
+  5: { bg:"#4A4A4A", text:"#A8B2BB" }, // Iron
 };
 
 const PO = ["A+","A","A-","B+","B","B-","C+","C","C-","D+","D","D-","F"];
@@ -60,10 +281,10 @@ const PO = ["A+","A","A-","B+","B","B-","C+","C","C-","D+","D","D-","F"];
 let state = {
   phase: "setup", coaches: [], occupied: [], queue: [], qi: 0,
   assignments: {}, pools: {}, ss: "idle", slotPool: [], slotResult: null,
-  slotTimer: null, conflict: null, lastMsg: "", undoSnapshot: null,
+  slotTimer: null, conflict: null, undoSnapshot: null,
   apiUrl: "https://script.google.com/macros/s/AKfycbyfO4OeT8OHyEXar-6qHB2Y3nYZl5ZVRdlBj70cxbUVc45NsW-lXMvWEjD3SqDuSHfIQw/exec",
   fetchStatus: "idle", fetchError: "",
-  form: { name:"", tier:"3", prestige:"B", winPct:"", top25:"" }, occInput: ""
+  form: { name:"", tier:"3", prestige:"B", winPct:"", top25:"", error:"" }
 };
 
 function esc(str) {
@@ -74,9 +295,9 @@ function currentRoundInfo() {
   const item = state.queue[state.qi];
   if (!item) return { tier:1, spinInRound:0, totalInRound:0 };
   const tier = item.tier;
-  const roundSpins = state.queue.filter(s => s.tier === tier && !s.isReroll);
-  const spinsBeforeThisRound = state.queue.slice(0, state.qi).filter(s => s.tier === tier && !s.isReroll).length;
-  return { tier, spinInRound: spinsBeforeThisRound + 1, totalInRound: roundSpins.length };
+  const roundSpins = state.queue.filter(s => s.tier === tier);
+  const spinsBeforeThis = state.queue.slice(0, state.qi).filter(s => s.tier === tier).length;
+  return { tier, spinInRound: spinsBeforeThis + 1, totalInRound: roundSpins.length };
 }
 
 function saveUndo() {
@@ -84,18 +305,24 @@ function saveUndo() {
     qi: state.qi,
     assignments: JSON.parse(JSON.stringify(state.assignments)),
     pools: JSON.parse(JSON.stringify(state.pools)),
-    queue: JSON.parse(JSON.stringify(state.queue)),
-    lastMsg: state.lastMsg
+    queue: JSON.parse(JSON.stringify(state.queue))
   };
 }
 
 function undoLast() {
   if (!state.undoSnapshot) return;
+  if (state.slotTimer) { clearTimeout(state.slotTimer); state.slotTimer = null; }
+  AUDIO.undo();
+  const flash = document.createElement("div");
+  flash.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#E00122;color:#F5F5F7;font-family:'Barlow Condensed',sans-serif;font-size:clamp(32px,5vw,56px);font-weight:900;letter-spacing:4px;padding:20px 48px;border-radius:8px;z-index:1000;opacity:0;transition:opacity 0.2s ease;pointer-events:none";
+  flash.textContent = "UNDONE";
+  document.body.appendChild(flash);
+  setTimeout(() => flash.style.opacity = "1", 20);
+  setTimeout(() => { flash.style.opacity = "0"; setTimeout(() => flash.remove(), 300); }, 900);
   state.qi = state.undoSnapshot.qi;
   state.assignments = state.undoSnapshot.assignments;
   state.pools = state.undoSnapshot.pools;
   state.queue = state.undoSnapshot.queue;
-  state.lastMsg = state.undoSnapshot.lastMsg;
   state.undoSnapshot = null;
   state.ss = "idle";
   state.conflict = null;
@@ -120,11 +347,11 @@ function render() {
   else app.innerHTML = renderResults();
 }
 
-function renderSetup() {
+function renderSetup() { document.body.style.overflow = "auto";
   const coachList = state.coaches.map((c,i) => `
-    <div style="display:flex;justify-content:space-between;align-items:center;background:#1A1A1A;border-left:3px solid ${TC[c.tier].bg};border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:5px">
+    <div style="display:flex;justify-content:space-between;align-items:center;background:#1A1A1A;border-left:3px solid ${getTierAccent(c.tier)};border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:5px">
       <div>
-        <span class="bc" style="font-size:17px;font-weight:900">${esc(c.name)}</span>
+        <span class="bc" style="font-size:17px;font-weight:700">${esc(c.name)}</span>
         <span style="margin-left:10px;font-size:11px;color:#666">T${c.tier} · ${c.prestige} · ${(c.winPct*100).toFixed(1)}% · ${c.top25wins} T25W</span>
       </div>
       <button class="remove-btn" onclick="removeCoach(${i})">✕</button>
@@ -143,7 +370,7 @@ function renderSetup() {
     ? `<div style="margin-top:10px;font-size:12px;color:#A8B2BB">Loading...</div>`
     : "";
 
-  return `
+  return `<div class="page-setup">
     <div style="text-align:center;margin-bottom:32px;padding-top:8px">
       <div class="bc" style="font-size:48px;font-weight:900;color:#C9A84C;letter-spacing:2px;line-height:1">CAMPUS LEGENDS OF SATURDAY</div>
       <div class="bc" style="font-size:22px;font-weight:700;color:#A8B2BB;letter-spacing:4px;margin-top:4px">WHEEL OF FORTUNE — SETUP</div>
@@ -175,6 +402,7 @@ function renderSetup() {
               <input id="c-top25" type="number" min="0" placeholder="Top 25 Wins" value="${state.form.top25}">
             </div>
             <button onclick="addCoach()" style="background:#C9A84C;color:#0A0A0A;padding:10px;font-size:14px;margin-top:2px">+ ADD COACH</button>
+            ${state.form.error ? `<div style="color:#E24B4A;font-size:12px;padding:2px 0">${esc(state.form.error)}</div>` : ""}
           </div>
         </details>
         ${state.coaches.length===0?'<div style="color:#444;font-size:13px;font-style:italic">No coaches loaded yet.</div>':coachList}
@@ -186,7 +414,7 @@ function renderSetup() {
           ${state.occupied.length>0?`<div style="font-size:11px;color:#555">${state.occupied.length} schools</div>`:""}
         </div>
         <div style="background:#1A1A1A;border-radius:10px;padding:18px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px">
-          <input id="occ-input" placeholder="School name" value="${esc(state.occInput)}" onkeydown="if(event.key==='Enter')addOcc()">
+          <input id="occ-input" placeholder="School name" onkeydown="if(event.key==='Enter')addOcc()">
           <button onclick="addOcc()" style="background:#A8B2BB;color:#0A0A0A;padding:9px;font-size:13px">+ ADD</button>
         </div>
         <div style="font-size:11px;color:#444;margin-bottom:8px">User-controlled schools — excluded from the wheel</div>
@@ -198,23 +426,35 @@ function renderSetup() {
       <div style="text-align:center;margin-top:40px;padding-bottom:16px">
         <button onclick="startShow()" style="background:#C9A84C;color:#0A0A0A;font-size:20px;padding:16px 52px;letter-spacing:3px" class="bc">START THE WHEEL OF FORTUNE</button>
       </div>`:""}
-  `;
+  </div>`;
 }
 
 function renderShow() {
+  document.body.style.overflow = "hidden";
   const item = state.queue[state.qi];
   if (!item) { state.phase="results"; return renderResults(); }
   const tc = TC[item.tier];
   const { tier, spinInRound, totalInRound } = currentRoundInfo();
 
   if (state.ss==="roundTransition") {
+    const upcomingCoaches = state.queue.filter(q => q.tier === tier && !q.isReroll).map(q => q.coach.name);
+    const MAX_SHOW = 8;
+    const coachPreview = upcomingCoaches.length === 0 ? "" :
+      `<div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:0;max-width:720px;margin-top:4px">
+        ${upcomingCoaches.slice(0, MAX_SHOW).map((n, i) => `
+          ${i > 0 ? `<span style="color:#333;margin:0 12px;font-size:14px">◆</span>` : ""}
+          <span class="bc" style="font-size:clamp(14px,1.6vw,20px);font-weight:700;color:#555;letter-spacing:1px">${esc(n)}</span>
+        `).join("")}
+        ${upcomingCoaches.length > MAX_SHOW ? `<span style="color:#333;margin-left:12px;font-size:14px">+${upcomingCoaches.length - MAX_SHOW} more</span>` : ""}
+      </div>`;
     return `
-      <div class="fade-in" style="min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:24px">
-        <div style="background:${tc.bg};color:${tc.text};font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;letter-spacing:5px;padding:6px 28px;border-radius:4px">COMING UP</div>
-        <div class="bc" style="font-size:96px;font-weight:900;color:#F5F5F7;line-height:0.9;letter-spacing:2px">${tc.label}</div>
-        <div class="bc" style="font-size:24px;font-weight:700;color:#A8B2BB;letter-spacing:3px">${tc.name.toUpperCase()}</div>
-        <div style="font-size:13px;color:#444">${totalInRound} coach${totalInRound!==1?"es":""} eligible this round</div>
-        <button onclick="startRound()" style="background:${tc.bg};color:${tc.text};font-size:20px;padding:16px 52px;letter-spacing:3px;margin-top:16px" class="bc">START ${tc.label}</button>
+      <div class="page-transition fade-in">
+        <div style="position:absolute;top:20px;left:40px;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:#2A2A2A;letter-spacing:3px">CLOS // WHEEL OF FORTUNE</div>
+        <div style="background:${getTierAccent(tier)};color:${luminance(getTierAccent(tier))>0.5?'#0A0A0A':'#F5F5F7'};font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:6px;padding:8px 32px;border-radius:4px">COMING UP</div>
+        <div class="bc" style="font-size:clamp(72px,14vw,160px);font-weight:900;color:#F5F5F7;line-height:0.9;letter-spacing:2px">${tc.label}</div>
+        ${coachPreview}
+        <button id="main-action-btn" onclick="startRound()" style="background:${tc.bg};color:${tc.text};border:${tc.border};font-size:clamp(18px,2vw,26px);padding:20px 64px;letter-spacing:4px;margin-top:24px" class="bc">START ${tc.label}</button>
+        <div style="font-size:12px;color:#333;margin-top:-12px">press spacebar to continue</div>
       </div>`;
   }
 
@@ -223,116 +463,145 @@ function renderShow() {
   if (state.ss==="idle") {
     const isLast = state.qi===state.queue.length-1;
     center = isLast
-      ? `<button onclick="doSpin()" style="background:${tc.bg};color:${tc.text};font-size:22px;padding:18px 52px;letter-spacing:3px" class="bc">FINAL SPIN</button>`
-      : `<button onclick="doSpin()" style="background:${tc.bg};color:${tc.text};font-size:22px;padding:18px 52px;letter-spacing:3px" class="bc">SPIN THE WHEEL</button>`;
+      ? `<div style="text-align:center"><button onclick="doSpin()" style="background:${tc.bg};color:${tc.text};border:${tc.border};font-size:clamp(20px,2.5vw,32px);padding:22px 72px;letter-spacing:4px" class="bc">FINAL SPIN</button><div style="font-size:12px;color:#333;margin-top:10px">press spacebar</div></div>`
+      : `<div style="text-align:center"><button onclick="doSpin()" style="background:${tc.bg};color:${tc.text};border:${tc.border};font-size:clamp(20px,2.5vw,32px);padding:22px 72px;letter-spacing:4px" class="bc">SPIN THE WHEEL</button><div style="font-size:12px;color:#333;margin-top:10px">press spacebar</div></div>`;
   }
 
   if (state.ss==="spinning") {
-    center = `
-      <div id="slot-box" style="background:#1A1A1A;border:3px solid #2A2A2A;border-radius:14px;padding:36px 56px;text-align:center;min-width:320px;transition:background 0.35s,border-color 0.35s">
-        <div id="slot-val" class="bc slot-spinning" style="font-size:44px;font-weight:900;color:#F5F5F7;text-transform:uppercase;line-height:1.1;transition:all 0.3s"></div>
-      </div>`;
+    // slot-box is injected via DOM by doSpin() — no render needed here
   }
 
-  if (state.ss==="conflict"&&state.conflict) {
+  if ((state.ss==="tiebreaker-drama"||state.ss==="conflict")&&state.conflict) {
     const res = state.conflict.resolution;
     const rerollLoser = res.winner.name===item.coach.name&&item.tier===state.conflict.other.tier;
     const rerollCurrent = res.winner.name!==item.coach.name&&item.tier===item.coach.tier;
     center = `
-      <div style="background:#1A1A1A;border:2px solid #C9A84C;border-radius:14px;padding:28px;max-width:460px;width:100%;text-align:center">
-        <div class="bc" style="font-size:26px;font-weight:900;color:#C9A84C;letter-spacing:2px;margin-bottom:8px">TIEBREAKER</div>
-        <div style="font-size:14px;color:#A8B2BB;margin-bottom:14px">
-          <strong style="color:#F5F5F7">${esc(item.coach.name)}</strong> and <strong style="color:#F5F5F7">${esc(state.conflict.other.name)}</strong> both landed on:
+      <div style="text-align:center;width:100%;max-width:600px">
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:20px">
+          <div style="height:1px;flex:1;background:#2A2A2A"></div>
+          <div class="bc" style="font-size:clamp(14px,1.6vw,20px);font-weight:700;color:#C9A84C;letter-spacing:4px">TIEBREAKER</div>
+          <div style="height:1px;flex:1;background:#2A2A2A"></div>
         </div>
-        <div class="bc" style="font-size:38px;font-weight:900;color:#F5F5F7;margin-bottom:20px">${esc(state.conflict.result).toUpperCase()}</div>
-        <div style="background:#0A0A0A;border-radius:8px;padding:16px;margin-bottom:16px">
-          <div style="color:#A8B2BB;font-weight:700;letter-spacing:2px;font-size:11px;margin-bottom:7px">RESOLVED BY: ${res.reason.toUpperCase()}</div>
-          <div style="color:#F5F5F7;font-size:13px;margin-bottom:10px">${esc(res.detail)}</div>
-          <div class="bc" style="font-size:22px;font-weight:900;color:#C9A84C">${esc(res.winner.name).toUpperCase()} WINS</div>
-          ${rerollLoser?`<div style="font-size:11px;color:#666;margin-top:5px">${esc(state.conflict.other.name)} gets a re-roll — highest eligible tier</div>`:""}
-          ${rerollCurrent?`<div style="font-size:11px;color:#666;margin-top:5px">${esc(item.coach.name)} gets a re-roll — highest eligible tier</div>`:""}
+        <div style="font-size:clamp(13px,1.3vw,16px);color:#666;margin-bottom:6px">
+          Both landed on
         </div>
-        <button onclick="confirmTiebreaker()" style="background:#C9A84C;color:#0A0A0A;width:100%;padding:12px;font-size:15px" class="bc">CONFIRM & CONTINUE</button>
+        <div class="bc" style="font-size:clamp(28px,4vw,52px);font-weight:900;color:#F5F5F7;margin-bottom:20px">${esc(state.conflict.result).toUpperCase()}</div>
+        <div id="tb-slot-box" style="background:#111;border:3px solid #2A2A2A;border-radius:12px;padding:32px 60px;text-align:center;display:inline-block;min-width:340px">
+          <div id="tb-slot-val" class="bc slot-spinning" style="font-size:clamp(32px,5vw,64px);font-weight:900;color:#F5F5F7;text-transform:uppercase;line-height:1.1">VS</div>
+        </div>
       </div>`;
   }
 
   if (state.ss==="confirmed") {
     const isLast = state.qi===state.queue.length-1;
     center = `
-      <div style="text-align:center">
-        ${state.lastMsg?`<div class="bc" style="font-size:24px;font-weight:900;color:#C9A84C;margin-bottom:18px">${esc(state.lastMsg).toUpperCase()}</div>`:""}
-        <div style="display:flex;gap:12px;justify-content:center;align-items:center">
-          ${state.undoSnapshot?`<button onclick="undoLast()" style="background:transparent;border:1px solid #2A2A2A;color:#666;font-size:13px;padding:10px 20px;letter-spacing:1px" class="bc">↩ UNDO</button>`:""}
+      <div style="background:#1A1A1A;border:2px solid #2A2A2A;border-radius:16px;padding:36px 48px;text-align:center;max-width:480px;width:100%">
+        <div class="bc" style="font-size:clamp(18px,2.5vw,28px);font-weight:700;color:#555;letter-spacing:3px;margin-bottom:8px">NO SCHOOLS AVAILABLE</div>
+        <div style="font-size:13px;color:#333;margin-bottom:28px">This ${tc.label} offer was skipped — pool is empty.</div>
+        <div style="display:flex;gap:16px;justify-content:center;align-items:center">
+          ${state.undoSnapshot?`<button onclick="undoLast()" style="background:transparent;border:1px solid #2A2A2A;color:#666;font-size:clamp(13px,1.4vw,16px);padding:14px 24px;letter-spacing:1px" class="bc">↩ UNDO</button>`:""}
           ${isLast
-            ? `<button onclick="nextSpin()" style="background:#C9A84C;color:#0A0A0A;font-size:17px;padding:12px 40px;letter-spacing:2px" class="bc">SEE RESULTS</button>`
-            : `<button onclick="nextSpin()" style="background:#F5F5F7;color:#0A0A0A;font-size:17px;padding:12px 40px;letter-spacing:2px" class="bc">NEXT SPIN</button>`
+            ? `<button onclick="nextSpin()" style="background:#C9A84C;color:#0A0A0A;font-size:clamp(18px,2.2vw,28px);padding:20px 56px;letter-spacing:3px" class="bc">SEE RESULTS</button>`
+            : `<button onclick="nextSpin()" style="background:#F5F5F7;color:#0A0A0A;font-size:clamp(18px,2.2vw,28px);padding:20px 56px;letter-spacing:3px" class="bc">NEXT SPIN</button>`
           }
         </div>
       </div>`;
   }
 
-  const aEntries = Object.entries(state.assignments).flatMap(([n,ts])=>Object.entries(ts).map(([t,s])=>({n,t,s})));
-  const aside = aEntries.length
-    ? aEntries.map(({n,t,s})=>`
-        <div style="background:#1A1A1A;border-left:3px solid ${TC[t].bg};padding:7px 11px;border-radius:0 4px 4px 0;font-size:12px;margin-bottom:3px">
-          <div style="font-weight:700;color:#F5F5F7;font-size:13px">${esc(n)}</div>
-          <div style="color:#888">T${t}: ${esc(s)}</div>
+  const aEntries = Object.entries(state.assignments).flatMap(([n,ts])=>Object.entries(ts).map(([t,s])=>({n,t:parseInt(t),s})));
+  const grouped = [5,4,3,2,1].map(t => ({
+    tier: t,
+    entries: aEntries.filter(e => e.t === t)
+  })).filter(g => g.entries.length > 0);
+
+  const aside = grouped.length
+    ? grouped.map(g => `
+        <div style="margin-bottom:12px" data-tier="${g.tier}">
+          <div style="font-size:10px;font-weight:700;color:#333;letter-spacing:2px;padding:4px 0;margin-bottom:4px;border-bottom:1px solid #1A1A1A">${TC[g.tier].label}</div>
+          ${g.entries.map(({n,t,s}) => {
+            const sc = SCHOOL_COLORS[s];
+            const accentColor = sc
+              ? (luminance(sc.p) >= luminance(sc.s) ? sc.p : sc.s)
+              : getTierAccent(t);
+            return `
+            <div style="background:#1A1A1A;border-left:3px solid ${accentColor};padding:7px 11px;border-radius:0 4px 4px 0;font-size:12px;margin-bottom:3px">
+              <div style="font-weight:700;color:#F5F5F7;font-size:13px">${esc(n)}</div>
+              <div style="color:#888">${esc(s)}</div>
+            </div>`;
+          }).join("")}
         </div>`).join("")
-    : '<div style="color:#333;font-size:12px;font-style:italic">No assignments yet</div>';
+    : '<div class="no-assignments" style="color:#333;font-size:12px;font-style:italic;padding:8px">No assignments yet</div>';
 
   return `
-    <div style="text-align:center;margin-bottom:20px;padding-top:8px">
-      <div class="bc" style="font-size:36px;font-weight:900;color:#C9A84C;letter-spacing:3px">CLOS — WHEEL OF FORTUNE</div>
-      <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-top:6px">
-        <div style="background:${tc.bg};color:${tc.text};font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:900;letter-spacing:3px;padding:3px 14px;border-radius:3px">${tc.label}</div>
-        <div style="font-size:12px;color:#555">Spin ${spinInRound} of ${totalInRound} this round &nbsp;·&nbsp; ${state.qi+1} of ${state.queue.length} overall</div>
+    <div class="page-show">
+      <div class="show-header">
+        <div class="bc" style="font-size:clamp(20px,2.5vw,32px);font-weight:900;color:#C9A84C;letter-spacing:3px">CLOS // WHEEL OF FORTUNE</div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="background:${tc.bg};color:${tc.text};border:${tc.border};font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:3px;padding:4px 16px;border-radius:3px">${tc.label}</div>
+          <div style="font-size:13px;color:#555">Spin ${spinInRound} of ${totalInRound} this round &nbsp;·&nbsp; ${state.qi+1} of ${state.queue.length} overall</div>
+          <button onclick="toggleMute()" id="mute-btn" style="background:transparent;border:1px solid #2A2A2A;color:${AUDIO.isMuted()?'#555':'#A8B2BB'};font-size:18px;padding:4px 10px;letter-spacing:0;line-height:1;border-radius:4px" title="${AUDIO.isMuted()?'Unmute':'Mute'}">${AUDIO.isMuted()?'🔇':'🔊'}</button>
+        </div>
       </div>
-    </div>
-
-    <div style="display:flex;gap:20px">
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:18px">
-        <div class="bc" style="background:${tc.bg};color:${tc.text};font-size:15px;font-weight:900;letter-spacing:4px;padding:5px 24px;border-radius:4px">
-          ${tc.label} OFFER${item.isReroll?" — RE-ROLL":""}
-        </div>
-        <div class="bc" style="font-size:56px;font-weight:900;color:#F5F5F7;line-height:1;text-align:center">${esc(item.coach.name).toUpperCase()}</div>
-        <div style="font-size:12px;color:#555">
-          Prestige: ${item.coach.prestige} &nbsp;·&nbsp; Win%: ${(item.coach.winPct*100).toFixed(1)}% &nbsp;·&nbsp; T25W: ${item.coach.top25wins}
-        </div>
-        ${center}
+      <div style="height:2px;background:#1A1A1A;flex-shrink:0">
+        <div style="height:100%;background:#C9A84C;width:${Math.round((state.qi/state.queue.length)*100)}%;transition:width 0.6s ease"></div>
       </div>
 
-      <div style="width:260px">
-        <div class="bc" style="font-size:15px;font-weight:700;color:#A8B2BB;letter-spacing:2px;margin-bottom:9px">ASSIGNMENTS</div>
-        <div style="max-height:520px;overflow-y:auto">${aside}</div>
+      <div class="show-body">
+        <div class="show-main">
+          <div class="${state.ss==='idle' ? 'coach-card-reveal' : 'coach-card-static'}" style="display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;background:#111;border:1px solid #1A1A1A;border-radius:20px;padding:32px 56px;min-width:420px">
+            <div class="bc" style="background:${tc.bg};color:${tc.text};border:${tc.border};font-size:clamp(11px,1.2vw,15px);font-weight:700;letter-spacing:5px;padding:5px 24px;border-radius:4px">
+              ${tc.label} OFFER${item.isReroll?" — RE-ROLL":""}
+            </div>
+            <div class="bc" style="font-size:clamp(52px,9vw,120px);font-weight:900;color:#F5F5F7;line-height:1;letter-spacing:1px">${esc(item.coach.name).toUpperCase()}</div>
+            <div style="font-size:clamp(12px,1.2vw,15px);color:#666">
+              Prestige: ${item.coach.prestige} &nbsp;·&nbsp; Win%: ${(item.coach.winPct*100).toFixed(1)}% &nbsp;·&nbsp; T25W: ${item.coach.top25wins}
+            </div>
+          </div>
+          ${center}
+        </div>
+
+        <div class="show-sidebar">
+          <div class="sidebar-header">
+            <div class="bc" style="font-size:16px;font-weight:700;color:#A8B2BB;letter-spacing:2px">ASSIGNMENTS</div>
+          </div>
+          <div class="sidebar-list">${aside}</div>
+        </div>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 function renderResults() {
-  const cards = state.coaches.map(coach => {
+  document.body.style.overflow = "auto";
+  const cards = state.coaches.map((coach, i) => {
     const coachAssignments = state.assignments[coach.name] || {};
     const topOffer = coachAssignments[coach.tier];
     const otherTiers = [1,2,3,4,5].filter(t => t >= coach.tier && t !== coach.tier);
+    const topSC = topOffer && SCHOOL_COLORS[topOffer] ? SCHOOL_COLORS[topOffer] : null;
+    const topBg = topSC ? topSC.p : "#111";
+    const topTxt = topSC ? getTextColor(topSC.p) : "#F5F5F7";
+    const topAccent = topSC ? topSC.s : TC[coach.tier].bg;
+    const topSubTxt = topSC ? (topTxt === "#F5F5F7" ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.45)") : "#555";
     const otherOffers = otherTiers.map(t => {
       const s = coachAssignments[t];
+      const tagBg  = TIER_BADGE[t].bg;
+      const tagTxt = TIER_BADGE[t].text;
       return `
         <div style="display:flex;align-items:center;padding:6px 14px;border-bottom:1px solid #111">
-          <span class="tag" style="background:${TC[t].bg};color:${TC[t].text};margin-right:10px">T${t}</span>
+          <span class="tag" style="background:${tagBg};color:${tagTxt};margin-right:10px">T${t}</span>
           <span style="font-size:12px;color:${s?"#888":"#2A2A2A"}">${s?esc(s):"—"}</span>
         </div>`;
     }).join("");
 
     return `
-      <div style="background:#1A1A1A;border-radius:10px;overflow:hidden">
-        <div style="background:#0D1B2A;padding:12px 16px;border-bottom:2px solid ${TC[coach.tier].bg}">
-          <div class="bc" style="font-size:19px;font-weight:900;color:#F5F5F7">${esc(coach.name).toUpperCase()}</div>
+      <div style="background:#1A1A1A;border-radius:10px;overflow:hidden;opacity:0;animation:cardFadeIn 0.5s ease forwards;animation-delay:${i*0.09}s">
+        <div style="background:#0D1B2A;padding:12px 16px;border-bottom:2px solid ${topSC ? topSC.s : TC[coach.tier].bg}">
+          <div class="bc" style="font-size:19px;font-weight:700;color:#F5F5F7">${esc(coach.name).toUpperCase()}</div>
           <div style="font-size:11px;color:#A8B2BB;margin-top:2px">Base: T${coach.tier} · Prestige: ${coach.prestige}</div>
         </div>
-        <div style="padding:14px 16px;border-bottom:1px solid #111">
-          <div style="font-size:10px;font-weight:700;color:#A8B2BB;letter-spacing:2px;margin-bottom:6px">TOP OFFER</div>
-          <div class="bc" style="font-size:28px;font-weight:900;color:${TC[coach.tier].bg}">${topOffer?esc(topOffer).toUpperCase():"—"}</div>
-          <div style="font-size:11px;color:#555;margin-top:2px">${TC[coach.tier].label} offer</div>
+        <div style="padding:14px 16px;border-bottom:1px solid #111;background:${topBg};transition:background 0.3s">
+          <div style="font-size:10px;font-weight:700;color:${topSubTxt};letter-spacing:2px;margin-bottom:6px">TOP OFFER</div>
+          <div class="bc" style="font-size:28px;font-weight:900;color:${topAccent}">${topOffer?esc(topOffer).toUpperCase():"—"}</div>
+          <div style="font-size:11px;color:${topSubTxt};margin-top:2px">${TC[coach.tier].label} offer</div>
         </div>
         ${otherTiers.length?`
           <div style="padding:8px 0">
@@ -342,16 +611,17 @@ function renderResults() {
       </div>`;
   }).join("");
 
-  return `
+  const cols = Math.min(state.coaches.length, 4);
+  return `<div class="page-results">
     <div style="text-align:center;margin-bottom:36px;padding-top:8px">
       <div class="bc" style="font-size:48px;font-weight:900;color:#C9A84C;letter-spacing:3px">WHEEL OF FORTUNE</div>
       <div class="bc" style="font-size:24px;font-weight:700;color:#A8B2BB;letter-spacing:4px">FINAL RESULTS</div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">${cards}</div>
-    <div style="text-align:center;margin-top:36px;padding-bottom:16px">
+    <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:12px">${cards}</div>
+    <div style="text-align:center;margin-top:36px;padding-bottom:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
       <button onclick="resetAll()" style="background:#A8B2BB;color:#0A0A0A;font-size:15px;padding:12px 32px;letter-spacing:2px" class="bc">NEW SESSION</button>
     </div>
-  `;
+  </div>`;
 }
 
 async function fetchData() {
@@ -367,6 +637,7 @@ async function fetchData() {
     state.coaches = data.coaches;
     state.occupied = data.occupied;
     state.fetchStatus = "success";
+    state.form.error = "";
   } catch(err) {
     state.fetchError = err.message||"Failed to fetch. Check the URL and try again.";
     state.fetchStatus = "error";
@@ -377,8 +648,15 @@ async function fetchData() {
 function addCoach() {
   const name = document.getElementById("c-name")?.value?.trim();
   if (!name) return;
-  state.coaches.push({ name, tier:+document.getElementById("c-tier").value, prestige:document.getElementById("c-prestige").value, winPct:+document.getElementById("c-winpct").value||0, top25wins:+document.getElementById("c-top25").value||0 });
-  state.form = { name:"", tier:document.getElementById("c-tier").value, prestige:document.getElementById("c-prestige").value, winPct:"", top25:"" };
+  if (state.coaches.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+    state.form = { ...state.form, name, error: `"${name}" is already in the list.` };
+    render(); return;
+  }
+  let winPct = parseFloat(document.getElementById("c-winpct").value) || 0;
+  if (winPct > 1 && winPct <= 100) winPct = winPct / 100;
+  winPct = Math.max(0, Math.min(1, winPct));
+  state.coaches.push({ name, tier:+document.getElementById("c-tier").value, prestige:document.getElementById("c-prestige").value, winPct, top25wins:+document.getElementById("c-top25").value||0 });
+  state.form = { name:"", tier:document.getElementById("c-tier").value, prestige:document.getElementById("c-prestige").value, winPct:"", top25:"", error:"" };
   render();
 }
 
@@ -388,7 +666,6 @@ function addOcc() {
   const v = document.getElementById("occ-input")?.value?.trim();
   if (!v) return;
   state.occupied.push(v);
-  state.occInput = "";
   render();
 }
 
@@ -404,27 +681,63 @@ function startShow() {
   state.pools = {};
   for (let t=1; t<=5; t++) state.pools[t] = SCHOOLS[t].filter(s=>!occSet.has(s.toLowerCase()));
   state.qi=0; state.assignments={}; state.ss="roundTransition";
-  state.slotPool=[]; state.slotResult=null; state.conflict=null; state.lastMsg=""; state.undoSnapshot=null;
+  state.slotPool=[]; state.slotResult=null; state.conflict=null; state.undoSnapshot=null;
   state.phase="show";
   render();
 }
 
-function startRound() { state.ss="idle"; render(); }
+function startRound() { AUDIO.roundStart(); state.ss="idle"; render(); }
 
 function doSpin() {
+  AUDIO.init();
   const item = state.queue[state.qi];
   const pool = state.pools[item.tier]||[];
-  if (!pool.length) { saveUndo(); state.lastMsg="No schools available — spin skipped"; state.ss="confirmed"; render(); return; }
+  if (!pool.length) { saveUndo(); state.ss="confirmed"; render(); return; }
   state.slotResult = pool[Math.floor(Math.random()*pool.length)];
   state.slotPool = [...pool];
   state.ss = "spinning";
-  render();
-  runSlot();
+
+  const showMain = document.querySelector(".show-main");
+  if (!showMain) { render(); runSlot(); return; }
+
+  // Fade out spin button
+  const spinBtn = showMain.lastElementChild;
+  if (spinBtn) {
+    spinBtn.style.transition = "opacity 0.25s ease";
+    spinBtn.style.opacity = "0";
+    setTimeout(() => spinBtn.remove(), 260);
+  }
+
+  // Compress card padding to make room for slot box
+  const card = showMain.querySelector(".coach-card-static, .coach-card-reveal");
+  if (card) {
+    card.style.transition = "padding 0.45s ease";
+    card.style.padding = "16px 40px";
+  }
+  showMain.style.transition = "gap 0.45s ease";
+  showMain.style.gap = "16px";
+
+  // Inject slot box with height animation
+  const slotBox = document.createElement("div");
+  slotBox.id = "slot-box";
+  slotBox.style.cssText = "background:#1A1A1A;border:4px solid #2A2A2A;border-radius:16px;padding:48px 80px;text-align:center;min-width:420px;transition:background 0.35s,border-color 0.35s";
+  slotBox.innerHTML = `<div id="slot-val" class="bc slot-spinning" style="font-size:clamp(48px,7vw,96px);font-weight:900;color:#F5F5F7;text-transform:uppercase;line-height:1.1;transition:all 0.3s"></div>`;
+
+  const wrapper = document.createElement("div");
+  wrapper.style.cssText = "overflow:hidden;max-height:0;opacity:0;transition:max-height 0.55s cubic-bezier(0.4,0,0.2,1),opacity 0.4s ease";
+  wrapper.appendChild(slotBox);
+  showMain.appendChild(wrapper);
+
+  setTimeout(() => {
+    wrapper.style.maxHeight = "320px";
+    wrapper.style.opacity = "1";
+    runSlot();
+  }, 60);
 }
 
 function runSlot() {
   let count=0, speed=55;
-  const TOTAL=44;
+  const TOTAL = 44; // total ticks before the slot settles (~2.5s of spinning)
   const item = state.queue[state.qi];
   const tc = TC[item.tier];
   const tick = () => {
@@ -433,16 +746,69 @@ function runSlot() {
     const box = document.getElementById("slot-box");
     if (!el) return;
     if (count>=TOTAL) {
+      const sc = SCHOOL_COLORS[state.slotResult];
+      const sbg = sc ? sc.p : tc.bg;
+      const stxt = sc ? getTextColor(sc.p) : tc.text;
+      const sborder = sc ? sc.s : tc.bg;
       el.textContent=state.slotResult;
       el.classList.remove("slot-spinning");
       el.classList.add("slot-settled");
-      el.style.fontSize="56px";
-      el.style.color=tc.text;
-      if (box) { box.style.background=tc.bg; box.style.borderColor=tc.bg; }
-      setTimeout(()=>afterSpin(), 1100);
+      el.style.fontSize = "clamp(48px,7vw,96px)";
+      el.style.color = "#F5F5F7";
+      el.style.transform = "scale(1)";
+      AUDIO.settle();
+      AUDIO.reveal(item.tier);
+      // Launch confetti timed to the fanfare chord (~950ms after settle)
+      setTimeout(() => launchConfetti(item.tier, sbg, sborder), 950);
+      if (box) {
+        box.style.transition = "none";
+        box.style.background = `linear-gradient(to right, ${sbg} 50%, #1A1A1A 50%)`;
+        box.style.backgroundSize = "200% 100%";
+        box.style.backgroundPosition = "100% 0";
+
+        // Inject countdown bar and spacebar hint below slot
+        const barColor = luminance(sbg) >= luminance(sborder) ? sbg : sborder;
+        const countdown = document.createElement("div");
+        countdown.id = "slot-countdown";
+        countdown.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:520px;opacity:0;transition:opacity 0.4s ease";
+        countdown.innerHTML = `<div style="width:100%;height:2px;background:#1A1A1A;border-radius:1px;overflow:hidden"><div id="slot-countdown-fill" style="height:100%;width:0%;background:${barColor};transition:width 3.5s linear;border-radius:1px"></div></div>`;
+        const wrapper = box.parentElement;
+        (wrapper && wrapper !== document.querySelector(".show-main") ? wrapper : box).insertAdjacentElement("afterend", countdown);
+        setTimeout(() => {
+          countdown.style.opacity = "1";
+          const fill = document.getElementById("slot-countdown-fill");
+          if (fill) fill.style.width = "100%";
+        }, 400);
+
+        setTimeout(() => {
+          box.style.transition = "background-position 0.65s cubic-bezier(0.4,0,0.2,1)";
+          box.style.backgroundPosition = "0% 0";
+          box.style.borderColor = sborder;
+          box.style.borderWidth = "4px";
+          setTimeout(() => {
+            el.style.transition = "color 0.3s ease";
+            el.style.color = stxt;
+          }, 350);
+          setTimeout(() => {
+            el.style.transition = "transform 0.6s cubic-bezier(0.34,1.56,0.64,1)";
+            el.style.transform = "scale(1.1)";
+            setTimeout(() => {
+              el.style.transition = "transform 0.5s ease-out";
+              el.style.transform = "scale(1)";
+            }, 800);
+          }, 700);
+        }, 350);
+      }
+      setTimeout(()=>afterSpin(), 3800);
       return;
     }
-    if (count>28) speed=Math.min(260,speed+16);
+    if (count>28) {
+      // Ease out: starts slow then accelerates the slowdown — feels like a real slot pull
+      const t = (count - 28) / (TOTAL - 28);
+      speed = Math.min(55 + Math.pow(t, 1.6) * 260, 315);
+    }
+    // Play tick on every tick when slow, every 2nd when fast
+    if (count <= 28 ? count % 2 === 0 : true) AUDIO.tick(speed);
     el.textContent=state.slotPool[Math.floor(Math.random()*state.slotPool.length)];
     state.slotTimer=setTimeout(tick,speed);
   };
@@ -459,11 +825,148 @@ function afterSpin() {
   if (conflictName) {
     const other = state.coaches.find(c=>c.name===conflictName);
     state.conflict = { result, other, resolution:breakTie(item.coach,other) };
-    state.ss = "conflict";
+    state.ss = "tiebreaker-drama";
     render();
+    runTiebreakerSlot();
   } else {
-    doConfirm(result);
+    injectNextButton();
   }
+}
+
+function runTiebreakerSlot() {
+  const item = state.queue[state.qi];
+  const { resolution, other } = state.conflict;
+  const winner = resolution.winner;
+  const names = [item.coach.name, other.name];
+  let count = 0, speed = 60;
+  const TOTAL = 38;
+
+  const tick = () => {
+    count++;
+    const el = document.getElementById("tb-slot-val");
+    const box = document.getElementById("tb-slot-box");
+    if (!el) return;
+
+    if (count >= TOTAL) {
+      el.textContent = winner.name;
+      el.classList.remove("slot-spinning");
+      el.classList.add("slot-settled");
+      el.style.color = "#C9A84C";
+      if (box) {
+        box.style.transition = "border-color 0.3s ease, background 0.4s ease";
+        box.style.borderColor = "#C9A84C";
+        box.style.background = "#0D1B2A";
+      }
+      AUDIO.settle();
+      // Small gold confetti burst for tiebreaker winner
+      setTimeout(() => launchConfetti(3, "#C9A84C", "#A8B2BB"), 400);
+      setTimeout(() => injectTiebreakerResult(), 1800);
+      return;
+    }
+
+    if (count > 24) {
+      const t = (count - 24) / (TOTAL - 24);
+      speed = Math.min(60 + Math.pow(t, 1.6) * 240, 300);
+    }
+    if (count % 2 === 0) AUDIO.tick(speed);
+    el.textContent = names[count % 2];
+    state.slotTimer = setTimeout(tick, speed);
+  };
+  state.slotTimer = setTimeout(tick, speed);
+}
+
+function injectTiebreakerResult() {
+  const item = state.queue[state.qi];
+  const { resolution, other } = state.conflict;
+  const res = resolution;
+  const rerollLoser  = res.winner.name===item.coach.name && item.tier===other.tier;
+  const rerollCurrent = res.winner.name!==item.coach.name && item.tier===item.coach.tier;
+
+  const div = document.createElement("div");
+  div.style.cssText = "opacity:0;transition:opacity 0.7s ease;width:100%;max-width:500px;margin-top:20px";
+  div.innerHTML = `
+    <div style="background:#0A0A0A;border-radius:10px;padding:20px;margin-bottom:16px;text-align:center">
+      <div style="color:#555;font-weight:700;letter-spacing:2px;font-size:11px;margin-bottom:8px">RESOLVED BY: ${esc(res.reason.toUpperCase())}</div>
+      <div style="color:#888;font-size:clamp(12px,1.2vw,14px);margin-bottom:12px">${esc(res.detail)}</div>
+      <div class="bc" style="font-size:clamp(24px,3.5vw,44px);font-weight:900;color:#C9A84C;letter-spacing:2px">${esc(res.winner.name).toUpperCase()} WINS</div>
+      ${rerollLoser  ? `<div style="font-size:12px;color:#555;margin-top:6px">${esc(other.name)} receives a re-roll</div>` : ""}
+      ${rerollCurrent ? `<div style="font-size:12px;color:#555;margin-top:6px">${esc(item.coach.name)} receives a re-roll</div>` : ""}
+    </div>
+    <button onclick="confirmTiebreaker()" style="background:#C9A84C;color:#0A0A0A;width:100%;padding:16px;font-size:clamp(16px,1.8vw,22px);border:none;border-radius:6px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px">CONFIRM & CONTINUE</button>
+    <div style="font-size:12px;color:#333;text-align:center;margin-top:8px">press spacebar</div>`;
+
+  const showMain = document.querySelector(".show-main");
+  if (showMain) {
+    showMain.appendChild(div);
+    setTimeout(() => div.style.opacity = "1", 50);
+  }
+  state.ss = "conflict"; // re-enable spacebar confirm
+}
+
+
+function injectNextButton() {
+  state.ss = "pendingConfirm";
+  const isLast = state.qi === state.queue.length - 1;
+  const btnDiv = document.createElement("div");
+  btnDiv.id = "injected-next-btn";
+  btnDiv.style.cssText = "opacity:0;transition:opacity 0.8s ease;text-align:center;margin-top:36px;display:flex;flex-direction:column;gap:12px;align-items:center";
+  const undoHtml = state.undoSnapshot
+    ? `<button onclick="undoLast()" style="background:transparent;border:1px solid #2A2A2A;color:#666;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:clamp(13px,1.4vw,16px);padding:14px 24px;letter-spacing:1px;border-radius:6px;cursor:pointer">↩ UNDO</button>`
+    : "";
+  const nextHtml = isLast
+    ? `<button onclick="confirmAndAdvance()" style="background:#C9A84C;color:#0A0A0A;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:clamp(18px,2.2vw,28px);padding:20px 56px;letter-spacing:3px;border:none;border-radius:6px;cursor:pointer">SEE RESULTS</button>`
+    : `<button onclick="confirmAndAdvance()" style="background:#F5F5F7;color:#0A0A0A;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:clamp(18px,2.2vw,28px);padding:20px 56px;letter-spacing:3px;border:none;border-radius:6px;cursor:pointer">NEXT SPIN</button>`;
+  btnDiv.innerHTML = `<div style="display:flex;gap:16px;justify-content:center;align-items:center">${undoHtml}${nextHtml}</div><div style="font-size:12px;color:#333">press spacebar</div>`;
+  const showMain = document.querySelector(".show-main");
+  if (showMain) {
+    showMain.appendChild(btnDiv);
+    setTimeout(() => btnDiv.style.opacity = "1", 50);
+  }
+  injectSidebarEntry();
+}
+
+function injectSidebarEntry() {
+  const item = state.queue[state.qi];
+  const result = state.slotResult;
+  if (!result || !item) return;
+  const sc = SCHOOL_COLORS[result];
+  const accentColor = sc
+    ? (luminance(sc.p) >= luminance(sc.s) ? sc.p : sc.s)
+    : getTierAccent(item.tier);
+  const sidebarList = document.querySelector(".sidebar-list");
+  if (!sidebarList) return;
+  const placeholder = sidebarList.querySelector(".no-assignments");
+  if (placeholder) placeholder.remove();
+  let tierGroup = sidebarList.querySelector(`[data-tier="${item.tier}"]`);
+  if (!tierGroup) {
+    tierGroup = document.createElement("div");
+    tierGroup.dataset.tier = String(item.tier);
+    tierGroup.style.marginBottom = "12px";
+    tierGroup.innerHTML = `<div style="font-size:10px;font-weight:700;color:#333;letter-spacing:2px;padding:4px 0;margin-bottom:4px;border-bottom:1px solid #1A1A1A">${TC[item.tier].label}</div>`;
+    const existingGroups = Array.from(sidebarList.querySelectorAll("[data-tier]"));
+    let inserted = false;
+    for (const g of existingGroups) {
+      if (parseInt(g.dataset.tier) < item.tier) {
+        sidebarList.insertBefore(tierGroup, g);
+        inserted = true;
+        break;
+      }
+    }
+    if (!inserted) sidebarList.appendChild(tierGroup);
+  }
+  const entry = document.createElement("div");
+  entry.style.cssText = `background:#1A1A1A;border-left:3px solid ${accentColor};padding:7px 11px;border-radius:0 4px 4px 0;font-size:12px;margin-bottom:3px;transform:translateY(24px);opacity:0;transition:transform 0.5s cubic-bezier(0.34,1.2,0.64,1),opacity 0.4s ease`;
+  entry.innerHTML = `<div style="font-weight:700;color:#F5F5F7;font-size:13px">${esc(item.coach.name)}</div><div style="color:#888">${esc(result)}</div>`;
+  tierGroup.appendChild(entry);
+  setTimeout(() => { entry.style.transform = "translateY(0)"; entry.style.opacity = "1"; }, 50);
+  setTimeout(() => sidebarList.scrollTo({ top: sidebarList.scrollHeight, behavior: "smooth" }), 100);
+}
+
+function confirmAndAdvance() {
+  doConfirm(state.slotResult);
+  const isLast = state.qi === state.queue.length - 1;
+  if (isLast) { state.phase = "results"; render(); }
+  else { nextSpin(); }
 }
 
 function doConfirm(result) {
@@ -472,10 +975,8 @@ function doConfirm(result) {
   if (!state.assignments[item.coach.name]) state.assignments[item.coach.name]={};
   state.assignments[item.coach.name][item.tier]=result;
   state.pools[item.tier]=state.pools[item.tier].filter(s=>s!==result);
-  state.lastMsg=`${item.coach.name} — ${result}`;
   state.conflict=null;
   state.ss="confirmed";
-  render();
 }
 
 function confirmTiebreaker() {
@@ -485,15 +986,13 @@ function confirmTiebreaker() {
   if (winner.name===item.coach.name) {
     if (item.tier===loser.tier) state.queue.splice(state.qi+1,0,{coach:loser,tier:item.tier,isReroll:true});
     doConfirm(result);
-    if (item.tier===loser.tier) state.lastMsg=`${winner.name} wins — ${result} confirmed. ${loser.name} re-rolls.`;
+    nextSpin();
   } else {
     const reroll = item.tier===item.coach.tier;
-    state.lastMsg=`${winner.name} wins tiebreaker.${reroll?` ${item.coach.name} gets a re-roll.`:""}`;
     if (reroll) state.queue.splice(state.qi+1,0,{coach:item.coach,tier:item.tier,isReroll:true});
     saveUndo();
     state.conflict=null;
-    state.ss="confirmed";
-    render();
+    nextSpin();
   }
 }
 
@@ -507,16 +1006,277 @@ function nextSpin() {
   render();
 }
 
+function toggleMute() {
+  AUDIO.mute(!AUDIO.isMuted());
+  const btn = document.getElementById("mute-btn");
+  if (btn) {
+    btn.textContent = AUDIO.isMuted() ? "🔇" : "🔊";
+    btn.style.color  = AUDIO.isMuted() ? "#555" : "#A8B2BB";
+    btn.title        = AUDIO.isMuted() ? "Unmute" : "Mute";
+  }
+}
+
 function resetAll() {
   state = { phase:"setup", coaches:[], occupied:[], queue:[], qi:0, assignments:{}, pools:{},
-    ss:"idle", slotPool:[], slotResult:null, slotTimer:null, conflict:null, lastMsg:"", undoSnapshot:null,
+    ss:"idle", slotPool:[], slotResult:null, slotTimer:null, conflict:null, undoSnapshot:null,
     apiUrl:state.apiUrl, fetchStatus:"idle", fetchError:"",
-    form:{name:"",tier:"3",prestige:"B",winPct:"",top25:""}, occInput:"" };
+    form:{name:"",tier:"3",prestige:"B",winPct:"",top25:"",error:""} };
   render();
 }
 
 render();
 if (state.apiUrl) fetchData();
+
+// ─── AUDIO ────────────────────────────────────────────────────────────────────
+const AUDIO = (() => {
+  let ctx = null;
+  let muted = false;
+
+  function init() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+
+  function mute(on) { muted = on; }
+  function isMuted() { return muted; }
+
+  // Short percussive click — pitch varies inversely with slot speed
+  function tick(speed) {
+    if (muted) return;
+    const ac = init();
+    const now = ac.currentTime;
+    const freq = Math.max(400, 1400 - speed * 3.2);
+    const osc = ac.createOscillator();
+    const g = ac.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(freq, now);
+    osc.connect(g); g.connect(ac.destination);
+    g.gain.setValueAtTime(0.06, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+    osc.start(now); osc.stop(now + 0.04);
+  }
+
+  // Low punch when the reel locks in
+  function settle() {
+    if (muted) return;
+    const ac = init();
+    const now = ac.currentTime;
+    const osc = ac.createOscillator();
+    const g = ac.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(130, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.18);
+    osc.connect(g); g.connect(ac.destination);
+    g.gain.setValueAtTime(0.5, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+    osc.start(now); osc.stop(now + 0.25);
+  }
+
+  // Rising sawtooth sweep timed to the color animation, then tier fanfare
+  function reveal(tier) {
+    if (muted) return;
+    const ac = init();
+    const now = ac.currentTime;
+
+    // Glissando sweep — starts at 350ms, matches color sweep animation
+    const sweep = ac.createOscillator();
+    const sweepFilter = ac.createBiquadFilter();
+    const sweepGain = ac.createGain();
+    sweepFilter.type = "lowpass";
+    sweepFilter.frequency.value = 2400;
+    sweep.type = "sawtooth";
+    sweep.frequency.setValueAtTime(120, now + 0.35);
+    sweep.frequency.exponentialRampToValueAtTime(880, now + 1.0);
+    sweep.connect(sweepFilter); sweepFilter.connect(sweepGain); sweepGain.connect(ac.destination);
+    sweepGain.gain.setValueAtTime(0, now + 0.35);
+    sweepGain.gain.linearRampToValueAtTime(0.12, now + 0.55);
+    sweepGain.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+    sweep.start(now + 0.35); sweep.stop(now + 1.15);
+
+    // Tier fanfare — chord hits after the sweep settles
+    const CHORDS = {
+      1: [523.25, 659.25, 783.99, 1046.5], // C5 E5 G5 C6 — full major
+      2: [523.25, 659.25, 783.99],          // C5 E5 G5 — triad
+      3: [523.25, 659.25],                  // C5 E5 — open fifth
+      4: [523.25],                           // C5 — single tone
+      5: [440],                              // A4 — quiet ping
+    };
+    const VOLS  = { 1:0.20, 2:0.16, 3:0.12, 4:0.08, 5:0.05 };
+    const DURS  = { 1:2.0,  2:1.6,  3:1.2,  4:0.8,  5:0.5  };
+    const freqs = CHORDS[tier] || CHORDS[5];
+    const vol   = VOLS[tier]   || 0.05;
+    const dur   = DURS[tier]   || 0.5;
+    const fanfareAt = now + 0.95;
+
+    freqs.forEach((freq, i) => {
+      const osc = ac.createOscillator();
+      const g   = ac.createGain();
+      osc.type = "sine"; osc.frequency.value = freq;
+      osc.connect(g); g.connect(ac.destination);
+      const t = fanfareAt + i * 0.055;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol, t + 0.07);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      osc.start(t); osc.stop(t + dur + 0.1);
+    });
+
+    // Sub-bass bloom under T1/T2 for extra weight
+    if (tier <= 2) {
+      const sub = ac.createOscillator();
+      const subG = ac.createGain();
+      sub.type = "sine"; sub.frequency.value = 65;
+      sub.connect(subG); subG.connect(ac.destination);
+      const subVol = tier === 1 ? 0.28 : 0.18;
+      subG.gain.setValueAtTime(0, fanfareAt);
+      subG.gain.linearRampToValueAtTime(subVol, fanfareAt + 0.06);
+      subG.gain.exponentialRampToValueAtTime(0.001, fanfareAt + 0.9);
+      sub.start(fanfareAt); sub.stop(fanfareAt + 1.0);
+    }
+  }
+
+  // Escalating drum roll for round transitions
+  function roundStart() {
+    if (muted) return;
+    const ac = init();
+    const now = ac.currentTime;
+    const HITS = 7;
+    for (let i = 0; i < HITS; i++) {
+      const t = now + i * 0.07;
+      const vol = 0.08 + (i / HITS) * 0.28;
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(80, t);
+      osc.frequency.exponentialRampToValueAtTime(28, t + 0.12);
+      osc.connect(g); g.connect(ac.destination);
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+      osc.start(t); osc.stop(t + 0.18);
+    }
+  }
+
+  // Descending two-note cue for undo
+  function undo() {
+    if (muted) return;
+    const ac = init();
+    const now = ac.currentTime;
+    [740, 523].forEach((freq, i) => {
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.type = "sine"; osc.frequency.value = freq;
+      osc.connect(g); g.connect(ac.destination);
+      const t = now + i * 0.13;
+      g.gain.setValueAtTime(0.14, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      osc.start(t); osc.stop(t + 0.25);
+    });
+  }
+
+  return { init, mute, isMuted, tick, settle, reveal, roundStart, undo };
+})();
+
+
+// ─── CONFETTI ─────────────────────────────────────────────────────────────────
+function launchConfetti(tier, primaryColor, secondaryColor) {
+  const COUNT = { 1:220, 2:160, 3:110, 4:65, 5:32 }[tier] || 32;
+  const canvas = document.createElement("canvas");
+  canvas.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999";
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx2d = canvas.getContext("2d");
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const colors = [primaryColor, secondaryColor, "#F5F5F7"].filter(Boolean);
+  const power = { 1:22, 2:18, 3:14, 4:10, 5:7 }[tier] || 7;
+  const LIFETIME = { 1:420, 2:360, 3:300, 4:240, 5:180 }[tier] || 180;
+
+  const particles = Array.from({ length: COUNT }, () => {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = (Math.random() * 0.6 + 0.4) * power;
+    return {
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - (Math.random() * 3 + 2),
+      w: Math.random() * 10 + 5,
+      h: Math.random() * 5 + 3,
+      rot: Math.random() * Math.PI * 2,
+      rotV: (Math.random() - 0.5) * 0.08,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      gravity: 0.018 + Math.random() * 0.012,
+      drag: 0.97 + Math.random() * 0.02,
+      sway: (Math.random() - 0.5) * 0.3,
+      swaySpeed: 0.02 + Math.random() * 0.02,
+      swayOffset: Math.random() * Math.PI * 2,
+    };
+  });
+
+  let frame, tick = 0;
+  function draw() {
+    ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+    tick++;
+    let alive = false;
+    for (const p of particles) {
+      p.vy += p.gravity;
+      p.vx *= p.drag;
+      p.vy *= p.drag;
+      p.x += p.vx + Math.sin(tick * p.swaySpeed + p.swayOffset) * p.sway;
+      p.y += p.vy;
+      p.rot += p.rotV;
+      const opacity = Math.max(0, 1 - tick / LIFETIME);
+      if (opacity > 0) alive = true;
+      ctx2d.save();
+      ctx2d.translate(p.x, p.y);
+      ctx2d.rotate(p.rot);
+      ctx2d.globalAlpha = opacity;
+      ctx2d.fillStyle = p.color;
+      ctx2d.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx2d.restore();
+    }
+    if (alive) frame = requestAnimationFrame(draw);
+    else { cancelAnimationFrame(frame); canvas.remove(); }
+  }
+  frame = requestAnimationFrame(draw);
+}
+
+document.addEventListener("keydown", e => {
+  if (e.code !== "Space" || e.target.tagName === "INPUT") return;
+  e.preventDefault();
+  if (state.phase !== "show") return;
+  AUDIO.init();
+  if (state.ss === "roundTransition") { startRound(); return; }
+  if (state.ss === "idle") { doSpin(); return; }
+  if (state.ss === "tiebreaker-drama") return; // wait for drama to finish
+  if (state.ss === "conflict") { confirmTiebreaker(); return; }
+  if (state.ss === "pendingConfirm") { confirmAndAdvance(); return; }
+  if (state.ss === "confirmed") { nextSpin(); return; }
+});
+
+// ─── TEST HELPER — call window.testTiebreaker() in browser console ────────────
+window.testTiebreaker = function() {
+  if (state.phase !== "show") { console.warn("Start the show first"); return; }
+  const item = state.queue[state.qi];
+  if (!item) { console.warn("No current spin"); return; }
+  const fakeOther = { name:"Test Coach", tier:item.tier, prestige:"B", winPct:0.5, top25wins:0 };
+  state.conflict = {
+    result: state.slotResult || "Alabama",
+    other: fakeOther,
+    resolution: { winner: item.coach, loser: fakeOther, reason:"Coin Flip", detail:"Forced via test helper" }
+  };
+  state.ss = "tiebreaker-drama";
+  render();
+  runTiebreakerSlot();
+  console.log("Tiebreaker drama triggered — winner:", item.coach.name);
+};
+
+// ─── UNLOAD GUARD — warn before losing a live session ─────────────────────────
+window.addEventListener("beforeunload", e => {
+  if (state.phase === "show") {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
 </script>
 </body>
 </html>
