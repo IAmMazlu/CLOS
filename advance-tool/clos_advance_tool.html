@@ -369,7 +369,7 @@ function requestAdvance(){
   const season=document.getElementById('seasonNum').value;
   const wt=weekLabel();
   const tone=weekTone();
-  const req='Write an advance post for CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league.\n\nWeek '+week+', Season '+season+' ('+wt+').\n\nThe post MUST start with this exact header on its own line:\n# WE\'VE ADVANCED TO '+wt.toUpperCase()+'!\n\nThen the body: Voice of the dynasty — authoritative, not personal. Must tag @CLOS Coach, reference #scheduling and getting games booked, end with a good luck sendoff. 3-4 sentences max. Fresh and unique — never the same post twice.\n\nTone guidance: '+tone;
+  const req='Write an advance post for CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league.\n\nWeek '+week+', Season '+season+' ('+wt+').\n\nThe post MUST start with this exact header on its own line:\n# WE\'VE ADVANCED TO '+(wt==='National Championship'?'THE ':'')+wt.toUpperCase()+'!\n\nThen the body: Voice of the dynasty — authoritative, not personal. Must tag @CLOS Coach, reference #scheduling and getting games booked, end with a good luck sendoff. 3-4 sentences max. Fresh and unique — never the same post twice.\n\nTone guidance: '+tone;
   document.getElementById('advRequest').value=req;
   document.getElementById('advRequestSection').style.display='block';
   document.getElementById('advRequestSection').scrollIntoView({behavior:'smooth'});
