@@ -590,11 +590,7 @@ async function postToDiscord(){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         content:content,
-        username:'CLOS Advance Tool',
-        embeds:[{
-          color:0x0D1B2A,
-          footer:{text:'CLOS_WEEK:'+document.getElementById('weekType').value}
-        }]
+        username:'CLOS Advance Tool ['+document.getElementById('weekType').value+']'
       })
     });
     if(res.ok||res.status===204){
