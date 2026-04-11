@@ -589,8 +589,8 @@ async function postToDiscord(){
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        content:content,
-        username:'CLOS Advance Tool ['+document.getElementById('weekType').value+']'
+        content:content + '\n\u200B\u200B\u200B' + document.getElementById('weekType').value,
+        username:'CLOS Advance Tool'
       })
     });
     if(res.ok||res.status===204){
