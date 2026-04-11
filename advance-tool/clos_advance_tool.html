@@ -388,7 +388,8 @@ function requestImagePrompt(){
 
   document.getElementById('imgRequest').value=req;
   document.getElementById('imgRequestSection').style.display='block';
-  document.getElementById('imgRequestSection').scrollIntoView({behavior:'smooth'});
+  document.getElementById('imgRequestSection').scrollIntoView({behavior:'smooth',block:'start'});
+  setTimeout(()=>window.scrollBy({top:-80,behavior:'smooth'}),300);
 }
 
 function requestGOTW(){
@@ -415,7 +416,8 @@ function requestGOTW(){
   const req='Write a full immersive Game of the Week match preview article for CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league. This goes in a Discord forum channel as a thread.\n\nWeek '+week+', Season '+season+' ('+wt+')\nMatchup: '+g1t+(g1rk?' ('+g1rk+')':'')+' ('+g1r+') coached by '+g1c+' vs '+g2t+(g2rk?' ('+g2rk+')':'')+' ('+g2r+') coached by '+g2c+'\nHome: '+(home||'Neutral site')+'\n'+(ctx?'Stakes: '+ctx+'\n':'')+(g1res?g1t+' last result: '+g1res+'\n':'')+(g1nar?g1t+' narrative: '+g1nar+'\n':'')+(g1pl?g1t+' key players:\n'+g1pl+'\n':'')+(g2res?g2t+' last result: '+g2res+'\n':'')+(g2nar?g2t+' narrative: '+g2nar+'\n':'')+(g2pl?g2t+' key players:\n'+g2pl+'\n':'')+'\nTone guidance: '+tone+'\n\nFormat: bold header with team names/rankings/records, multi-paragraph breakdown of both teams, fabricated but believable coach quotes for both coaches, dramatic closing lines, end with "Who wins Week '+week+'\'s Game of the Week? Vote below!"';
   document.getElementById('gotwRequest').value=req;
   document.getElementById('gotwRequestSection').style.display='block';
-  document.getElementById('gotwRequestSection').scrollIntoView({behavior:'smooth'});
+  document.getElementById('gotwRequestSection').scrollIntoView({behavior:'smooth',block:'start'});
+  setTimeout(()=>window.scrollBy({top:-80,behavior:'smooth'}),300);
 }
 
 function parseLine(line){
