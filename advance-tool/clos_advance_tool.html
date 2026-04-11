@@ -64,8 +64,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 
 <div class="sticky-bar">
   <div class="sticky-inner">
-    <span class="sticky-label">Week</span>
-    <input class="sticky-input" type="number" id="weekNum" min="0" max="20" value="0"/>
     <span class="sticky-label">Season</span>
     <input class="sticky-input" type="number" id="seasonNum" min="1" max="20" value="1"/>
     <select class="sticky-select" id="weekType">
@@ -327,6 +325,17 @@ function renderRoster(data){
 
 function toggleRoster(){document.getElementById('rosterPanel').classList.toggle('hidden');}
 
+function weekShort(){
+  const map={
+    kickoff:'0',week1:'1',week2:'2',week3:'3',week4:'4',
+    week5:'5',week6:'6',week7:'7',week8:'8',
+    week9:'9',week10:'10',week11:'11',week12:'12',
+    week13:'13',week14:'14',
+    confchamp:'CC',bowl1:'B1',bowl2:'B2',bowl3:'B3',natty:'NC'
+  };
+  return map[document.getElementById('weekType').value]||'0';
+}
+
 function weekLabel(){
   const map={
     kickoff:'Week 0 — Season Kickoff',
@@ -356,7 +365,7 @@ function weekTone(){
 }
 
 function requestAdvance(){
-  const week=document.getElementById('weekNum').value;
+  const week=weekShort();
   const season=document.getElementById('seasonNum').value;
   const wt=weekLabel();
   const tone=weekTone();
@@ -367,7 +376,7 @@ function requestAdvance(){
 }
 
 function requestImagePrompt(){
-  const week=document.getElementById('weekNum').value;
+  const week=weekShort();
   const season=document.getElementById('seasonNum').value;
   const g1t=document.getElementById('g1team').value.trim();
   const g2t=document.getElementById('g2team').value.trim();
@@ -381,7 +390,7 @@ function requestImagePrompt(){
 }
 
 function requestGOTW(){
-  const week=document.getElementById('weekNum').value;
+  const week=weekShort();
   const season=document.getElementById('seasonNum').value;
   const wt=weekLabel();
   const g1t=document.getElementById('g1team').value.trim();
@@ -429,7 +438,7 @@ function indicator(diff){
 }
 
 function generate(){
-  const week=document.getElementById('weekNum').value;
+  const week=weekShort();
   const season=document.getElementById('seasonNum').value;
   const rm=getRosterMap();
   const currRaw=document.getElementById('top25').value.split('\n').map(t=>t.trim()).filter(Boolean);
@@ -581,7 +590,11 @@ async function postToDiscord(){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         content:content,
-        username:'CLOS Advance Tool'
+        username:'CLOS Advance Tool',
+        embeds:[{
+          color:0x0D1B2A,
+          footer:{text:'CLOS_WEEK:'+document.getElementById('weekType').value}
+        }]
       })
     });
     if(res.ok||res.status===204){
