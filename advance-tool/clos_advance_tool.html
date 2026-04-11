@@ -115,6 +115,22 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   </div>
 </div>
 
+<!-- WEBHOOK SETTINGS -->
+<div class="section">
+  <div class="row-header">
+    <div class="tool-header" style="margin-bottom:0">
+      <div class="tool-header-bar"></div>
+      <div><div class="tool-header-text">Discord Webhook <span class="badge hidden" id="webhookBadge">✓ Saved</span></div><div class="tool-header-sub">Set once — stored locally, never uploaded</div></div>
+    </div>
+    <button class="btn-sm" onclick="document.getElementById('webhookPanel').classList.toggle('hidden')">Show / Hide</button>
+  </div>
+  <div id="webhookPanel" class="hidden" style="margin-top:.75rem">
+    <p class="sec-sub">Paste your #clos-announcements webhook URL below. This is saved in your browser only — never sent anywhere except Discord.</p>
+    <div class="fg"><label>Webhook URL</label><input type="text" id="webhookUrl" placeholder="https://discord.com/api/webhooks/..." oninput="saveWebhook()"/></div>
+    <p class="ok hidden" id="webhookSaveMsg">Webhook saved to browser storage.</p>
+  </div>
+</div>
+
 <hr class="divider"/>
 
 <!-- ADVANCE + GOTW -->
@@ -139,9 +155,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 <div class="output-section">
   <div class="out-header">
     <span class="out-label">✓ Advance Post — Output</span>
-    <button class="copy-btn" onclick="cpBox('advPaste',this)">Copy</button>
+    <div style="display:flex;gap:6px">
+      <button class="copy-btn" onclick="cpBox('advPaste',this)">Copy</button>
+      <button class="copy-btn" id="postBtn" onclick="postToDiscord()" style="background:#4caf50;color:#0A0A0A;border-color:#4caf50;font-weight:600">Post to Discord</button>
+    </div>
   </div>
   <textarea class="output-box" id="advPaste" rows="5" placeholder="Paste Claude's advance post here..."></textarea>
+  <p class="ok hidden" id="postStatus"></p>
 </div>
 
 <hr class="divider"/>
@@ -518,6 +538,81 @@ function cpBox(id,btn){
   }catch(e){}
 })();
 
+// Webhook functions
+const WEBHOOK_KEY='clos_webhook_url';
+
+function saveWebhook(){
+  const url=document.getElementById('webhookUrl').value.trim();
+  try{localStorage.setItem(WEBHOOK_KEY,url);}catch(e){}
+  const badge=document.getElementById('webhookBadge');
+  const msg=document.getElementById('webhookSaveMsg');
+  if(url){badge.classList.remove('hidden');msg.classList.remove('hidden');}
+  else{badge.classList.add('hidden');msg.classList.add('hidden');}
+}
+
+function loadWebhook(){
+  try{
+    const url=localStorage.getItem(WEBHOOK_KEY);
+    if(url){
+      document.getElementById('webhookUrl').value=url;
+      document.getElementById('webhookBadge').classList.remove('hidden');
+    }
+  }catch(e){}
+}
+
+async function postToDiscord(){
+  const webhookUrl=document.getElementById('webhookUrl').value.trim();
+  if(!webhookUrl){
+    alert('Set your webhook URL first (Discord Webhook section above).');
+    return;
+  }
+  const content=document.getElementById('advPaste').value.trim();
+  if(!content){
+    alert('Paste the advance post into the output box first.');
+    return;
+  }
+  const btn=document.getElementById('postBtn');
+  const status=document.getElementById('postStatus');
+  btn.textContent='Posting...';
+  btn.disabled=true;
+  try{
+    const res=await fetch(webhookUrl,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        content:content,
+        username:'CLOS Advance Tool'
+      })
+    });
+    if(res.ok||res.status===204){
+      btn.textContent='✓ Posted!';
+      btn.style.background='#4caf50';
+      status.textContent='Advance post sent to Discord. CLOS Report will fire automatically.';
+      status.style.color='#4caf50';
+      status.classList.remove('hidden');
+    }else{
+      const err=await res.text();
+      btn.textContent='Failed';
+      btn.style.background='#f44336';
+      status.textContent='Error: '+res.status+' — '+err;
+      status.style.color='#f44336';
+      status.classList.remove('hidden');
+    }
+  }catch(e){
+    btn.textContent='Failed';
+    btn.style.background='#f44336';
+    status.textContent='Error: '+e.message;
+    status.style.color='#f44336';
+    status.classList.remove('hidden');
+  }
+  setTimeout(()=>{
+    btn.textContent='Post to Discord';
+    btn.style.background='#4caf50';
+    btn.disabled=false;
+  },3000);
+}
+
+loadWebhook();
 fetchRoster();
 </script>
 </body>
