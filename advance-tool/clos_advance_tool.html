@@ -152,6 +152,29 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 .copy-btn:hover{border-color:#A8B2BB}
 .copy-btn--discord{background:#4caf50;color:#0A0A0A;border-color:#4caf50;font-weight:600}
 .req-timestamp{font-size:11px;color:#A8B2BB;font-weight:400;text-transform:none;letter-spacing:0;margin-left:8px}
+
+/* ===== Inline warning / error / info banners ===== */
+.warn-box{
+  background:#2a1e0a;border-left:3px solid #f0a020;
+  color:#f5c77a;font-size:12px;line-height:1.5;
+  padding:10px 12px;border-radius:6px;margin-top:10px;
+}
+.warn-box ul{margin:4px 0 0 18px}
+.warn-box li{margin:2px 0}
+.err-text{color:#f44336;font-size:12px;margin-top:6px}
+.info-text{color:#A8B2BB;font-size:12px;margin-top:6px}
+.success-text{color:#4caf50;font-size:12px;margin-top:6px}
+
+/* Small ghost icon button (used for Week +1 arrow) */
+.btn-icon{
+  font-size:14px;font-weight:700;cursor:pointer;
+  background:#1C1C1E;border:1px solid #1C1C1E;
+  color:#F5F5F7;border-radius:6px;
+  padding:5px 10px;line-height:1;
+  font-family:Inter,sans-serif;
+}
+.btn-icon:hover{border-color:#A8B2BB}
+.btn-icon:disabled{opacity:.45;cursor:not-allowed}
 .output-section{
   background:#0A0A0A;border:1px solid #A8B2BB;border-radius:12px;
   padding:1.25rem;margin-bottom:1.25rem;
@@ -241,8 +264,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
     <span class="sticky-label">Season</span>
     <input class="sticky-input" type="number" id="seasonNum" min="1" max="20" value="1" oninput="saveSeason()"/>
     <select class="sticky-select" id="weekType" onchange="updateNowBuilding()"></select>
+    <button class="btn-icon" id="weekNextBtn" onclick="advanceWeek()" title="Advance to next week type">→</button>
     <button class="btn-clear" id="copyAllBtn" onclick="copyAllOutputs(this)">Copy all outputs</button>
-    <button class="btn-clear" onclick="clearAll()">Clear all outputs</button>
+    <button class="btn-clear" onclick="confirmClearAll()">Clear all outputs</button>
   </div>
 </div>
 
@@ -289,8 +313,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
       <label>Webhook URL</label>
       <input type="text" id="webhookUrl" placeholder="https://discord.com/api/webhooks/..." oninput="saveWebhook()"/>
     </div>
-    <button class="btn-sm hidden" id="webhookForget" onclick="forgetWebhook()" style="margin-top:4px">Forget saved URL</button>
+    <p class="err-text hidden" id="webhookFormatWarn">That doesn't look like a Discord webhook URL. It should start with <code>https://discord.com/api/webhooks/</code>.</p>
+    <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+      <button class="btn-sm hidden" id="webhookTest" onclick="testWebhook(this)">Send test ping</button>
+      <button class="btn-sm hidden" id="webhookForget" onclick="forgetWebhook()">Forget saved URL</button>
+    </div>
     <p class="ok hidden" id="webhookSaveMsg">Webhook saved to browser storage.</p>
+    <p class="info-text hidden" id="webhookTestMsg"></p>
   </div>
 </div>
 
@@ -449,6 +478,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <button class="btn-clear" onclick="clearTop25()">Clear fields</button>
 </div>
 
+<div class="warn-box hidden" id="top25Warnings"></div>
+
 <div id="output" class="hidden">
   <div class="output-section">
     <div class="out-header">
@@ -465,7 +496,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 // ============ Constants & storage keys ============
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFNE1VvmzOA--kOJX06QzrcGLp9SZrHu3hG388Kudz_Fzr4YJC2w_-mPRpdrfAtGAgcA/exec';
 const DIV = '━━━━━━━━━━━━━━━━━━━━';
-const STORAGE = { lastWeek: 'clos_last_week_v1', webhook: 'clos_webhook_url', season: 'clos_season' };
+const STORAGE = {
+  lastWeek:  'clos_last_week_v1',
+  webhook:   'clos_webhook_url',
+  season:    'clos_season',
+  gotwDraft: 'clos_gotw_draft_v1'
+};
+const WEBHOOK_PATTERN = /^https:\/\/(canary\.|ptb\.)?discord(app)?\.com\/api\/webhooks\/\d+\/[\w-]+/i;
 const ROSTER_TIMEOUT_MS = 10000;
 
 // ============ Week-type config (single source of truth) ============
@@ -673,6 +710,44 @@ function indicator(diff) {
   return ' —';
 }
 
+// Pre-flight validation for the Top 25 input. Returns an array of warning
+// strings. Warnings are advisory — the generator still runs regardless.
+function validateTop25(currRaw) {
+  const warnings = [];
+  if (currRaw.length === 0) {
+    warnings.push('No teams entered — nothing to generate.');
+    return warnings;
+  }
+  if (currRaw.length !== 25) {
+    warnings.push('Expected 25 teams, got ' + currRaw.length + '.');
+  }
+  const seen = new Map();
+  const unparsed = [];
+  currRaw.forEach((line, i) => {
+    const { team, record } = parseLine(line);
+    const key = team.toLowerCase();
+    if (!team) {
+      unparsed.push('Line ' + (i + 1) + ' is blank or unparseable.');
+    } else if (seen.has(key)) {
+      warnings.push('Duplicate: "' + team + '" on lines ' + (seen.get(key) + 1) + ' and ' + (i + 1) + '.');
+    } else {
+      seen.set(key, i);
+    }
+    if (team && !record) {
+      unparsed.push('Line ' + (i + 1) + ' (' + team + ') has no record — expected "Team W-L".');
+    }
+  });
+  return warnings.concat(unparsed);
+}
+
+function renderTop25Warnings(warnings) {
+  const box = $('top25Warnings');
+  if (!warnings.length) { box.innerHTML = ''; hide(box); return; }
+  box.innerHTML = '<strong>Heads up:</strong><ul>' +
+    warnings.map(w => '<li>' + escapeHtml(w) + '</li>').join('') + '</ul>';
+  show(box);
+}
+
 function generate() {
   try {
     const w = currentWeek();
@@ -682,6 +757,10 @@ function generate() {
     const currRaw = lines($('top25').value);
     const last    = lines($('last25').value);
     const recv    = lines($('receiving').value);
+
+    const warnings = validateTop25(currRaw);
+    renderTop25Warnings(warnings);
+    if (currRaw.length === 0) { hide($('output')); return; }
 
     const parsed = currRaw.map((line, i) => {
       const { team, record } = parseLine(line);
@@ -768,11 +847,15 @@ function clearGOTW() {
   clearValues(GOTW_FIELDS);
   hide($('gotwRequestSection'));
   hide($('imgRequestSection'));
+  try { localStorage.removeItem(STORAGE.gotwDraft); } catch (e) {}
+  updateGotwButtons();
 }
 
 function clearTop25() {
   clearValues(['top25', 'last25', 'receiving', 't25Post']);
   hide($('output'));
+  hide($('top25Warnings'));
+  $('top25Warnings').innerHTML = '';
   try { localStorage.removeItem(STORAGE.lastWeek); } catch (e) {}
 }
 
@@ -792,6 +875,12 @@ function clearAll() {
   clearTop25();
 }
 
+function confirmClearAll() {
+  const hasContent = ['advRequest','advPaste','gotwPaste','t25Post'].some(id => ($(id).value || '').trim());
+  if (hasContent && !confirm('Clear all request and output boxes? This cannot be undone.')) return;
+  clearAll();
+}
+
 // ============ Clipboard ============
 function copyValue(id, btn, restore = 'Copy') {
   const el = $(id);
@@ -808,14 +897,31 @@ function copyValue(id, btn, restore = 'Copy') {
 function copyPrimer(btn) { copyValue('primerText', btn, 'Copy primer'); }
 
 // ============ Webhook & Discord posting ============
+function isValidWebhook(url) {
+  return WEBHOOK_PATTERN.test(url);
+}
+
 function saveWebhook() {
   const url = $('webhookUrl').value.trim();
   try { localStorage.setItem(STORAGE.webhook, url); } catch (e) {}
-  const badge = $('webhookBadge');
-  const msg   = $('webhookSaveMsg');
+  const badge     = $('webhookBadge');
+  const msg       = $('webhookSaveMsg');
   const forgetBtn = $('webhookForget');
-  if (url) { show(badge); show(msg); show(forgetBtn); }
-  else     { hide(badge); hide(msg); hide(forgetBtn); }
+  const testBtn   = $('webhookTest');
+  const formatWarn = $('webhookFormatWarn');
+  const testMsg   = $('webhookTestMsg');
+  hide(testMsg);
+
+  if (!url) {
+    hide(badge); hide(msg); hide(forgetBtn); hide(testBtn); hide(formatWarn);
+    return;
+  }
+  if (!isValidWebhook(url)) {
+    show(formatWarn); hide(badge); hide(msg); show(forgetBtn); hide(testBtn);
+    return;
+  }
+  hide(formatWarn);
+  show(badge); show(msg); show(forgetBtn); show(testBtn);
 }
 
 function forgetWebhook() {
@@ -829,10 +935,52 @@ function loadWebhook() {
     const url = localStorage.getItem(STORAGE.webhook);
     if (url) {
       $('webhookUrl').value = url;
-      show($('webhookBadge'));
-      show($('webhookForget'));
+      // Run the same validation path as a fresh save so UI state is consistent.
+      saveWebhook();
     }
   } catch (e) {}
+}
+
+async function testWebhook(btn) {
+  const url = $('webhookUrl').value.trim();
+  const msgEl = $('webhookTestMsg');
+  if (!isValidWebhook(url)) {
+    msgEl.textContent = 'URL format looks wrong — fix it first.';
+    msgEl.className = 'err-text';
+    show(msgEl);
+    return;
+  }
+  const orig = btn.textContent;
+  btn.textContent = 'Pinging...';
+  btn.disabled = true;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: '🛠️ CLOS Advance Tool — webhook test ping at ' + timestamp() + '. You can delete this message.',
+        username: 'CLOS Advance Bot'
+      })
+    });
+    if (res.ok || res.status === 204) {
+      msgEl.textContent = '✓ Test ping sent. Check your Discord channel.';
+      msgEl.className = 'success-text';
+    } else if (res.status === 429) {
+      const body = await res.json().catch(() => ({}));
+      const retry = body.retry_after ? Math.ceil(body.retry_after) : '?';
+      msgEl.textContent = 'Rate-limited by Discord. Try again in ' + retry + 's.';
+      msgEl.className = 'err-text';
+    } else {
+      msgEl.textContent = 'Failed: HTTP ' + res.status + '.';
+      msgEl.className = 'err-text';
+    }
+  } catch (e) {
+    msgEl.textContent = 'Network error: ' + e.message;
+    msgEl.className = 'err-text';
+  }
+  show(msgEl);
+  btn.textContent = orig;
+  btn.disabled = false;
 }
 
 function resetPostButton() {
@@ -880,6 +1028,13 @@ async function postToDiscord() {
       $('advPaste').value = '';
       // Only auto-reset on success. On failure we leave the red state so the user sees it.
       setTimeout(resetPostButton, 3000);
+    } else if (res.status === 429) {
+      const body = await res.json().catch(() => ({}));
+      const retry = body.retry_after ? Math.ceil(body.retry_after) : '?';
+      status.textContent = 'Rate-limited by Discord. Try again in ' + retry + 's.';
+      status.style.color = '#f44336';
+      show(status);
+      setPostButtonFailed();
     } else {
       const err = await res.text();
       status.textContent = 'Error: ' + res.status + ' — ' + err;
@@ -914,6 +1069,44 @@ function updateNowBuilding() {
   const w = currentWeek();
   const s = $('seasonNum').value || '1';
   $('nowBuilding').textContent = 'Building for: ' + w.label + ' · Season ' + s;
+}
+
+// ============ Week +1 button ============
+// Advances to the next week type in WEEK_TYPES order. Wraps from National
+// Championship back to Week 0 (Kickoff) — user bumps Season manually.
+function advanceWeek() {
+  const cur = $('weekType').value;
+  const idx = WEEK_TYPES.findIndex(w => w.key === cur);
+  const next = WEEK_TYPES[(idx + 1) % WEEK_TYPES.length];
+  $('weekType').value = next.key;
+  updateNowBuilding();
+}
+
+// ============ GOTW draft auto-save ============
+// Input fields only — not the generated request textarea or pasted article.
+const GOTW_INPUT_FIELDS = [
+  'g1team','g1coach','g1rec','g1rank','g1result','g1narrative','g1players',
+  'g2team','g2coach','g2rec','g2rank','g2result','g2narrative','g2players',
+  'gotwCtx','gotwHome'
+];
+
+function saveGotwDraft() {
+  try {
+    const draft = {};
+    GOTW_INPUT_FIELDS.forEach(id => { draft[id] = $(id).value; });
+    localStorage.setItem(STORAGE.gotwDraft, JSON.stringify(draft));
+  } catch (e) {}
+}
+
+function loadGotwDraft() {
+  try {
+    const raw = localStorage.getItem(STORAGE.gotwDraft);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    GOTW_INPUT_FIELDS.forEach(id => {
+      if (typeof draft[id] === 'string') $(id).value = draft[id];
+    });
+  } catch (e) {}
 }
 
 // ============ GOTW button enable/disable ============
@@ -979,13 +1172,21 @@ function wireGotwButtonGuard() {
   updateGotwButtons();
 }
 
+function wireGotwDraftSave() {
+  GOTW_INPUT_FIELDS.forEach(id => {
+    $(id).addEventListener('input', saveGotwDraft);
+  });
+}
+
 function init() {
   populateWeekDropdown();
   loadSeason();
   loadLastTop25();
   loadWebhook();
+  loadGotwDraft();
   updateNowBuilding();
   wireGotwButtonGuard();
+  wireGotwDraftSave();
   wireKeyboardShortcuts();
   fetchRoster();
 }
