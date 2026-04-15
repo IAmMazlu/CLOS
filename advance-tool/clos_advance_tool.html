@@ -6,88 +6,225 @@
 <title>CLOS Advance Tool</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Inter:wght@400;600;700&display=swap');
+
+/* ===== Reset & base ===== */
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,sans-serif;background:#0A0A0A;color:#F5F5F7;padding:1.5rem;max-width:960px;margin:0 auto;padding-top:5rem}
-h1{font-family:'Barlow Condensed',sans-serif;font-size:2.5rem;font-weight:700;letter-spacing:.05em;margin-bottom:.25rem;color:#F5F5F7}
-.sticky-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:#0A0A0A;border-bottom:1px solid #1C1C1E;padding:.75rem 1.5rem;display:flex;align-items:center;gap:20px;max-width:100%}
-.sticky-inner{display:flex;align-items:center;gap:16px;max-width:960px;margin:0 auto;width:100%;flex-wrap:wrap}
-.sticky-label{font-size:11px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
-.sticky-input{background:#1C1C1E;border:1px solid #1C1C1E;border-radius:6px;color:#F5F5F7;font-size:13px;padding:5px 8px;width:70px;font-family:Inter,sans-serif}
-.sticky-select{background:#1C1C1E;border:1px solid #1C1C1E;border-radius:6px;color:#F5F5F7;font-size:13px;padding:5px 8px;font-family:Inter,sans-serif;flex:1;min-width:140px}
-.btn-clear{font-size:12px;padding:5px 12px;cursor:pointer;background:transparent;border:1px solid #1C1C1E;color:#A8B2BB;border-radius:6px;white-space:nowrap}
-.btn-clear:hover{border-color:#A8B2BB}
+body{
+  font-family:Inter,sans-serif;
+  background:#0A0A0A;
+  color:#F5F5F7;
+  padding:1.5rem;
+  padding-top:5rem;
+  max-width:960px;
+  margin:0 auto;
+}
+h1{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:2.5rem;
+  font-weight:700;
+  letter-spacing:.05em;
+  margin-bottom:.25rem;
+  color:#F5F5F7;
+}
 .sub{font-size:13px;color:#A8B2BB;margin-bottom:2rem}
-.section{border:1px solid #1C1C1E;border-radius:12px;padding:1.25rem;margin-bottom:1.25rem;background:#0D1B2A}
-.sec-sub{font-size:12px;color:#A8B2BB;margin-bottom:.75rem}
+.divider{border:none;border-top:1px solid #1C1C1E;margin:1.5rem 0}
+.hidden{display:none}
+
+/* ===== Sticky top bar ===== */
+.sticky-bar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:#0A0A0A;
+  border-bottom:1px solid #1C1C1E;
+  padding:.75rem 1.5rem;
+  display:flex;align-items:center;gap:20px;
+  max-width:100%;
+}
+.sticky-inner{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  max-width:960px;margin:0 auto;width:100%;
+}
+.sticky-label{
+  font-size:11px;font-weight:700;
+  color:#A8B2BB;
+  text-transform:uppercase;letter-spacing:.08em;
+  white-space:nowrap;
+}
+.sticky-input{
+  background:#1C1C1E;border:1px solid #1C1C1E;border-radius:6px;
+  color:#F5F5F7;font-size:13px;padding:5px 8px;width:70px;
+  font-family:Inter,sans-serif;
+}
+.sticky-select{
+  background:#1C1C1E;border:1px solid #1C1C1E;border-radius:6px;
+  color:#F5F5F7;font-size:13px;padding:5px 8px;
+  font-family:Inter,sans-serif;flex:1;min-width:140px;
+}
+
+/* ===== Form fields ===== */
+input,select,textarea{
+  background:#1C1C1E;border:1px solid #1C1C1E;border-radius:6px;
+  color:#F5F5F7;font-size:13px;padding:8px 10px;width:100%;
+  font-family:Inter,sans-serif;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
 .fg label{font-size:12px;color:#A8B2BB}
 .fg:last-child{margin-bottom:0}
-input,select,textarea{background:#1C1C1E;border:1px solid #1C1C1E;border-radius:6px;color:#F5F5F7;font-size:13px;padding:8px 10px;width:100%;font-family:Inter,sans-serif}
-input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:600px){.grid2{grid-template-columns:1fr}}
-.btn{width:100%;padding:12px;font-size:14px;font-weight:600;margin:8px 0;cursor:pointer;background:#F5F5F7;color:#0A0A0A;border:none;border-radius:8px;letter-spacing:.02em}
-.btn:hover{background:#ddd}
-.btn-sm{font-size:12px;padding:6px 12px;cursor:pointer;background:transparent;border:1px solid #1C1C1E;color:#A8B2BB;border-radius:6px}
-.btn-sm:hover{border-color:#A8B2BB}
-.btn-req{width:100%;padding:10px;font-size:13px;font-weight:600;margin-top:10px;cursor:pointer;background:#0D1B2A;border:1px solid #A8B2BB;color:#F5F5F7;border-radius:6px}
-.btn-req:hover{background:#1C1C1E}
-.out-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem}
-.out-label{font-size:11px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.08em}
-.copy-btn{font-size:12px;padding:4px 10px;cursor:pointer;background:transparent;border:1px solid #1C1C1E;color:#A8B2BB;border-radius:5px}
-.copy-btn:hover{border-color:#A8B2BB}
-.paste-box{width:100%;font-size:13px;font-family:'Courier New',monospace;resize:vertical;line-height:1.65;padding:.75rem;background:#1C1C1E;border:1px solid #1C1C1E;border-radius:8px;color:#F5F5F7;margin-top:8px}
-.output-box{width:100%;font-size:13px;font-family:'Courier New',monospace;resize:vertical;line-height:1.65;padding:.75rem;background:#0A0A0A;border:1px solid #A8B2BB;border-radius:8px;color:#F5F5F7;margin-top:8px}
-.request-box{width:100%;font-size:13px;font-family:'Courier New',monospace;resize:vertical;line-height:1.65;padding:.75rem;background:#1C1C1E;border:1px dashed #A8B2BB;border-radius:8px;color:#F5F5F7;margin-top:8px}
-.post-box{font-size:13px;color:#F5F5F7;white-space:pre-wrap;font-family:'Courier New',monospace;background:#0A0A0A;border:1px solid #A8B2BB;border-radius:8px;padding:.75rem;line-height:1.65}
-.output-section{background:#0A0A0A;border:1px solid #A8B2BB;border-radius:12px;padding:1.25rem;margin-bottom:1.25rem}
-.hint{font-size:12px;color:#A8B2BB;margin-top:4px}
-.ok{font-size:12px;color:#4caf50;margin-top:6px}
-.hidden{display:none}
-.roster-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
-.remove-btn{font-size:12px;padding:6px 10px;cursor:pointer;background:transparent;border:1px solid #1C1C1E;color:#A8B2BB;border-radius:5px}
-.roster-head{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:6px}
-.roster-head span{font-size:11px;color:#A8B2BB;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-.badge{font-size:11px;color:#4caf50;margin-left:8px}
-.row-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
-.divider{border:none;border-top:1px solid #1C1C1E;margin:1.5rem 0}
-.team-label{font-size:12px;font-weight:600;color:#A8B2BB;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+
+/* ===== Sections & tool headers ===== */
+.section{
+  border:1px solid #1C1C1E;border-radius:12px;
+  padding:1.25rem;margin-bottom:1.25rem;
+  background:#0D1B2A;
+}
+.sec-sub{font-size:12px;color:#A8B2BB;margin-bottom:.75rem}
 .tool-header{display:flex;align-items:center;gap:14px;margin-bottom:1.25rem}
+.tool-header--tight{margin-bottom:0}
 .tool-header-bar{width:4px;height:36px;background:#A8B2BB;border-radius:2px;flex-shrink:0}
-.tool-header-text{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:#F5F5F7;letter-spacing:.03em;line-height:1}
+.tool-header-text{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:28px;font-weight:700;
+  color:#F5F5F7;letter-spacing:.03em;line-height:1;
+}
 .tool-header-sub{font-size:12px;color:#A8B2BB;margin-top:3px}
+.row-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.panel-body{margin-top:.75rem}
 .section-label{font-size:10px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
 .dashed-hint{font-size:11px;color:#A8B2BB;margin-bottom:6px}
+.team-label{font-size:12px;font-weight:600;color:#A8B2BB;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+
+/* ===== Buttons ===== */
+.btn{
+  width:100%;padding:12px;font-size:14px;font-weight:600;
+  margin:8px 0;cursor:pointer;
+  background:#F5F5F7;color:#0A0A0A;
+  border:none;border-radius:8px;letter-spacing:.02em;
+}
+.btn:hover{background:#ddd}
+.btn-sm{
+  font-size:12px;padding:6px 12px;cursor:pointer;
+  background:transparent;border:1px solid #1C1C1E;
+  color:#A8B2BB;border-radius:6px;
+}
+.btn-sm:hover{border-color:#A8B2BB}
+.btn-req{
+  width:100%;padding:10px;font-size:13px;font-weight:600;
+  margin-top:10px;cursor:pointer;
+  background:#0D1B2A;border:1px solid #A8B2BB;
+  color:#F5F5F7;border-radius:6px;
+}
+.btn-req:hover{background:#1C1C1E}
+.btn-clear{
+  font-size:12px;padding:5px 12px;cursor:pointer;
+  background:transparent;border:1px solid #1C1C1E;
+  color:#A8B2BB;border-radius:6px;white-space:nowrap;
+}
+.btn-clear:hover{border-color:#A8B2BB}
+.action-row{display:flex;gap:10px;margin-top:10px}
+.action-row .btn-req{margin-top:0;flex:1}
+
+/* ===== Output boxes & headers ===== */
+.out-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem}
+.out-btns{display:flex;gap:6px}
+.out-label{font-size:11px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.08em}
+.copy-btn{
+  font-size:12px;padding:4px 10px;cursor:pointer;
+  background:transparent;border:1px solid #1C1C1E;
+  color:#A8B2BB;border-radius:5px;
+}
+.copy-btn:hover{border-color:#A8B2BB}
+.copy-btn--discord{background:#4caf50;color:#0A0A0A;border-color:#4caf50;font-weight:600}
+.output-section{
+  background:#0A0A0A;border:1px solid #A8B2BB;border-radius:12px;
+  padding:1.25rem;margin-bottom:1.25rem;
+}
+
+/* shared mono box */
+.mono-box{
+  width:100%;font-size:13px;
+  font-family:'Courier New',monospace;
+  line-height:1.65;padding:.75rem;
+  border-radius:8px;resize:vertical;margin-top:8px;
+}
+.paste-box  {background:#1C1C1E;border:1px solid #1C1C1E;color:#F5F5F7}
+.output-box {background:#0A0A0A;border:1px solid #A8B2BB;color:#F5F5F7}
+.request-box{background:#1C1C1E;border:1px dashed #A8B2BB;color:#F5F5F7}
+.post-box{
+  font-size:13px;color:#F5F5F7;
+  white-space:pre-wrap;
+  font-family:'Courier New',monospace;
+  background:#0A0A0A;border:1px solid #A8B2BB;border-radius:8px;
+  padding:.75rem;line-height:1.65;
+}
+
+/* ===== Status text ===== */
+.hint{font-size:12px;color:#A8B2BB;margin-top:4px}
+.ok{font-size:12px;color:#4caf50;margin-top:6px}
+.badge{font-size:11px;color:#4caf50;margin-left:8px}
+
+/* ===== Roster display ===== */
+.roster-head{
+  display:grid;grid-template-columns:1fr 1fr auto;
+  gap:8px;margin-bottom:6px;
+}
+.roster-head span{
+  font-size:11px;color:#A8B2BB;font-weight:700;
+  text-transform:uppercase;letter-spacing:.04em;
+}
+.roster-row{
+  display:grid;grid-template-columns:1fr 1fr auto;
+  gap:8px;margin-bottom:6px;align-items:center;
+}
+.roster-cell{
+  background:#1C1C1E;border:1px solid #1C1C1E;border-radius:6px;
+  color:#F5F5F7;font-size:13px;padding:8px 10px;opacity:.7;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.roster-check{font-size:11px;color:#4caf50;padding:0 6px}
+.roster-empty{font-size:12px;color:#A8B2BB;padding:4px 0}
+
+/* ===== Primer callout (Top 25 instructions) ===== */
+.primer{
+  background:#1C1C1E;border-radius:8px;
+  padding:1rem;margin-bottom:1rem;
+  border-left:3px solid #A8B2BB;
+}
+.primer-title{font-size:12px;font-weight:700;color:#F5F5F7;margin-bottom:8px}
+.primer-text{font-size:12px;color:#A8B2BB;line-height:1.6;margin-bottom:10px}
+.primer-text strong{color:#F5F5F7}
+.primer-step{font-size:12px;font-weight:700;color:#F5F5F7;margin-bottom:6px}
+.primer-box{
+  width:100%;font-size:12px;
+  font-family:'Courier New',monospace;
+  background:#0D1B2A;border:1px solid #1C1C1E;border-radius:6px;
+  color:#F5F5F7;padding:.6rem;line-height:1.6;
+  resize:none;margin-bottom:8px;
+}
+.primer-copy{
+  font-size:12px;padding:5px 12px;cursor:pointer;
+  background:transparent;border:1px solid #A8B2BB;
+  color:#A8B2BB;border-radius:5px;margin-bottom:10px;
+}
+
+/* ===== GOTW extras ===== */
+.gotw-graphic{margin-top:1rem;border-top:1px solid #1C1C1E;padding-top:1rem}
+.gotw-graphic-title{
+  font-size:11px;font-weight:700;color:#A8B2BB;
+  text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;
+}
+.gotw-graphic-desc{font-size:12px;color:#A8B2BB;margin-bottom:8px}
 </style>
 </head>
 <body>
 
+<!-- ===== Sticky top bar ===== -->
 <div class="sticky-bar">
   <div class="sticky-inner">
     <span class="sticky-label">Season</span>
     <input class="sticky-input" type="number" id="seasonNum" min="1" max="20" value="1"/>
-    <select class="sticky-select" id="weekType">
-      <option value="kickoff" selected>Week 0 — Season Kickoff</option>
-      <option value="week1">Week 1</option>
-      <option value="week2">Week 2</option>
-      <option value="week3">Week 3</option>
-      <option value="week4">Week 4</option>
-      <option value="week5">Week 5</option>
-      <option value="week6">Week 6</option>
-      <option value="week7">Week 7</option>
-      <option value="week8">Week 8</option>
-      <option value="week9">Week 9</option>
-      <option value="week10">Week 10</option>
-      <option value="week11">Week 11</option>
-      <option value="week12">Week 12</option>
-      <option value="week13">Week 13</option>
-      <option value="week14">Week 14</option>
-      <option value="confchamp">Conference Championships</option>
-      <option value="bowl1">Bowl Week 1</option>
-      <option value="bowl2">Bowl Week 2</option>
-      <option value="bowl3">Bowl Week 3</option>
-      <option value="natty">National Championship</option>
-    </select>
+    <select class="sticky-select" id="weekType"></select>
     <button class="btn-clear" onclick="clearAll()">Clear all outputs</button>
   </div>
 </div>
@@ -95,57 +232,70 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 <h1>CLOS ADVANCE TOOL</h1>
 <p class="sub">Campus Legends of Saturday — Advance Day Post Generator &nbsp;·&nbsp; Start by setting your Week, Season, and Week Type in the bar above — then work through each section top to bottom.</p>
 
-<!-- ROSTER -->
+<!-- ===== Coach Roster ===== -->
 <div class="section">
   <div class="row-header">
-    <div class="tool-header" style="margin-bottom:0">
+    <div class="tool-header tool-header--tight">
       <div class="tool-header-bar"></div>
-      <div><div class="tool-header-text">Coach Roster <span class="badge hidden" id="savedBadge">✓ Synced</span></div><div class="tool-header-sub">Synced live from the Team Info Sheet on load</div></div>
+      <div>
+        <div class="tool-header-text">Coach Roster <span class="badge hidden" id="savedBadge">✓ Synced</span></div>
+        <div class="tool-header-sub">Synced live from the Team Info Sheet on load</div>
+      </div>
     </div>
     <button class="btn-sm" onclick="toggleRoster()">Show / Hide</button>
   </div>
-  <div id="rosterPanel" class="hidden" style="margin-top:.75rem">
+  <div id="rosterPanel" class="hidden panel-body">
     <p class="sec-sub">Pulled live from the Team Info Sheet. Update the Sheet after the carousel — the tool syncs automatically on load.</p>
     <div class="roster-head"><span>Team name</span><span>Discord username</span><span></span></div>
-    <div id="rosterRows"><p style="font-size:12px;color:#A8B2BB;padding:4px 0">Loading roster...</p></div>
+    <div id="rosterRows"><p class="roster-empty">Loading roster...</p></div>
     <button class="btn-sm" style="margin-top:8px" onclick="fetchRoster()">↻ Refresh from Sheet</button>
     <div class="ok hidden" id="saveMsg">Roster refreshed.</div>
   </div>
 </div>
 
-<!-- WEBHOOK SETTINGS -->
+<!-- ===== Webhook Settings ===== -->
 <div class="section">
   <div class="row-header">
-    <div class="tool-header" style="margin-bottom:0">
+    <div class="tool-header tool-header--tight">
       <div class="tool-header-bar"></div>
-      <div><div class="tool-header-text">Discord Webhook <span class="badge hidden" id="webhookBadge">✓ Saved</span></div><div class="tool-header-sub">Set once — stored locally, never uploaded</div></div>
+      <div>
+        <div class="tool-header-text">Discord Webhook <span class="badge hidden" id="webhookBadge">✓ Saved</span></div>
+        <div class="tool-header-sub">Set once — stored locally, never uploaded</div>
+      </div>
     </div>
     <button class="btn-sm" onclick="document.getElementById('webhookPanel').classList.toggle('hidden')">Show / Hide</button>
   </div>
-  <div id="webhookPanel" class="hidden" style="margin-top:.75rem">
+  <div id="webhookPanel" class="hidden panel-body">
     <p class="sec-sub">Paste your #clos-announcements webhook URL below. This is saved in your browser only — never sent anywhere except Discord.</p>
-    <div class="fg"><label>Webhook URL</label><input type="text" id="webhookUrl" placeholder="https://discord.com/api/webhooks/..." oninput="saveWebhook()"/></div>
+    <div class="fg">
+      <label>Webhook URL</label>
+      <input type="text" id="webhookUrl" placeholder="https://discord.com/api/webhooks/..." oninput="saveWebhook()"/>
+    </div>
+    <button class="btn-sm hidden" id="webhookForget" onclick="forgetWebhook()" style="margin-top:4px">Forget saved URL</button>
     <p class="ok hidden" id="webhookSaveMsg">Webhook saved to browser storage.</p>
   </div>
 </div>
 
 <hr class="divider"/>
 
-<!-- ADVANCE + GOTW -->
+<!-- ===== 01 — Advance Post ===== -->
 <div class="section">
   <div class="tool-header">
     <div class="tool-header-bar"></div>
-    <div><div class="tool-header-text">01 — Advance Post</div><div class="tool-header-sub">Generate a fresh advance post for this week</div></div>
+    <div>
+      <div class="tool-header-text">01 — Advance Post</div>
+      <div class="tool-header-sub">Generate a fresh advance post for this week</div>
+    </div>
   </div>
   <button class="btn-req" onclick="requestAdvance()">Build advance post request ↗</button>
   <p class="hint" style="margin-top:8px">A copyable Claude request will appear below after clicking.</p>
-  <div id="advRequestSection" style="display:none;margin-top:1rem">
+  <div id="advRequestSection" class="hidden panel-body">
     <p class="dashed-hint">— Claude Request — copy and paste into Claude chat</p>
     <div class="out-header">
       <span class="out-label">Copy this into Claude</span>
-      <button class="copy-btn" onclick="cpBox('advRequest',this)">Copy</button>
+      <button class="copy-btn" onclick="copyValue('advRequest',this)">Copy</button>
     </div>
-    <textarea class="request-box" id="advRequest" rows="5"></textarea>
+    <textarea class="mono-box request-box" id="advRequest" rows="5"></textarea>
     <p class="hint" style="margin-top:6px">Then paste Claude's response below ↓</p>
   </div>
 </div>
@@ -153,21 +303,25 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 <div class="output-section">
   <div class="out-header">
     <span class="out-label">✓ Advance Post — Output</span>
-    <div style="display:flex;gap:6px">
-      <button class="copy-btn" onclick="cpBox('advPaste',this)">Copy</button>
-      <button class="copy-btn" id="postBtn" onclick="postToDiscord()" style="background:#4caf50;color:#0A0A0A;border-color:#4caf50;font-weight:600">Post to Discord</button>
+    <div class="out-btns">
+      <button class="copy-btn" onclick="copyValue('advPaste',this)">Copy</button>
+      <button class="copy-btn copy-btn--discord" id="postBtn" onclick="postToDiscord()">Post to Discord</button>
     </div>
   </div>
-  <textarea class="output-box" id="advPaste" rows="5" placeholder="Paste Claude's advance post here..."></textarea>
+  <textarea class="mono-box output-box" id="advPaste" rows="5" placeholder="Paste Claude's advance post here..."></textarea>
   <p class="ok hidden" id="postStatus"></p>
 </div>
 
 <hr class="divider"/>
 
+<!-- ===== 02 — Game of the Week ===== -->
 <div class="section">
   <div class="tool-header">
     <div class="tool-header-bar"></div>
-    <div><div class="tool-header-text">02 — Game of the Week</div><div class="tool-header-sub">Fill in the matchup details and generate the full GOTW article</div></div>
+    <div>
+      <div class="tool-header-text">02 — Game of the Week</div>
+      <div class="tool-header-sub">Fill in the matchup details and generate the full GOTW article</div>
+    </div>
   </div>
 
   <div class="grid2" style="margin-bottom:12px">
@@ -178,8 +332,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
       <div class="fg"><label>Record</label><input type="text" id="g1rec" placeholder="15-1"/></div>
       <div class="fg"><label>Ranking (optional)</label><input type="text" id="g1rank" placeholder="#1"/></div>
       <div class="fg"><label>Recent result</label><input type="text" id="g1result" placeholder="W 52-17 vs #2 Ohio State"/></div>
-      <div class="fg"><label>Team narrative</label><textarea class="paste-box" id="g1narrative" rows="2" placeholder="Hot off a dominant title game win..."></textarea></div>
-      <div class="fg"><label>Key players — last game stats</label><textarea class="paste-box" id="g1players" rows="3" placeholder="QB Jason Smith — 341 yds, 4 TD&#10;RB Marcus Johnson — 214 yds, 3 TD"></textarea></div>
+      <div class="fg"><label>Team narrative</label><textarea class="mono-box paste-box" id="g1narrative" rows="2" placeholder="Hot off a dominant title game win..."></textarea></div>
+      <div class="fg"><label>Key players — last game stats</label><textarea class="mono-box paste-box" id="g1players" rows="3" placeholder="QB Jason Smith — 341 yds, 4 TD&#10;RB Marcus Johnson — 214 yds, 3 TD"></textarea></div>
     </div>
     <div>
       <div class="team-label">Team 2</div>
@@ -188,41 +342,41 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
       <div class="fg"><label>Record</label><input type="text" id="g2rec" placeholder="14-1"/></div>
       <div class="fg"><label>Ranking (optional)</label><input type="text" id="g2rank" placeholder="#3"/></div>
       <div class="fg"><label>Recent result</label><input type="text" id="g2result" placeholder="W 38-21 vs Florida State"/></div>
-      <div class="fg"><label>Team narrative</label><textarea class="paste-box" id="g2narrative" rows="2" placeholder="Battle-tested and peaking late..."></textarea></div>
-      <div class="fg"><label>Key players — last game stats</label><textarea class="paste-box" id="g2players" rows="3" placeholder="QB Tyler Williams — 298 yds, 3 TD&#10;DE Chris Carter — 3 sacks, 2 TFL"></textarea></div>
+      <div class="fg"><label>Team narrative</label><textarea class="mono-box paste-box" id="g2narrative" rows="2" placeholder="Battle-tested and peaking late..."></textarea></div>
+      <div class="fg"><label>Key players — last game stats</label><textarea class="mono-box paste-box" id="g2players" rows="3" placeholder="QB Tyler Williams — 298 yds, 3 TD&#10;DE Chris Carter — 3 sacks, 2 TFL"></textarea></div>
     </div>
   </div>
 
   <div class="fg"><label>Storyline / stakes</label><input type="text" id="gotwCtx" placeholder="Playoff semifinal, revenge game, undefeated on the line..."/></div>
   <div class="fg"><label>Home team</label><input type="text" id="gotwHome" placeholder="Oregon (or Neutral site)"/></div>
 
-  <div style="display:flex;gap:10px;margin-top:10px">
-    <button class="btn-req" style="margin-top:0;flex:1" onclick="requestGOTW()">Build GOTW request ↗</button>
+  <div class="action-row">
+    <button class="btn-req" onclick="requestGOTW()">Build GOTW request ↗</button>
     <button class="btn-clear" onclick="clearGOTW()">Clear fields</button>
   </div>
   <p class="hint" style="margin-top:8px">A copyable Claude request will appear below after clicking.</p>
-  <div id="gotwRequestSection" style="display:none;margin-top:1rem">
+  <div id="gotwRequestSection" class="hidden panel-body">
     <p class="dashed-hint">— Claude Request — copy and paste into Claude chat</p>
     <div class="out-header">
       <span class="out-label">Copy this into Claude</span>
-      <button class="copy-btn" onclick="cpBox('gotwRequest',this)">Copy</button>
+      <button class="copy-btn" onclick="copyValue('gotwRequest',this)">Copy</button>
     </div>
-    <textarea class="request-box" id="gotwRequest" rows="10"></textarea>
+    <textarea class="mono-box request-box" id="gotwRequest" rows="10"></textarea>
     <p class="hint" style="margin-top:6px">Then paste Claude's response below ↓</p>
   </div>
 
-  <div style="margin-top:1rem;border-top:1px solid #1C1C1E;padding-top:1rem">
-    <p style="font-size:11px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">🎨 GOTW Graphic Prompt</p>
-    <p style="font-size:12px;color:#A8B2BB;margin-bottom:8px">Generates a Gemini image prompt based on your matchup. Open Claude chat, paste this in, and Claude will look up the correct stadiums and mascots and return a ready-to-use image prompt.</p>
+  <div class="gotw-graphic">
+    <p class="gotw-graphic-title">🎨 GOTW Graphic Prompt</p>
+    <p class="gotw-graphic-desc">Generates a Gemini image prompt based on your matchup. Open Claude chat, paste this in, and Claude will look up the correct stadiums and mascots and return a ready-to-use image prompt.</p>
     <button class="btn-req" style="margin-top:0" onclick="requestImagePrompt()">Build image prompt request ↗</button>
     <p class="hint" style="margin-top:8px">A copyable Claude request will appear below after clicking.</p>
-    <div id="imgRequestSection" style="display:none;margin-top:1rem">
+    <div id="imgRequestSection" class="hidden panel-body">
       <p class="dashed-hint">— Claude Request — copy and paste into Claude chat</p>
       <div class="out-header">
         <span class="out-label">Copy this into Claude</span>
-        <button class="copy-btn" onclick="cpBox('imgRequest',this)">Copy</button>
+        <button class="copy-btn" onclick="copyValue('imgRequest',this)">Copy</button>
       </div>
-      <textarea class="request-box" id="imgRequest" rows="6"></textarea>
+      <textarea class="mono-box request-box" id="imgRequest" rows="6"></textarea>
       <p class="hint" style="margin-top:6px">Claude will search for the correct stadiums and mascots and return the full Gemini prompt. Attach your reference image in Gemini when you paste it.</p>
     </div>
   </div>
@@ -231,46 +385,49 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 <div class="output-section">
   <div class="out-header">
     <span class="out-label">✓ Game of the Week Article — Output</span>
-    <button class="copy-btn" onclick="cpBox('gotwPaste',this)">Copy</button>
+    <button class="copy-btn" onclick="copyValue('gotwPaste',this)">Copy</button>
   </div>
-  <textarea class="output-box" id="gotwPaste" rows="12" placeholder="Paste Claude's GOTW article here..."></textarea>
+  <textarea class="mono-box output-box" id="gotwPaste" rows="12" placeholder="Paste Claude's GOTW article here..."></textarea>
 </div>
 
 <hr class="divider"/>
 
-<!-- TOP 25 -->
+<!-- ===== 03 — Top 25 Rankings ===== -->
 <div class="section">
   <div class="tool-header">
     <div class="tool-header-bar"></div>
-    <div><div class="tool-header-text">03 — Top 25 Rankings</div><div class="tool-header-sub">Use Claude to read your screenshots, then generate the post instantly</div></div>
+    <div>
+      <div class="tool-header-text">03 — Top 25 Rankings</div>
+      <div class="tool-header-sub">Use Claude to read your screenshots, then generate the post instantly</div>
+    </div>
   </div>
-  <div style="background:#1C1C1E;border-radius:8px;padding:1rem;margin-bottom:1rem;border-left:3px solid #A8B2BB">
-    <p style="font-size:12px;font-weight:700;color:#F5F5F7;margin-bottom:8px">📸 HOW TO FILL IN THE TOP 25</p>
-    <p style="font-size:12px;color:#A8B2BB;line-height:1.6;margin-bottom:10px">Take three screenshots from the game: the top half of the rankings list, the bottom half, and the <strong style="color:#F5F5F7">More Information</strong> screen showing "Others Receiving Votes."</p>
-    <p style="font-size:12px;font-weight:700;color:#F5F5F7;margin-bottom:6px">Step 1 — Open Claude chat and paste this first:</p>
-    <textarea id="primerText" style="width:100%;font-size:12px;font-family:'Courier New',monospace;background:#0D1B2A;border:1px solid #1C1C1E;border-radius:6px;color:#F5F5F7;padding:.6rem;line-height:1.6;resize:none;margin-bottom:8px" rows="4">I help run CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league on EA Sports College Football. Please read the attached in-game Top 25 poll screenshots and return a clean ranked list formatted as "Team Record" one per line (e.g. Alabama 4-0), followed by a separate list of teams receiving votes. Extract team names and records only — nothing else.</textarea>
-    <button onclick="copyPrimer(this)" style="font-size:12px;padding:5px 12px;cursor:pointer;background:transparent;border:1px solid #A8B2BB;color:#A8B2BB;border-radius:5px;margin-bottom:10px">Copy primer</button>
-    <p style="font-size:12px;color:#A8B2BB;line-height:1.6"><strong style="color:#F5F5F7">Step 2</strong> — Upload all three screenshots to Claude chat.<br/><strong style="color:#F5F5F7">Step 3</strong> — Claude hands you back the formatted list. Paste it into the fields below.</p>
+  <div class="primer">
+    <p class="primer-title">📸 HOW TO FILL IN THE TOP 25</p>
+    <p class="primer-text">Take three screenshots from the game: the top half of the rankings list, the bottom half, and the <strong>More Information</strong> screen showing "Others Receiving Votes."</p>
+    <p class="primer-step">Step 1 — Open Claude chat and paste this first:</p>
+    <textarea id="primerText" class="primer-box" rows="4">I help run CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league on EA Sports College Football. Please read the attached in-game Top 25 poll screenshots and return a clean ranked list formatted as "Team Record" one per line (e.g. Alabama 4-0), followed by a separate list of teams receiving votes. Extract team names and records only — nothing else.</textarea>
+    <button class="primer-copy" onclick="copyPrimer(this)">Copy primer</button>
+    <p class="primer-text"><strong>Step 2</strong> — Upload all three screenshots to Claude chat.<br/><strong>Step 3</strong> — Claude hands you back the formatted list. Paste it into the fields below.</p>
   </div>
   <div class="grid2">
     <div class="fg">
       <label>This week — "Team Record" one per line</label>
-      <textarea id="top25" rows="14" style="width:100%;resize:vertical" placeholder="Paste this week's rankings here — one team and record per line (e.g. Alabama 4-0)"></textarea>
+      <textarea id="top25" rows="14" style="resize:vertical" placeholder="Paste this week's rankings here — one team and record per line (e.g. Alabama 4-0)"></textarea>
     </div>
     <div class="fg">
       <label>Last week — team names only (auto-fills after generate)</label>
-      <textarea id="last25" rows="14" style="width:100%;resize:vertical" placeholder="Auto-fills after first generate — or paste last week's teams manually"></textarea>
+      <textarea id="last25" rows="14" style="resize:vertical" placeholder="Auto-fills after first generate — or paste last week's teams manually"></textarea>
     </div>
   </div>
   <div class="fg" style="margin-top:10px">
     <label>Receiving votes (one per line)</label>
-    <textarea id="receiving" rows="5" style="width:100%;resize:vertical" placeholder="One team per line"></textarea>
+    <textarea id="receiving" rows="5" style="resize:vertical" placeholder="One team per line"></textarea>
   </div>
   <p class="hint">Teams receiving votes but not ranked in the Top 25 this week only.</p>
 </div>
 
-<div style="display:flex;gap:10px">
-  <button class="btn" style="flex:1" onclick="generate()">Generate Top 25 post</button>
+<div class="action-row">
+  <button class="btn" style="flex:1;margin:0" onclick="generate()">Generate Top 25 post</button>
   <button class="btn-clear" onclick="clearTop25()">Clear fields</button>
 </div>
 
@@ -278,355 +435,463 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <div class="output-section">
     <div class="out-header">
       <span class="out-label">✓ Top 25 Poll — Output</span>
-      <button class="copy-btn" onclick="cp('t25Post',this)">Copy</button>
+      <button class="copy-btn" onclick="copyValue('t25Post',this)">Copy</button>
     </div>
     <div class="post-box" id="t25Post"></div>
   </div>
 </div>
 
 <script>
-const DIV='━━━━━━━━━━━━━━━━━━━━';
-const LAST_KEY='clos_last_week_v1';
-const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzFNE1VvmzOA--kOJX06QzrcGLp9SZrHu3hG388Kudz_Fzr4YJC2w_-mPRpdrfAtGAgcA/exec';
+'use strict';
 
-let rosterCache={};
+// ============ Constants & storage keys ============
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFNE1VvmzOA--kOJX06QzrcGLp9SZrHu3hG388Kudz_Fzr4YJC2w_-mPRpdrfAtGAgcA/exec';
+const DIV = '━━━━━━━━━━━━━━━━━━━━';
+const STORAGE = { lastWeek: 'clos_last_week_v1', webhook: 'clos_webhook_url' };
+const ROSTER_TIMEOUT_MS = 10000;
 
-async function fetchRoster(){
-  try{
-    const resp=await fetch(APPS_SCRIPT_URL);
-    const data=await resp.json();
-    rosterCache={};
-    data.forEach(r=>{if(r.team&&r.discord)rosterCache[r.team.toLowerCase()]=r.discord;});
+// ============ Week-type config (single source of truth) ============
+// Drives the dropdown options, short codes, display labels, and tone
+// guidance fed into every Claude prompt. Edit here — nothing else.
+const TONE = {
+  kickoff:  'This is Week 0 — the season is brand new. Tone should feel like a fresh start: anticipation, potential, anything is possible. No pressure yet, just excitement.',
+  early:    'Early season. Tone should feel like first impressions and early statement games. Who looks legit? Who is already surprising people? Expectations are being set.',
+  mid:      'Midseason. The real teams are starting to separate from the pretenders. Tone should feel like a turning point — who is actually built for this?',
+  late:     'Late season. Every game has massive implications. Tone should feel urgent and high stakes — seasons are on the line, playoff spots are being won and lost.',
+  week13:   'Week 13 — rivalry territory. Tone should feel personal, heated, historic. Records go out the window. These games are about pride and bragging rights.',
+  week14:   'Week 14 — closing out the regular season. Tone should feel like last chances and desperation. Some teams are fighting for bowl eligibility, others for playoff positioning.',
+  confchamp:'Conference Championships. Tone should feel like a one-game season — winner takes the title, loser goes home with nothing. Legacy is on the line.',
+  bowl:     'Bowl season. Tone should feel like a reward — programs that earned it get one last shot to make a statement. Pride, momentum, and bragging rights heading into the offseason.',
+  natty:    'National Championship. This is the biggest game of the season. Tone should feel dynasty-defining — once in a season, everything on the line, one team walks away as champions. Maximum drama, maximum stakes.'
+};
+
+const WEEK_TYPES = [
+  { key:'kickoff',   short:'0',  label:'Week 0 — Season Kickoff',   tone:TONE.kickoff },
+  { key:'week1',     short:'1',  label:'Week 1',                     tone:TONE.early },
+  { key:'week2',     short:'2',  label:'Week 2',                     tone:TONE.early },
+  { key:'week3',     short:'3',  label:'Week 3',                     tone:TONE.early },
+  { key:'week4',     short:'4',  label:'Week 4',                     tone:TONE.early },
+  { key:'week5',     short:'5',  label:'Week 5',                     tone:TONE.mid },
+  { key:'week6',     short:'6',  label:'Week 6',                     tone:TONE.mid },
+  { key:'week7',     short:'7',  label:'Week 7',                     tone:TONE.mid },
+  { key:'week8',     short:'8',  label:'Week 8',                     tone:TONE.mid },
+  { key:'week9',     short:'9',  label:'Week 9',                     tone:TONE.late },
+  { key:'week10',    short:'10', label:'Week 10',                    tone:TONE.late },
+  { key:'week11',    short:'11', label:'Week 11',                    tone:TONE.late },
+  { key:'week12',    short:'12', label:'Week 12',                    tone:TONE.late },
+  { key:'week13',    short:'13', label:'Week 13',                    tone:TONE.week13 },
+  { key:'week14',    short:'14', label:'Week 14',                    tone:TONE.week14 },
+  { key:'confchamp', short:'CC', label:'Conference Championships',   tone:TONE.confchamp },
+  { key:'bowl1',     short:'B1', label:'Bowl Week 1',                tone:TONE.bowl },
+  { key:'bowl2',     short:'B2', label:'Bowl Week 2',                tone:TONE.bowl },
+  { key:'bowl3',     short:'B3', label:'Bowl Week 3',                tone:TONE.bowl },
+  { key:'natty',     short:'NC', label:'National Championship',      tone:TONE.natty }
+];
+const WEEK_BY_KEY = Object.fromEntries(WEEK_TYPES.map(w => [w.key, w]));
+
+function currentWeek() {
+  return WEEK_BY_KEY[$('weekType').value] || WEEK_TYPES[0];
+}
+
+// ============ DOM helpers ============
+const $ = id => document.getElementById(id);
+const show = el => el.classList.remove('hidden');
+const hide = el => el.classList.add('hidden');
+function setDisplay(id, display) { $(id).style.display = display; }
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ============ Roster ============
+let rosterCache = {};
+
+async function fetchRoster() {
+  const badge = $('savedBadge');
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ROSTER_TIMEOUT_MS);
+    const resp = await fetch(APPS_SCRIPT_URL, { signal: ctrl.signal });
+    clearTimeout(timer);
+    const data = await resp.json();
+    rosterCache = {};
+    data.forEach(r => { if (r.team && r.discord) rosterCache[r.team.toLowerCase()] = r.discord; });
     renderRoster(data);
-    document.getElementById('savedBadge').classList.remove('hidden');
-    document.getElementById('savedBadge').textContent='✓ Synced from Sheet';
-  }catch(e){
-    document.getElementById('savedBadge').classList.remove('hidden');
-    document.getElementById('savedBadge').textContent='⚠ Could not load roster';
+    show(badge);
+    badge.textContent = '✓ Synced from Sheet';
+  } catch (e) {
+    show(badge);
+    badge.textContent = '⚠ Could not load roster';
   }
 }
 
-function getRosterMap(){return rosterCache;}
-
-function renderRoster(data){
-  const container=document.getElementById('rosterRows');
-  container.innerHTML='';
-  if(data&&data.length){
-    data.forEach(r=>{
-      const d=document.createElement('div');
-      d.className='roster-row';
-      d.innerHTML=`<input type="text" value="${r.team||''}" readonly style="opacity:.6"/><input type="text" value="${r.discord||''}" readonly style="opacity:.6"/><span style="font-size:11px;color:#4caf50;padding:0 6px">✓</span>`;
-      container.appendChild(d);
-    });
-  } else {
-    container.innerHTML='<p style="font-size:12px;color:#A8B2BB;padding:4px 0">No coaches loaded.</p>';
+function renderRoster(data) {
+  const c = $('rosterRows');
+  c.innerHTML = '';
+  if (!data || !data.length) {
+    c.innerHTML = '<p class="roster-empty">No coaches loaded.</p>';
+    return;
   }
+  data.forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'roster-row';
+    row.innerHTML =
+      '<span class="roster-cell">' + escapeHtml(r.team || '') + '</span>' +
+      '<span class="roster-cell">' + escapeHtml(r.discord || '') + '</span>' +
+      '<span class="roster-check">✓</span>';
+    c.appendChild(row);
+  });
 }
 
-function toggleRoster(){document.getElementById('rosterPanel').classList.toggle('hidden');}
+function toggleRoster() { $('rosterPanel').classList.toggle('hidden'); }
 
-function weekShort(){
-  const map={
-    kickoff:'0',week1:'1',week2:'2',week3:'3',week4:'4',
-    week5:'5',week6:'6',week7:'7',week8:'8',
-    week9:'9',week10:'10',week11:'11',week12:'12',
-    week13:'13',week14:'14',
-    confchamp:'CC',bowl1:'B1',bowl2:'B2',bowl3:'B3',natty:'NC'
-  };
-  return map[document.getElementById('weekType').value]||'0';
+// ============ Request builders ============
+// All three sections (advance / GOTW / image prompt) share the same
+// "drop text into a textarea, reveal the panel, scroll to it" flow.
+function showRequest(sectionId, textareaId, body) {
+  $(textareaId).value = body;
+  const section = $(sectionId);
+  show(section);
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => window.scrollBy({ top: -80, behavior: 'smooth' }), 300);
 }
 
-function weekLabel(){
-  const map={
-    kickoff:'Week 0 — Season Kickoff',
-    week1:'Week 1',week2:'Week 2',week3:'Week 3',week4:'Week 4',
-    week5:'Week 5',week6:'Week 6',week7:'Week 7',week8:'Week 8',
-    week9:'Week 9',week10:'Week 10',week11:'Week 11',week12:'Week 12',
-    week13:'Week 13',week14:'Week 14',
-    confchamp:'Conference Championships',
-    bowl1:'Bowl Week 1',bowl2:'Bowl Week 2',bowl3:'Bowl Week 3',
-    natty:'National Championship'
-  };
-  return map[document.getElementById('weekType').value]||'';
+function requestAdvance() {
+  const w = currentWeek();
+  const season = $('seasonNum').value;
+  const isNatty = w.label === 'National Championship';
+  const body =
+    'Write an advance post for CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league.\n\n' +
+    'Week ' + w.short + ', Season ' + season + ' (' + w.label + ').\n\n' +
+    'The post MUST start with this exact header on its own line:\n' +
+    '# WE\'VE ADVANCED TO ' + (isNatty ? 'THE ' : '') + w.label.toUpperCase() + '!\n\n' +
+    'Then the body: Voice of the dynasty — authoritative, not personal. Must tag @CLOS Coach, reference #scheduling and getting games booked, end with a good luck sendoff. 3-4 sentences max. Fresh and unique — never the same post twice.\n\n' +
+    'Tone guidance: ' + w.tone;
+  showRequest('advRequestSection', 'advRequest', body);
 }
 
-function weekTone(){
-  const v=document.getElementById('weekType').value;
-  if(v==='kickoff')return'This is Week 0 — the season is brand new. Tone should feel like a fresh start: anticipation, potential, anything is possible. No pressure yet, just excitement.';
-  if(['week1','week2','week3','week4'].includes(v))return'Early season. Tone should feel like first impressions and early statement games. Who looks legit? Who is already surprising people? Expectations are being set.';
-  if(['week5','week6','week7','week8'].includes(v))return'Midseason. The real teams are starting to separate from the pretenders. Tone should feel like a turning point — who is actually built for this?';
-  if(['week9','week10','week11','week12'].includes(v))return'Late season. Every game has massive implications. Tone should feel urgent and high stakes — seasons are on the line, playoff spots are being won and lost.';
-  if(v==='week13')return'Week 13 — rivalry territory. Tone should feel personal, heated, historic. Records go out the window. These games are about pride and bragging rights.';
-  if(v==='week14')return'Week 14 — closing out the regular season. Tone should feel like last chances and desperation. Some teams are fighting for bowl eligibility, others for playoff positioning.';
-  if(v==='confchamp')return'Conference Championships. Tone should feel like a one-game season — winner takes the title, loser goes home with nothing. Legacy is on the line.';
-  if(['bowl1','bowl2','bowl3'].includes(v))return'Bowl season. Tone should feel like a reward — programs that earned it get one last shot to make a statement. Pride, momentum, and bragging rights heading into the offseason.';
-  if(v==='natty')return'National Championship. This is the biggest game of the season. Tone should feel dynasty-defining — once in a season, everything on the line, one team walks away as champions. Maximum drama, maximum stakes.';
-  return'';
+function requestGOTW() {
+  const g1t = $('g1team').value.trim();
+  const g2t = $('g2team').value.trim();
+  if (!g1t || !g2t) { alert('Enter both team names before building the GOTW request.'); return; }
+
+  const w = currentWeek();
+  const season = $('seasonNum').value;
+  const f = id => $(id).value.trim();
+  const g1c = f('g1coach'), g1r = f('g1rec'), g1rk = f('g1rank'),
+        g1res = f('g1result'), g1nar = f('g1narrative'), g1pl = f('g1players');
+  const g2c = f('g2coach'), g2r = f('g2rec'), g2rk = f('g2rank'),
+        g2res = f('g2result'), g2nar = f('g2narrative'), g2pl = f('g2players');
+  const ctx = f('gotwCtx'), home = f('gotwHome');
+
+  const body =
+    'Write a full immersive Game of the Week match preview article for CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league. This goes in a Discord forum channel as a thread.\n\n' +
+    'Week ' + w.short + ', Season ' + season + ' (' + w.label + ')\n' +
+    'Matchup: ' + g1t + (g1rk ? ' (' + g1rk + ')' : '') + ' (' + g1r + ') coached by ' + g1c +
+      ' vs ' + g2t + (g2rk ? ' (' + g2rk + ')' : '') + ' (' + g2r + ') coached by ' + g2c + '\n' +
+    'Home: ' + (home || 'Neutral site') + '\n' +
+    (ctx   ? 'Stakes: ' + ctx + '\n' : '') +
+    (g1res ? g1t + ' last result: ' + g1res + '\n' : '') +
+    (g1nar ? g1t + ' narrative: '   + g1nar + '\n' : '') +
+    (g1pl  ? g1t + ' key players:\n' + g1pl + '\n' : '') +
+    (g2res ? g2t + ' last result: ' + g2res + '\n' : '') +
+    (g2nar ? g2t + ' narrative: '   + g2nar + '\n' : '') +
+    (g2pl  ? g2t + ' key players:\n' + g2pl + '\n' : '') +
+    '\nTone guidance: ' + w.tone + '\n\n' +
+    'Format: bold header with team names/rankings/records, multi-paragraph breakdown of both teams, fabricated but believable coach quotes for both coaches, dramatic closing lines, end with "Who wins Week ' + w.short + '\'s Game of the Week? Vote below!"';
+  showRequest('gotwRequestSection', 'gotwRequest', body);
 }
 
-function requestAdvance(){
-  const week=weekShort();
-  const season=document.getElementById('seasonNum').value;
-  const wt=weekLabel();
-  const tone=weekTone();
-  const req='Write an advance post for CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league.\n\nWeek '+week+', Season '+season+' ('+wt+').\n\nThe post MUST start with this exact header on its own line:\n# WE\'VE ADVANCED TO '+(wt==='National Championship'?'THE ':'')+wt.toUpperCase()+'!\n\nThen the body: Voice of the dynasty — authoritative, not personal. Must tag @CLOS Coach, reference #scheduling and getting games booked, end with a good luck sendoff. 3-4 sentences max. Fresh and unique — never the same post twice.\n\nTone guidance: '+tone;
-  document.getElementById('advRequest').value=req;
-  document.getElementById('advRequestSection').style.display='block';
-  document.getElementById('advRequestSection').scrollIntoView({behavior:'smooth',block:'start'});
-  // Nudge up so the copy button and header are visible
-  setTimeout(()=>window.scrollBy({top:-80,behavior:'smooth'}),300);
+function requestImagePrompt() {
+  const g1t = $('g1team').value.trim();
+  const g2t = $('g2team').value.trim();
+  if (!g1t || !g2t) { alert('Enter both team names before building the image prompt.'); return; }
+
+  const w = currentWeek();
+  const season = $('seasonNum').value;
+  const home = $('gotwHome').value.trim();
+  const body =
+    'Write a GOTW image prompt for CLOS (Campus Legends of Saturday) using the vintage college football poster style described below.\n\n' +
+    'Matchup: ' + g1t + ' vs ' + g2t + '\n' +
+    'Week ' + w.short + ' | Season ' + season + '\n' +
+    (home ? 'Home team: ' + home + '\n' : '') +
+    '\nUsing web search, look up:\n' +
+    '- The correct home stadium name for ' + g1t + '\n' +
+    '- The correct home stadium name for ' + g2t + '\n' +
+    '- The correct mascot or primary visual symbol for ' + g1t + '\n' +
+    '- The correct mascot or primary visual symbol for ' + g2t + '\n\n' +
+    'Then write a complete Gemini image prompt in this exact format:\n\n' +
+    'Vintage college football game day poster illustration, 16:9 widescreen landscape format, for CLOS (Campus Legends of Saturday). [TEAM 1] vs [TEAM 2]. Bold retro poster art style — flat colors, strong graphic shapes, vintage typography, no photorealism. Left half: [TEAM 1 colors], [TEAM 1 STADIUM] illustrated in the background. Right half: [TEAM 2 colors], [TEAM 2 STADIUM] illustrated in the background. Both stadiums split down the center, each half belonging to its team. [TEAM 1 MASCOT] on the left side, [TEAM 2 MASCOT] on the right side, both facing each other at the center split, illustrated in bold vintage flat art style. Large bold retro text at the top reads "GAME OF THE WEEK." Below that: "[TEAM 1] vs [TEAM 2]." Bottom reads "CAMPUS LEGENDS OF SATURDAY" in small caps. Corner text: "WK [X] | S[X]." Feels like a 1950s college football game program cover brought to life. Output as 16:9 widescreen aspect ratio, horizontal orientation only.';
+  showRequest('imgRequestSection', 'imgRequest', body);
 }
 
-function requestImagePrompt(){
-  const week=weekShort();
-  const season=document.getElementById('seasonNum').value;
-  const g1t=document.getElementById('g1team').value.trim();
-  const g2t=document.getElementById('g2team').value.trim();
-  const home=document.getElementById('gotwHome').value.trim();
-
-  const req='Write a GOTW image prompt for CLOS (Campus Legends of Saturday) using the vintage college football poster style described below.\n\nMatchup: '+g1t+' vs '+g2t+'\nWeek '+week+' | Season '+season+'\n'+(home?'Home team: '+home+'\n':'')+'\nUsing web search, look up:\n- The correct home stadium name for '+g1t+'\n- The correct home stadium name for '+g2t+'\n- The correct mascot or primary visual symbol for '+g1t+'\n- The correct mascot or primary visual symbol for '+g2t+'\n\nThen write a complete Gemini image prompt in this exact format:\n\nVintage college football game day poster illustration, 16:9 widescreen landscape format, for CLOS (Campus Legends of Saturday). [TEAM 1] vs [TEAM 2]. Bold retro poster art style — flat colors, strong graphic shapes, vintage typography, no photorealism. Left half: [TEAM 1 colors], [TEAM 1 STADIUM] illustrated in the background. Right half: [TEAM 2 colors], [TEAM 2 STADIUM] illustrated in the background. Both stadiums split down the center, each half belonging to its team. [TEAM 1 MASCOT] on the left side, [TEAM 2 MASCOT] on the right side, both facing each other at the center split, illustrated in bold vintage flat art style. Large bold retro text at the top reads "GAME OF THE WEEK." Below that: "[TEAM 1] vs [TEAM 2]." Bottom reads "CAMPUS LEGENDS OF SATURDAY" in small caps. Corner text: "WK [X] | S[X]." Feels like a 1950s college football game program cover brought to life. Output as 16:9 widescreen aspect ratio, horizontal orientation only.';
-
-  document.getElementById('imgRequest').value=req;
-  document.getElementById('imgRequestSection').style.display='block';
-  document.getElementById('imgRequestSection').scrollIntoView({behavior:'smooth',block:'start'});
-  setTimeout(()=>window.scrollBy({top:-80,behavior:'smooth'}),300);
+// ============ Top 25 generator ============
+// parseLine: "Alabama 4-0" -> {team:'Alabama', record:'4-0'}.
+// Record must match /^\d+-\d+$/ on the final token, else the whole line is the team.
+function parseLine(line) {
+  const p = line.trim().split(/\s+/);
+  const r = p[p.length - 1];
+  if (/^\d+-\d+$/.test(r)) return { team: p.slice(0, -1).join(' '), record: r };
+  return { team: line.trim(), record: '' };
 }
 
-function requestGOTW(){
-  const week=weekShort();
-  const season=document.getElementById('seasonNum').value;
-  const wt=weekLabel();
-  const g1t=document.getElementById('g1team').value.trim();
-  const g1c=document.getElementById('g1coach').value.trim();
-  const g1r=document.getElementById('g1rec').value.trim();
-  const g1rk=document.getElementById('g1rank').value.trim();
-  const g1res=document.getElementById('g1result').value.trim();
-  const g1nar=document.getElementById('g1narrative').value.trim();
-  const g1pl=document.getElementById('g1players').value.trim();
-  const g2t=document.getElementById('g2team').value.trim();
-  const g2c=document.getElementById('g2coach').value.trim();
-  const g2r=document.getElementById('g2rec').value.trim();
-  const g2rk=document.getElementById('g2rank').value.trim();
-  const g2res=document.getElementById('g2result').value.trim();
-  const g2nar=document.getElementById('g2narrative').value.trim();
-  const g2pl=document.getElementById('g2players').value.trim();
-  const ctx=document.getElementById('gotwCtx').value.trim();
-  const home=document.getElementById('gotwHome').value.trim();
-  const tone=weekTone();
-  const req='Write a full immersive Game of the Week match preview article for CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league. This goes in a Discord forum channel as a thread.\n\nWeek '+week+', Season '+season+' ('+wt+')\nMatchup: '+g1t+(g1rk?' ('+g1rk+')':'')+' ('+g1r+') coached by '+g1c+' vs '+g2t+(g2rk?' ('+g2rk+')':'')+' ('+g2r+') coached by '+g2c+'\nHome: '+(home||'Neutral site')+'\n'+(ctx?'Stakes: '+ctx+'\n':'')+(g1res?g1t+' last result: '+g1res+'\n':'')+(g1nar?g1t+' narrative: '+g1nar+'\n':'')+(g1pl?g1t+' key players:\n'+g1pl+'\n':'')+(g2res?g2t+' last result: '+g2res+'\n':'')+(g2nar?g2t+' narrative: '+g2nar+'\n':'')+(g2pl?g2t+' key players:\n'+g2pl+'\n':'')+'\nTone guidance: '+tone+'\n\nFormat: bold header with team names/rankings/records, multi-paragraph breakdown of both teams, fabricated but believable coach quotes for both coaches, dramatic closing lines, end with "Who wins Week '+week+'\'s Game of the Week? Vote below!"';
-  document.getElementById('gotwRequest').value=req;
-  document.getElementById('gotwRequestSection').style.display='block';
-  document.getElementById('gotwRequestSection').scrollIntoView({behavior:'smooth',block:'start'});
-  setTimeout(()=>window.scrollBy({top:-80,behavior:'smooth'}),300);
+// Positive return = team moved UP (old rank - new rank). Negative = moved DOWN.
+function getMovement(rank, last, team) {
+  if (!last.length) return null;
+  const i = last.findIndex(t => t.toLowerCase() === team.toLowerCase());
+  if (i === -1) return null;
+  return (i + 1) - rank;
 }
 
-function parseLine(line){
-  const p=line.trim().split(/\s+/);
-  const r=p[p.length-1];
-  if(/^\d+-\d+$/.test(r))return{team:p.slice(0,p.length-1).join(' '),record:r};
-  return{team:line.trim(),record:''};
-}
-
-function getMovement(rank,last,team){
-  if(!last.length)return null;
-  const i=last.findIndex(t=>t.toLowerCase()===team.toLowerCase());
-  if(i===-1)return null;
-  return(i+1)-rank;
-}
-
-function indicator(diff){
-  if(diff===null)return ' 🆕';
-  if(diff>0)return ' ↑'+diff;
-  if(diff<0)return ' ↓'+Math.abs(diff);
+function indicator(diff) {
+  if (diff === null) return ' 🆕';
+  if (diff > 0)      return ' ↑' + diff;
+  if (diff < 0)      return ' ↓' + Math.abs(diff);
   return ' —';
 }
 
-function generate(){
-  const week=weekShort();
-  const season=document.getElementById('seasonNum').value;
-  const rm=getRosterMap();
-  const currRaw=document.getElementById('top25').value.split('\n').map(t=>t.trim()).filter(Boolean);
-  const last=document.getElementById('last25').value.split('\n').map(t=>t.trim()).filter(Boolean);
-  const recv=document.getElementById('receiving').value.split('\n').map(t=>t.trim()).filter(Boolean);
+function generate() {
+  try {
+    const w = currentWeek();
+    const season = $('seasonNum').value;
+    const lines = s => s.split('\n').map(t => t.trim()).filter(Boolean);
 
-  const parsed=currRaw.map((line,i)=>{
-    const{team,record}=parseLine(line);
-    const diff=getMovement(i+1,last,team);
-    return{team,record,diff,rank:i+1,discord:rm[team.toLowerCase()]||null};
-  });
+    const currRaw = lines($('top25').value);
+    const last    = lines($('last25').value);
+    const recv    = lines($('receiving').value);
 
-  let post='📊 **CLOS TOP 25 — WEEK '+week+' | SEASON '+season+'**\n'+DIV+'\n\n';
-  parsed.forEach(({team,record,diff,discord},i)=>{
-    post+='**'+(i+1)+'.** '+team+(record?' ('+record+')':'')+indicator(diff)+(discord?' | @'+discord:'')+'\n';
-  });
+    const parsed = currRaw.map((line, i) => {
+      const { team, record } = parseLine(line);
+      const diff = getMovement(i + 1, last, team);
+      return { team, record, diff, rank: i + 1, discord: rosterCache[team.toLowerCase()] || null };
+    });
 
-  const newEntries=parsed.filter(p=>p.diff===null&&last.length>0);
-  const currLower=parsed.map(p=>p.team.toLowerCase());
-  const dropped=last.filter(t=>!currLower.includes(t.toLowerCase())).map(t=>({team:t,discord:rm[t.toLowerCase()]||null}));
+    let post = '📊 **CLOS TOP 25 — WEEK ' + w.short + ' | SEASON ' + season + '**\n' + DIV + '\n\n';
+    parsed.forEach(({ team, record, diff, discord }, i) => {
+      post += '**' + (i + 1) + '.** ' + team +
+              (record ? ' (' + record + ')' : '') +
+              indicator(diff) +
+              (discord ? ' | @' + discord : '') + '\n';
+    });
 
-  if(newEntries.length){
-    post+='\n'+DIV+'\n🆕 **NEW TO THE POLL**\n';
-    newEntries.forEach(p=>{post+=p.team+(p.record?' ('+p.record+')':'')+' — enters at #'+p.rank+(p.discord?' | @'+p.discord:'')+'\n';});
-  }
-  if(dropped.length){
-    post+='\n📉 **DROPPED OUT**\n';
-    dropped.forEach(p=>{post+=p.team+(p.discord?' | @'+p.discord:'')+'\n';});
-  }
+    const newEntries = parsed.filter(p => p.diff === null && last.length > 0);
+    const currLower  = parsed.map(p => p.team.toLowerCase());
+    const dropped    = last
+      .filter(t => !currLower.includes(t.toLowerCase()))
+      .map(t => ({ team: t, discord: rosterCache[t.toLowerCase()] || null }));
 
-  const risers=parsed.filter(p=>p.diff!==null&&p.diff>0).sort((a,b)=>b.diff-a.diff).slice(0,3);
-  const fallers=parsed.filter(p=>p.diff!==null&&p.diff<0).sort((a,b)=>a.diff-b.diff).slice(0,3);
+    if (newEntries.length) {
+      post += '\n' + DIV + '\n🆕 **NEW TO THE POLL**\n';
+      newEntries.forEach(p => {
+        post += p.team + (p.record ? ' (' + p.record + ')' : '') +
+                ' — enters at #' + p.rank +
+                (p.discord ? ' | @' + p.discord : '') + '\n';
+      });
+    }
+    if (dropped.length) {
+      post += '\n📉 **DROPPED OUT**\n';
+      dropped.forEach(p => { post += p.team + (p.discord ? ' | @' + p.discord : '') + '\n'; });
+    }
 
-  if(risers.length||fallers.length){
-    post+='\n'+DIV+'\n';
-    if(risers.length){post+='**BIGGEST RISERS**\n';risers.forEach(p=>{post+='↑'+p.diff+' '+p.team+(p.record?' ('+p.record+')':'')+' — now #'+p.rank+'\n';});}
-    if(fallers.length){post+='\n**BIGGEST FALLERS**\n';fallers.forEach(p=>{post+='↓'+Math.abs(p.diff)+' '+p.team+(p.record?' ('+p.record+')':'')+' — now #'+p.rank+'\n';});}
-  }
+    const risers  = parsed.filter(p => p.diff !== null && p.diff > 0).sort((a,b) => b.diff - a.diff).slice(0,3);
+    const fallers = parsed.filter(p => p.diff !== null && p.diff < 0).sort((a,b) => a.diff - b.diff).slice(0,3);
 
-  if(recv.length){post+='\n'+DIV+'\n**RECEIVING VOTES**\n';recv.forEach(t=>{post+=t+'\n';});}
-
-  document.getElementById('t25Post').textContent=post;
-  document.getElementById('output').classList.remove('hidden');
-
-  try{
-    localStorage.setItem(LAST_KEY,JSON.stringify(parsed.map(p=>p.team)));
-    document.getElementById('last25').value=parsed.map(p=>p.team).join('\n');
-  }catch(e){}
-}
-
-function cp(id,btn){
-  const el=document.getElementById(id);
-  const txt=el.tagName==='TEXTAREA'?el.value:el.textContent;
-  navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);});
-}
-
-function clearGOTW(){
-  ['g1team','g1coach','g1rec','g1rank','g1result','g1narrative','g1players',
-   'g2team','g2coach','g2rec','g2rank','g2result','g2narrative','g2players',
-   'gotwCtx','gotwHome','gotwRequest','gotwPaste','imgRequest'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.value='';
-  });
-  document.getElementById('gotwRequestSection').style.display='none';
-  document.getElementById('imgRequestSection').style.display='none';
-}
-
-function clearAll(){
-  ['advRequest','advPaste','gotwRequest','gotwPaste'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.value='';
-  });
-  document.getElementById('advRequestSection').style.display='none';
-  document.getElementById('gotwRequestSection').style.display='none';
-  document.getElementById('output').classList.add('hidden');
-  document.getElementById('t25Post').textContent='';
-}
-function clearTop25(){
-  document.getElementById('top25').value='';
-  document.getElementById('last25').value='';
-  document.getElementById('receiving').value='';
-  document.getElementById('output').classList.add('hidden');
-  document.getElementById('t25Post').textContent='';
-  try{localStorage.removeItem(LAST_KEY);}catch(e){}
-}
-
-function copyPrimer(btn){
-  const txt=document.getElementById('primerText').value;
-  navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy primer',2000);});
-}
-
-function cpBox(id,btn){
-  navigator.clipboard.writeText(document.getElementById(id).value).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',2000);});
-}
-
-// Auto-load last week only if saved by generate function
-(function(){
-  try{
-    const s=localStorage.getItem(LAST_KEY);
-    if(s){
-      const t=JSON.parse(s);
-      if(t.length){
-        document.getElementById('last25').value=t.join('\n');
+    if (risers.length || fallers.length) {
+      post += '\n' + DIV + '\n';
+      if (risers.length) {
+        post += '**BIGGEST RISERS**\n';
+        risers.forEach(p => {
+          post += '↑' + p.diff + ' ' + p.team + (p.record ? ' (' + p.record + ')' : '') + ' — now #' + p.rank + '\n';
+        });
+      }
+      if (fallers.length) {
+        post += '\n**BIGGEST FALLERS**\n';
+        fallers.forEach(p => {
+          post += '↓' + Math.abs(p.diff) + ' ' + p.team + (p.record ? ' (' + p.record + ')' : '') + ' — now #' + p.rank + '\n';
+        });
       }
     }
-  }catch(e){}
-})();
 
-// Webhook functions
-const WEBHOOK_KEY='clos_webhook_url';
-
-function saveWebhook(){
-  const url=document.getElementById('webhookUrl').value.trim();
-  try{localStorage.setItem(WEBHOOK_KEY,url);}catch(e){}
-  const badge=document.getElementById('webhookBadge');
-  const msg=document.getElementById('webhookSaveMsg');
-  if(url){badge.classList.remove('hidden');msg.classList.remove('hidden');}
-  else{badge.classList.add('hidden');msg.classList.add('hidden');}
-}
-
-function loadWebhook(){
-  try{
-    const url=localStorage.getItem(WEBHOOK_KEY);
-    if(url){
-      document.getElementById('webhookUrl').value=url;
-      document.getElementById('webhookBadge').classList.remove('hidden');
+    if (recv.length) {
+      post += '\n' + DIV + '\n**RECEIVING VOTES**\n';
+      recv.forEach(t => { post += t + '\n'; });
     }
-  }catch(e){}
+
+    $('t25Post').textContent = post;
+    show($('output'));
+
+    // Snapshot this week's teams for next week's diff.
+    try {
+      localStorage.setItem(STORAGE.lastWeek, JSON.stringify(parsed.map(p => p.team)));
+      $('last25').value = parsed.map(p => p.team).join('\n');
+    } catch (e) {}
+  } catch (e) {
+    alert('Could not generate Top 25 post: ' + e.message);
+  }
 }
 
-async function postToDiscord(){
-  const webhookUrl=document.getElementById('webhookUrl').value.trim();
-  if(!webhookUrl){
-    alert('Set your webhook URL first (Discord Webhook section above).');
-    return;
-  }
-  const content=document.getElementById('advPaste').value.trim();
-  if(!content){
-    alert('Paste the advance post into the output box first.');
-    return;
-  }
-  const btn=document.getElementById('postBtn');
-  const status=document.getElementById('postStatus');
-  btn.textContent='Posting...';
-  btn.disabled=true;
-  try{
-    const res=await fetch(webhookUrl,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        content:content,
-        username:'CLOS Advance Bot'
-      })
+// ============ Clear handlers ============
+const GOTW_FIELDS = [
+  'g1team','g1coach','g1rec','g1rank','g1result','g1narrative','g1players',
+  'g2team','g2coach','g2rec','g2rank','g2result','g2narrative','g2players',
+  'gotwCtx','gotwHome','gotwRequest','gotwPaste','imgRequest'
+];
+
+function clearValues(ids) {
+  ids.forEach(id => { const el = $(id); if (el) el.value = ''; });
+}
+
+function clearGOTW() {
+  clearValues(GOTW_FIELDS);
+  hide($('gotwRequestSection'));
+  hide($('imgRequestSection'));
+}
+
+function clearTop25() {
+  clearValues(['top25', 'last25', 'receiving']);
+  hide($('output'));
+  $('t25Post').textContent = '';
+  try { localStorage.removeItem(STORAGE.lastWeek); } catch (e) {}
+}
+
+function clearAll() {
+  // Advance
+  clearValues(['advRequest', 'advPaste']);
+  hide($('advRequestSection'));
+  const status = $('postStatus');
+  status.textContent = ''; hide(status);
+  resetPostButton();
+  // GOTW + image prompt
+  clearGOTW();
+  // Top 25
+  clearTop25();
+}
+
+// ============ Clipboard ============
+function copyValue(id, btn, restore = 'Copy') {
+  const el = $(id);
+  const txt = (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') ? el.value : el.textContent;
+  navigator.clipboard.writeText(txt).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = restore; }, 2000);
+  }).catch(() => {
+    btn.textContent = 'Copy failed';
+    setTimeout(() => { btn.textContent = restore; }, 2000);
+  });
+}
+
+function copyPrimer(btn) { copyValue('primerText', btn, 'Copy primer'); }
+
+// ============ Webhook & Discord posting ============
+function saveWebhook() {
+  const url = $('webhookUrl').value.trim();
+  try { localStorage.setItem(STORAGE.webhook, url); } catch (e) {}
+  const badge = $('webhookBadge');
+  const msg   = $('webhookSaveMsg');
+  const forgetBtn = $('webhookForget');
+  if (url) { show(badge); show(msg); show(forgetBtn); }
+  else     { hide(badge); hide(msg); hide(forgetBtn); }
+}
+
+function forgetWebhook() {
+  $('webhookUrl').value = '';
+  try { localStorage.removeItem(STORAGE.webhook); } catch (e) {}
+  saveWebhook();
+}
+
+function loadWebhook() {
+  try {
+    const url = localStorage.getItem(STORAGE.webhook);
+    if (url) {
+      $('webhookUrl').value = url;
+      show($('webhookBadge'));
+      show($('webhookForget'));
+    }
+  } catch (e) {}
+}
+
+function resetPostButton() {
+  const btn = $('postBtn');
+  btn.textContent = 'Post to Discord';
+  btn.style.background = '#4caf50';
+  btn.style.borderColor = '#4caf50';
+  btn.style.color = '#0A0A0A';
+  btn.disabled = false;
+}
+
+function setPostButtonFailed() {
+  const btn = $('postBtn');
+  btn.textContent = 'Failed';
+  btn.style.background = '#f44336';
+  btn.style.borderColor = '#f44336';
+  btn.disabled = false;
+}
+
+async function postToDiscord() {
+  const webhookUrl = $('webhookUrl').value.trim();
+  if (!webhookUrl) { alert('Set your webhook URL first (Discord Webhook section above).'); return; }
+  const content = $('advPaste').value.trim();
+  if (!content)   { alert('Paste the advance post into the output box first.'); return; }
+
+  const btn = $('postBtn');
+  const status = $('postStatus');
+  btn.textContent = 'Posting...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, username: 'CLOS Advance Bot' })
     });
-    if(res.ok||res.status===204){
-      btn.textContent='✓ Posted!';
-      btn.style.background='#4caf50';
-      status.textContent='Advance post sent to Discord. CLOS Report will fire automatically.';
-      status.style.color='#4caf50';
-      status.classList.remove('hidden');
-    }else{
-      const err=await res.text();
-      btn.textContent='Failed';
-      btn.style.background='#f44336';
-      status.textContent='Error: '+res.status+' — '+err;
-      status.style.color='#f44336';
-      status.classList.remove('hidden');
+    if (res.ok || res.status === 204) {
+      btn.textContent = '✓ Posted!';
+      btn.style.background = '#4caf50';
+      status.textContent = 'Advance post sent to Discord. CLOS Report will fire automatically.';
+      status.style.color = '#4caf50';
+      show(status);
+      // Only auto-reset on success. On failure we leave the red state so the user sees it.
+      setTimeout(resetPostButton, 3000);
+    } else {
+      const err = await res.text();
+      status.textContent = 'Error: ' + res.status + ' — ' + err;
+      status.style.color = '#f44336';
+      show(status);
+      setPostButtonFailed();
     }
-  }catch(e){
-    btn.textContent='Failed';
-    btn.style.background='#f44336';
-    status.textContent='Error: '+e.message;
-    status.style.color='#f44336';
-    status.classList.remove('hidden');
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = '#f44336';
+    show(status);
+    setPostButtonFailed();
   }
-  setTimeout(()=>{
-    btn.textContent='Post to Discord';
-    btn.style.background='#4caf50';
-    btn.disabled=false;
-  },3000);
 }
 
-loadWebhook();
-fetchRoster();
+// ============ Init ============
+function populateWeekDropdown() {
+  const sel = $('weekType');
+  sel.innerHTML = WEEK_TYPES.map(w =>
+    '<option value="' + w.key + '"' + (w.key === 'kickoff' ? ' selected' : '') + '>' + w.label + '</option>'
+  ).join('');
+}
+
+function loadLastTop25() {
+  try {
+    const s = localStorage.getItem(STORAGE.lastWeek);
+    if (s) {
+      const t = JSON.parse(s);
+      if (t.length) $('last25').value = t.join('\n');
+    }
+  } catch (e) {}
+}
+
+function init() {
+  populateWeekDropdown();
+  loadLastTop25();
+  loadWebhook();
+  fetchRoster();
+}
+
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
