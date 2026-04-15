@@ -364,8 +364,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <p class="ok hidden" id="postStatus"></p>
 </div>
 
-<!-- Gameplay sections (GOTW + Top 25) — hidden during offseason weeks -->
-<div id="gameplaySections">
+<!-- GOTW section — hidden during Week 14, Bowls, Natty, and all offseason weeks -->
+<div id="gotwSection">
 
 <hr class="divider"/>
 
@@ -386,9 +386,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
       <div class="fg"><label>Coach name</label><input type="text" id="g1coach" placeholder="GoodGameBro"/></div>
       <div class="fg"><label>Record</label><input type="text" id="g1rec" placeholder="15-1"/></div>
       <div class="fg"><label>Ranking (optional)</label><input type="text" id="g1rank" placeholder="#1"/></div>
-      <div class="fg"><label>Recent result</label><input type="text" id="g1result" placeholder="W 52-17 vs #2 Ohio State"/></div>
-      <div class="fg"><label>Team narrative</label><textarea class="mono-box paste-box" id="g1narrative" rows="2" placeholder="Hot off a dominant title game win..."></textarea></div>
-      <div class="fg"><label>Key players — last game stats</label><textarea class="mono-box paste-box" id="g1players" rows="3" placeholder="QB Jason Smith — 341 yds, 4 TD&#10;RB Marcus Johnson — 214 yds, 3 TD"></textarea></div>
+      <div class="fg"><label>Recent result <span style="color:#A8B2BB;font-weight:400">(or preseason outlook)</span></label><input type="text" id="g1result" placeholder="W 52-17 vs Ohio State  —or—  Returns 17 starters from 11-2 campaign"/></div>
+      <div class="fg"><label>Team narrative</label><textarea class="mono-box paste-box" id="g1narrative" rows="2" placeholder="Hot off a dominant title game win, or building on preseason buzz..."></textarea></div>
+      <div class="fg"><label>Key players <span style="color:#A8B2BB;font-weight:400">(stats, projections, or returning stars)</span></label><textarea class="mono-box paste-box" id="g1players" rows="3" placeholder="QB Jason Smith — 341 yds, 4 TD last week&#10;RB Marcus Johnson — 1,200 yds projected as a junior"></textarea></div>
     </div>
     <div>
       <div class="team-label">Team 2</div>
@@ -396,9 +396,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
       <div class="fg"><label>Coach name</label><input type="text" id="g2coach" placeholder="DEppsRightSteps"/></div>
       <div class="fg"><label>Record</label><input type="text" id="g2rec" placeholder="14-1"/></div>
       <div class="fg"><label>Ranking (optional)</label><input type="text" id="g2rank" placeholder="#3"/></div>
-      <div class="fg"><label>Recent result</label><input type="text" id="g2result" placeholder="W 38-21 vs Florida State"/></div>
-      <div class="fg"><label>Team narrative</label><textarea class="mono-box paste-box" id="g2narrative" rows="2" placeholder="Battle-tested and peaking late..."></textarea></div>
-      <div class="fg"><label>Key players — last game stats</label><textarea class="mono-box paste-box" id="g2players" rows="3" placeholder="QB Tyler Williams — 298 yds, 3 TD&#10;DE Chris Carter — 3 sacks, 2 TFL"></textarea></div>
+      <div class="fg"><label>Recent result <span style="color:#A8B2BB;font-weight:400">(or preseason outlook)</span></label><input type="text" id="g2result" placeholder="W 38-21 vs Florida State  —or—  Loaded returning core, ranked preseason top 10"/></div>
+      <div class="fg"><label>Team narrative</label><textarea class="mono-box paste-box" id="g2narrative" rows="2" placeholder="Battle-tested and peaking late, or riding preseason momentum..."></textarea></div>
+      <div class="fg"><label>Key players <span style="color:#A8B2BB;font-weight:400">(stats, projections, or returning stars)</span></label><textarea class="mono-box paste-box" id="g2players" rows="3" placeholder="QB Tyler Williams — 298 yds, 3 TD last week&#10;DE Chris Carter — projected all-conference returning senior"></textarea></div>
     </div>
   </div>
 
@@ -444,6 +444,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   </div>
   <textarea class="mono-box output-box" id="gotwPaste" rows="12" placeholder="Paste Claude's GOTW article here..."></textarea>
 </div>
+
+</div><!-- /#gotwSection -->
+
+<!-- Top 25 section — hidden during offseason weeks -->
+<div id="top25Section">
 
 <hr class="divider"/>
 
@@ -498,7 +503,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   </div>
 </div>
 
-</div><!-- /#gameplaySections -->
+</div><!-- /#top25Section -->
 
 <script>
 'use strict';
@@ -525,8 +530,8 @@ const TONE = {
   early:     'Early season. Tone should feel like first impressions and early statement games. Who looks legit? Who is already surprising people? Expectations are being set.',
   mid:       'Midseason. The real teams are starting to separate from the pretenders. Tone should feel like a turning point — who is actually built for this?',
   late:      'Late season. Every game has massive implications. Tone should feel urgent and high stakes — seasons are on the line, playoff spots are being won and lost.',
-  week13:    'Week 13 — rivalry territory. Tone should feel personal, heated, historic. Records go out the window. These games are about pride and bragging rights.',
-  week14:    'Week 14 — closing out the regular season. Tone should feel like last chances and desperation. Some teams are fighting for bowl eligibility, others for playoff positioning.',
+  rivalry:   'Rivalry Week. Records go out the window. Iron Bowl, The Game, Bedlam, Holy War — the biggest grudge matches of the year all firing the same Saturday. Tone: personal, heated, historic. Year-long grudges settle, legacies stamp, nothing else on the schedule matters.',
+  armynavy:  'Army/Navy Week. One game, two service academies, 125+ years of tradition. Everyone else sits — only Army and Navy take the field. Tone: reverent, cinematic, not playoff-flavored. Honor, pride, and the game itself. The one Saturday the whole country watches two programs nobody talks about the other 51 weeks.',
   confchamp: 'Conference Championships. Tone should feel like a one-game season — winner takes the title, loser goes home with nothing. Legacy is on the line.',
   bowl:      'Bowl season. Tone should feel like a reward — programs that earned it get one last shot to make a statement. Pride, momentum, and bragging rights heading into the offseason.',
   natty:     'National Championship. This is the biggest game of the season. Tone should feel dynasty-defining — once in a season, everything on the line, one team walks away as champions. Maximum drama, maximum stakes.',
@@ -567,8 +572,9 @@ const WEEK_TYPES = [
   { key:'week10',    short:'10', label:'Week 10',                    tone:TONE.late },
   { key:'week11',    short:'11', label:'Week 11',                    tone:TONE.late },
   { key:'week12',    short:'12', label:'Week 12',                    tone:TONE.late },
-  { key:'week13',    short:'13', label:'Week 13',                    tone:TONE.week13 },
-  { key:'week14',    short:'14', label:'Week 14',                    tone:TONE.week14 },
+  { key:'week13',    short:'13', label:'Week 13',                    tone:TONE.late },
+  { key:'week14',    short:'14', label:'Week 14 — Rivalry Week',     tone:TONE.rivalry },
+  { key:'week15',    short:'15', label:'Week 15 — Army/Navy Week',   tone:TONE.armynavy },
   { key:'confchamp', short:'CC', label:'Conference Championships',   tone:TONE.confchamp },
   { key:'bowl1',     short:'B1', label:'Bowl Week 1',                tone:TONE.bowl },
   { key:'bowl2',     short:'B2', label:'Bowl Week 2',                tone:TONE.bowl },
@@ -590,12 +596,22 @@ const WEEK_TYPES = [
 ];
 const WEEK_BY_KEY = Object.fromEntries(WEEK_TYPES.map(w => [w.key, w]));
 
-// Weeks during which GOTW and Top 25 sections are hidden (no games, no poll).
+// Weeks during which the Top 25 section is hidden (no poll in offseason).
 const OFFSEASON_KEYS = new Set([
   'eos','playersleaving','portal1','portal2','portal3','portal4',
   'nsd','training','transfers','preseason'
 ]);
 function isOffseason(key) { return OFFSEASON_KEYS.has(key); }
+
+// Weeks during which the GOTW section is shown. Week 15 (Army/Navy Week)
+// skipped because only one game is played league-wide. Bowl Season + Natty
+// skipped because coaches are locked in and GOTW posts aren't made.
+const GOTW_WEEKS = new Set([
+  'kickoff','week1','week2','week3','week4','week5','week6','week7',
+  'week8','week9','week10','week11','week12','week13','week14','confchamp'
+]);
+function hasGOTW(key) { return GOTW_WEEKS.has(key); }
+
 // Weeks that support the Wheel of Fortune toggle.
 function usesWheelToggle(key) { return key === 'eos' || key === 'playersleaving'; }
 
@@ -1148,13 +1164,19 @@ function updateNowBuilding() {
   updateOffseasonState();
 }
 
-// ============ Offseason state ============
-// Toggles visibility of the gameplay sections (GOTW + Top 25) and the Wheel
-// of Fortune checkbox based on the currently-selected week type.
+// ============ Section visibility ============
+// Toggles visibility of the GOTW section, the Top 25 section, and the Wheel
+// of Fortune checkbox based on the currently-selected week type. GOTW hides
+// during Week 14, Bowl Season, Natty, and offseason (no matchup previews).
+// Top 25 hides only during offseason (final poll still runs after Natty).
 function updateOffseasonState() {
   const w = currentWeek();
-  const gameplay = $('gameplaySections');
-  if (isOffseason(w.key)) hide(gameplay); else show(gameplay);
+
+  const gotw = $('gotwSection');
+  if (hasGOTW(w.key)) show(gotw); else hide(gotw);
+
+  const top25 = $('top25Section');
+  if (isOffseason(w.key)) hide(top25); else show(top25);
 
   const wheelBox = $('wheelToggleBox');
   if (usesWheelToggle(w.key)) show(wheelBox); else hide(wheelBox);
