@@ -101,7 +101,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 .tool-header-sub{font-size:12px;color:#A8B2BB;margin-top:3px}
 .row-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
 .panel-body{margin-top:.75rem}
-.section-label{font-size:10px;font-weight:700;color:#A8B2BB;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
 .dashed-hint{font-size:11px;color:#A8B2BB;margin-bottom:6px}
 .team-label{font-size:12px;font-weight:600;color:#A8B2BB;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
 
@@ -190,14 +189,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 .paste-box  {background:#1C1C1E;border:1px solid #1C1C1E;color:#F5F5F7}
 .output-box {background:#0A0A0A;border:1px solid #A8B2BB;color:#F5F5F7}
 .request-box{background:#1C1C1E;border:1px dashed #A8B2BB;color:#F5F5F7}
-.post-box{
-  font-size:13px;color:#F5F5F7;
-  white-space:pre-wrap;
-  font-family:'Courier New',monospace;
-  background:#0A0A0A;border:1px solid #A8B2BB;border-radius:8px;
-  padding:.75rem;line-height:1.65;
-}
-
 /* ===== Status text ===== */
 .hint{font-size:12px;color:#A8B2BB;margin-top:4px}
 .ok{font-size:12px;color:#4caf50;margin-top:6px}
@@ -247,6 +238,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   color:#A8B2BB;border-radius:5px;margin-bottom:10px;
 }
 
+/* ===== Wheel of Fortune toggle (offseason only) ===== */
+.wheel-toggle{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;margin-top:12px;
+  background:#1C1C1E;border-left:3px solid #A8B2BB;
+  border-radius:6px;font-size:13px;color:#F5F5F7;
+  cursor:pointer;
+}
+.wheel-toggle input{width:auto;margin:0;accent-color:#A8B2BB}
+.wheel-toggle label{cursor:pointer;user-select:none;flex:1}
+
 /* ===== GOTW extras ===== */
 .gotw-graphic{margin-top:1rem;border-top:1px solid #1C1C1E;padding-top:1rem}
 .gotw-graphic-title{
@@ -291,7 +293,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
     <div class="roster-head"><span>Team name</span><span>Discord username</span><span></span></div>
     <div id="rosterRows"><p class="roster-empty">Loading roster...</p></div>
     <button class="btn-sm" style="margin-top:8px" onclick="fetchRoster()">↻ Refresh from Sheet</button>
-    <div class="ok hidden" id="saveMsg">Roster refreshed.</div>
   </div>
 </div>
 
@@ -334,6 +335,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
       <div class="tool-header-sub">Generate a fresh advance post for this week</div>
     </div>
   </div>
+  <div class="wheel-toggle hidden" id="wheelToggleBox">
+    <input type="checkbox" id="wheelToggle" onchange="saveWheel()" checked/>
+    <label for="wheelToggle">🎡 Wheel of Fortune active this cycle</label>
+  </div>
   <button class="btn-req" onclick="requestAdvance()">Build advance post request ↗</button>
   <p class="hint" style="margin-top:8px">A copyable Claude request will appear below after clicking.</p>
   <div id="advRequestSection" class="hidden panel-body">
@@ -358,6 +363,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <textarea class="mono-box output-box" id="advPaste" rows="5" placeholder="Paste Claude's advance post here..."></textarea>
   <p class="ok hidden" id="postStatus"></p>
 </div>
+
+<!-- Gameplay sections (GOTW + Top 25) — hidden during offseason weeks -->
+<div id="gameplaySections">
 
 <hr class="divider"/>
 
@@ -490,6 +498,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   </div>
 </div>
 
+</div><!-- /#gameplaySections -->
+
 <script>
 'use strict';
 
@@ -497,10 +507,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFNE1VvmzOA--kOJX06QzrcGLp9SZrHu3hG388Kudz_Fzr4YJC2w_-mPRpdrfAtGAgcA/exec';
 const DIV = '━━━━━━━━━━━━━━━━━━━━';
 const STORAGE = {
-  lastWeek:  'clos_last_week_v1',
-  webhook:   'clos_webhook_url',
-  season:    'clos_season',
-  gotwDraft: 'clos_gotw_draft_v1'
+  lastWeek:    'clos_last_week_v1',
+  webhook:     'clos_webhook_url',
+  season:      'clos_season',
+  gotwDraft:   'clos_gotw_draft_v1',
+  wheelActive: 'clos_wheel_active'
 };
 const WEBHOOK_PATTERN = /^https:\/\/(canary\.|ptb\.)?discord(app)?\.com\/api\/webhooks\/\d+\/[\w-]+/i;
 const ROSTER_TIMEOUT_MS = 10000;
@@ -509,18 +520,40 @@ const ROSTER_TIMEOUT_MS = 10000;
 // Drives the dropdown options, short codes, display labels, and tone
 // guidance fed into every Claude prompt. Edit here — nothing else.
 const TONE = {
-  kickoff:  'This is Week 0 — the season is brand new. Tone should feel like a fresh start: anticipation, potential, anything is possible. No pressure yet, just excitement.',
-  early:    'Early season. Tone should feel like first impressions and early statement games. Who looks legit? Who is already surprising people? Expectations are being set.',
-  mid:      'Midseason. The real teams are starting to separate from the pretenders. Tone should feel like a turning point — who is actually built for this?',
-  late:     'Late season. Every game has massive implications. Tone should feel urgent and high stakes — seasons are on the line, playoff spots are being won and lost.',
-  week13:   'Week 13 — rivalry territory. Tone should feel personal, heated, historic. Records go out the window. These games are about pride and bragging rights.',
-  week14:   'Week 14 — closing out the regular season. Tone should feel like last chances and desperation. Some teams are fighting for bowl eligibility, others for playoff positioning.',
-  confchamp:'Conference Championships. Tone should feel like a one-game season — winner takes the title, loser goes home with nothing. Legacy is on the line.',
-  bowl:     'Bowl season. Tone should feel like a reward — programs that earned it get one last shot to make a statement. Pride, momentum, and bragging rights heading into the offseason.',
-  natty:    'National Championship. This is the biggest game of the season. Tone should feel dynasty-defining — once in a season, everything on the line, one team walks away as champions. Maximum drama, maximum stakes.'
+  // In-season
+  kickoff:   'This is Week 0 — the season is brand new. Tone should feel like a fresh start: anticipation, potential, anything is possible. No pressure yet, just excitement.',
+  early:     'Early season. Tone should feel like first impressions and early statement games. Who looks legit? Who is already surprising people? Expectations are being set.',
+  mid:       'Midseason. The real teams are starting to separate from the pretenders. Tone should feel like a turning point — who is actually built for this?',
+  late:      'Late season. Every game has massive implications. Tone should feel urgent and high stakes — seasons are on the line, playoff spots are being won and lost.',
+  week13:    'Week 13 — rivalry territory. Tone should feel personal, heated, historic. Records go out the window. These games are about pride and bragging rights.',
+  week14:    'Week 14 — closing out the regular season. Tone should feel like last chances and desperation. Some teams are fighting for bowl eligibility, others for playoff positioning.',
+  confchamp: 'Conference Championships. Tone should feel like a one-game season — winner takes the title, loser goes home with nothing. Legacy is on the line.',
+  bowl:      'Bowl season. Tone should feel like a reward — programs that earned it get one last shot to make a statement. Pride, momentum, and bragging rights heading into the offseason.',
+  natty:     'National Championship. This is the biggest game of the season. Tone should feel dynasty-defining — once in a season, everything on the line, one team walks away as champions. Maximum drama, maximum stakes.',
+
+  // Offseason — End of Season Recap (Wheel of Fortune spins this week)
+  eosOn:     'Champion crowned. Season closed. But the real story this week is the Wheel of Fortune — eligible coaches get their Tier 1 through Tier 5 offers, 24-hour decision clocks start, and half the league\'s future gets decided before the week ends. Tone: reflective on what just ended but crackling with carousel tension. Every coach is watching to see who\'s on the move.',
+  eosOff:    'Champion crowned. Season closed. No Wheel of Fortune this cycle — either nobody applied or nobody cleared the bar. Tone: measured and reflective. Look back at the biggest storylines of the year, the programs that over-delivered, the ones that cratered. A week to breathe before the offseason machinery fires up.',
+
+  // Offseason — Players Leaving (accepted Wheel offers execute; retention negotiations run)
+  plOn:      'Wheel commitments come due. Coaches who accepted their offers delete their current head coach and rebuild at the new school — achievements wiped, records reset, slates blank. Meanwhile every program in the league is working the phones, pitching outgoing stars to stay before the portal opens. Tone: kinetic, high-stakes, transformational. The map of the league redraws overnight.',
+  plOff:     'No Wheel moves this cycle — this week is pure retention work. Every program is pitching outgoing stars to stay before the portal opens. Tone: tactical and tense. Coaches making their cases, players weighing their options, depth charts starting to wobble.',
+
+  // Offseason — Transfer Portal windows
+  portal1:   'Transfer Portal opens. First wave hits. Tone: market bell ringing. Stars departing, stars available, every roster under construction.',
+  portal2:   'Portal in full swing. First batch of moves locks in. Tone: rumor mill at full tilt. Who landed where, who\'s still shopping, what boards just got reshuffled.',
+  portal3:   'Late portal territory. Tone: last call at the auction. Desperation buys, program-altering swings, teams scrambling to plug holes.',
+  portal4:   'Portal closes. Rosters lock. Tone: dust settling. Name the winners and losers of the cycle, new depth charts coming into focus.',
+
+  // Offseason — late-stage roster shaping
+  nsd:       'Recruits officially sign. Position changes go on the books. Tone: draft night energy. Months of speculation converging on one page of signatures.',
+  training:  'Development hits. Last clean look at the roster before cuts. Tone: lab reveal. Who broke out, who stalled, which storylines just got louder.',
+  et:        'Final roster moves. Coaches trim the fat and finalize depth charts. Tone: business end of roster construction. Tough decisions, hard conversations, clean rosters by week\'s end.',
+  preseason: 'Door to the new season is open. Media days, preseason polls, camp reports. Tone: engine revving. Narratives setting, rankings solidifying, Week 0 within reach.'
 };
 
 const WEEK_TYPES = [
+  // In-season
   { key:'kickoff',   short:'0',  label:'Week 0 — Season Kickoff',   tone:TONE.kickoff },
   { key:'week1',     short:'1',  label:'Week 1',                     tone:TONE.early },
   { key:'week2',     short:'2',  label:'Week 2',                     tone:TONE.early },
@@ -540,9 +573,31 @@ const WEEK_TYPES = [
   { key:'bowl1',     short:'B1', label:'Bowl Week 1',                tone:TONE.bowl },
   { key:'bowl2',     short:'B2', label:'Bowl Week 2',                tone:TONE.bowl },
   { key:'bowl3',     short:'B3', label:'Bowl Week 3',                tone:TONE.bowl },
-  { key:'natty',     short:'NC', label:'National Championship',      tone:TONE.natty }
+  { key:'natty',     short:'NC', label:'National Championship',      tone:TONE.natty },
+
+  // Offseason (belongs to the upcoming season — natty→eos auto-bumps Season +1)
+  // tone is the default (Wheel of Fortune ON); toneOff used when the wheel toggle is unchecked
+  { key:'eos',            short:'OS',  label:'End of Season Recap',      tone:TONE.eosOn, toneOff:TONE.eosOff },
+  { key:'playersleaving', short:'PL',  label:'Players Leaving',          tone:TONE.plOn,  toneOff:TONE.plOff },
+  { key:'portal1',        short:'P1',  label:'Offseason Portal Week 1',  tone:TONE.portal1 },
+  { key:'portal2',        short:'P2',  label:'Offseason Portal Week 2',  tone:TONE.portal2 },
+  { key:'portal3',        short:'P3',  label:'Offseason Portal Week 3',  tone:TONE.portal3 },
+  { key:'portal4',        short:'P4',  label:'Offseason Portal Week 4',  tone:TONE.portal4 },
+  { key:'nsd',            short:'NSD', label:'National Signing Day',     tone:TONE.nsd },
+  { key:'training',       short:'TR',  label:'Training Results',         tone:TONE.training },
+  { key:'transfers',      short:'ET',  label:'Encourage Transfers',      tone:TONE.et },
+  { key:'preseason',      short:'PRE', label:'Preseason',                tone:TONE.preseason }
 ];
 const WEEK_BY_KEY = Object.fromEntries(WEEK_TYPES.map(w => [w.key, w]));
+
+// Weeks during which GOTW and Top 25 sections are hidden (no games, no poll).
+const OFFSEASON_KEYS = new Set([
+  'eos','playersleaving','portal1','portal2','portal3','portal4',
+  'nsd','training','transfers','preseason'
+]);
+function isOffseason(key) { return OFFSEASON_KEYS.has(key); }
+// Weeks that support the Wheel of Fortune toggle.
+function usesWheelToggle(key) { return key === 'eos' || key === 'playersleaving'; }
 
 function currentWeek() {
   return WEEK_BY_KEY[$('weekType').value] || WEEK_TYPES[0];
@@ -552,7 +607,6 @@ function currentWeek() {
 const $ = id => document.getElementById(id);
 const show = el => el.classList.remove('hidden');
 const hide = el => el.classList.add('hidden');
-function setDisplay(id, display) { $(id).style.display = display; }
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
@@ -576,6 +630,9 @@ async function fetchRoster() {
   } catch (e) {
     show(badge);
     badge.textContent = '⚠ Could not load roster';
+    // Replace the "Loading roster..." placeholder with an error state so
+    // the panel doesn't look stuck mid-load.
+    $('rosterRows').innerHTML = '<p class="roster-empty">Roster unavailable — check the Apps Script endpoint and click Refresh.</p>';
   }
 }
 
@@ -620,13 +677,27 @@ function requestAdvance() {
   const w = currentWeek();
   const season = $('seasonNum').value;
   const isNatty = w.label === 'National Championship';
+
+  // EoS and Players Leaving have two tone variants depending on whether the
+  // Wheel of Fortune is active this cycle. For all other weeks, use w.tone.
+  let tone = w.tone;
+  if (usesWheelToggle(w.key) && !$('wheelToggle').checked && w.toneOff) {
+    tone = w.toneOff;
+  }
+
+  // Offseason weeks don't have games to schedule, so drop the #scheduling
+  // reference from the body instructions.
+  const bodyInstructions = isOffseason(w.key)
+    ? 'Then the body: Voice of the dynasty — authoritative, not personal. Must tag @CLOS Coach. 3-4 sentences max. Fresh and unique — never the same post twice.'
+    : 'Then the body: Voice of the dynasty — authoritative, not personal. Must tag @CLOS Coach, reference #scheduling and getting games booked, end with a good luck sendoff. 3-4 sentences max. Fresh and unique — never the same post twice.';
+
   const body =
     'Write an advance post for CLOS (Campus Legends of Saturday), a 32-coach online college football dynasty sim league.\n\n' +
     'Week ' + w.short + ', Season ' + season + ' (' + w.label + ').\n\n' +
     'The post MUST start with this exact header on its own line:\n' +
     '# WE\'VE ADVANCED TO ' + (isNatty ? 'THE ' : '') + w.label.toUpperCase() + '!\n\n' +
-    'Then the body: Voice of the dynasty — authoritative, not personal. Must tag @CLOS Coach, reference #scheduling and getting games booked, end with a good luck sendoff. 3-4 sentences max. Fresh and unique — never the same post twice.\n\n' +
-    'Tone guidance: ' + w.tone;
+    bodyInstructions + '\n\n' +
+    'Tone guidance: ' + tone;
   showRequest('advRequestSection', 'advRequest', body);
 }
 
@@ -876,8 +947,13 @@ function clearAll() {
 }
 
 function confirmClearAll() {
-  const hasContent = ['advRequest','advPaste','gotwPaste','t25Post'].some(id => ($(id).value || '').trim());
-  if (hasContent && !confirm('Clear all request and output boxes? This cannot be undone.')) return;
+  // Check request/output boxes AND the GOTW input form — so an in-progress
+  // matchup entry doesn't get wiped silently before the user generates.
+  const outputIds = ['advRequest','advPaste','gotwPaste','t25Post','top25','last25','receiving'];
+  const hasContent =
+    outputIds.some(id => ($(id).value || '').trim()) ||
+    GOTW_INPUT_FIELDS.some(id => ($(id).value || '').trim());
+  if (hasContent && !confirm('Clear every field, request, and output on the page? This cannot be undone.')) return;
   clearAll();
 }
 
@@ -1069,15 +1145,50 @@ function updateNowBuilding() {
   const w = currentWeek();
   const s = $('seasonNum').value || '1';
   $('nowBuilding').textContent = 'Building for: ' + w.label + ' · Season ' + s;
+  updateOffseasonState();
+}
+
+// ============ Offseason state ============
+// Toggles visibility of the gameplay sections (GOTW + Top 25) and the Wheel
+// of Fortune checkbox based on the currently-selected week type.
+function updateOffseasonState() {
+  const w = currentWeek();
+  const gameplay = $('gameplaySections');
+  if (isOffseason(w.key)) hide(gameplay); else show(gameplay);
+
+  const wheelBox = $('wheelToggleBox');
+  if (usesWheelToggle(w.key)) show(wheelBox); else hide(wheelBox);
+}
+
+// ============ Wheel of Fortune toggle ============
+function saveWheel() {
+  try { localStorage.setItem(STORAGE.wheelActive, $('wheelToggle').checked ? 'true' : 'false'); } catch (e) {}
+}
+
+function loadWheel() {
+  try {
+    const v = localStorage.getItem(STORAGE.wheelActive);
+    // Default true — only false if explicitly stored as 'false'.
+    $('wheelToggle').checked = v !== 'false';
+  } catch (e) { $('wheelToggle').checked = true; }
 }
 
 // ============ Week +1 button ============
-// Advances to the next week type in WEEK_TYPES order. Wraps from National
-// Championship back to Week 0 (Kickoff) — user bumps Season manually.
+// Advances to the next week type in WEEK_TYPES order. Wraps from the final
+// offseason week (Preseason) back to Week 0. Auto-bumps Season by 1 when
+// transitioning from National Championship to End of Season Recap, since
+// offseason weeks belong to the upcoming season.
 function advanceWeek() {
   const cur = $('weekType').value;
   const idx = WEEK_TYPES.findIndex(w => w.key === cur);
   const next = WEEK_TYPES[(idx + 1) % WEEK_TYPES.length];
+
+  if (cur === 'natty') {
+    const seasonInput = $('seasonNum');
+    seasonInput.value = (parseInt(seasonInput.value, 10) || 1) + 1;
+    saveSeason();
+  }
+
   $('weekType').value = next.key;
   updateNowBuilding();
 }
@@ -1184,6 +1295,7 @@ function init() {
   loadLastTop25();
   loadWebhook();
   loadGotwDraft();
+  loadWheel();
   updateNowBuilding();
   wireGotwButtonGuard();
   wireGotwDraftSave();
