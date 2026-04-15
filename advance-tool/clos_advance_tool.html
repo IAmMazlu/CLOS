@@ -26,9 +26,19 @@ h1{
   margin-bottom:.25rem;
   color:#F5F5F7;
 }
-.sub{font-size:13px;color:#A8B2BB;margin-bottom:2rem}
+.sub{font-size:13px;color:#A8B2BB;margin-bottom:.75rem}
 .divider{border:none;border-top:1px solid #1C1C1E;margin:1.5rem 0}
 .hidden{display:none}
+
+/* ===== Now-building pill (under h1) ===== */
+.now-building{
+  display:inline-block;
+  font-size:11px;font-weight:700;
+  color:#0A0A0A;background:#A8B2BB;
+  text-transform:uppercase;letter-spacing:.08em;
+  padding:4px 10px;border-radius:999px;
+  margin-bottom:1.25rem;
+}
 
 /* ===== Sticky top bar ===== */
 .sticky-bar{
@@ -124,6 +134,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 .btn-clear:hover{border-color:#A8B2BB}
 .action-row{display:flex;gap:10px;margin-top:10px}
 .action-row .btn-req{margin-top:0;flex:1}
+.btn-req:disabled,
+.btn:disabled{
+  opacity:.45;cursor:not-allowed;
+}
+.btn-req:disabled:hover{background:#0D1B2A}
 
 /* ===== Output boxes & headers ===== */
 .out-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem}
@@ -136,6 +151,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 }
 .copy-btn:hover{border-color:#A8B2BB}
 .copy-btn--discord{background:#4caf50;color:#0A0A0A;border-color:#4caf50;font-weight:600}
+.req-timestamp{font-size:11px;color:#A8B2BB;font-weight:400;text-transform:none;letter-spacing:0;margin-left:8px}
 .output-section{
   background:#0A0A0A;border:1px solid #A8B2BB;border-radius:12px;
   padding:1.25rem;margin-bottom:1.25rem;
@@ -223,14 +239,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 <div class="sticky-bar">
   <div class="sticky-inner">
     <span class="sticky-label">Season</span>
-    <input class="sticky-input" type="number" id="seasonNum" min="1" max="20" value="1"/>
-    <select class="sticky-select" id="weekType"></select>
+    <input class="sticky-input" type="number" id="seasonNum" min="1" max="20" value="1" oninput="saveSeason()"/>
+    <select class="sticky-select" id="weekType" onchange="updateNowBuilding()"></select>
+    <button class="btn-clear" id="copyAllBtn" onclick="copyAllOutputs(this)">Copy all outputs</button>
     <button class="btn-clear" onclick="clearAll()">Clear all outputs</button>
   </div>
 </div>
 
 <h1>CLOS ADVANCE TOOL</h1>
 <p class="sub">Campus Legends of Saturday — Advance Day Post Generator &nbsp;·&nbsp; Start by setting your Week, Season, and Week Type in the bar above — then work through each section top to bottom.</p>
+<div class="now-building" id="nowBuilding">Building for: Week 0 — Season Kickoff · Season 1</div>
 
 <!-- ===== Coach Roster ===== -->
 <div class="section">
@@ -292,7 +310,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <div id="advRequestSection" class="hidden panel-body">
     <p class="dashed-hint">— Claude Request — copy and paste into Claude chat</p>
     <div class="out-header">
-      <span class="out-label">Copy this into Claude</span>
+      <span class="out-label">Copy this into Claude<span class="req-timestamp" id="advRequestTime"></span></span>
       <button class="copy-btn" onclick="copyValue('advRequest',this)">Copy</button>
     </div>
     <textarea class="mono-box request-box" id="advRequest" rows="5"></textarea>
@@ -351,14 +369,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <div class="fg"><label>Home team</label><input type="text" id="gotwHome" placeholder="Oregon (or Neutral site)"/></div>
 
   <div class="action-row">
-    <button class="btn-req" onclick="requestGOTW()">Build GOTW request ↗</button>
+    <button class="btn-req" id="gotwBtn" onclick="requestGOTW()" disabled>Build GOTW request ↗</button>
     <button class="btn-clear" onclick="clearGOTW()">Clear fields</button>
   </div>
-  <p class="hint" style="margin-top:8px">A copyable Claude request will appear below after clicking.</p>
+  <p class="hint" style="margin-top:8px">Fill in both team names to enable this button.</p>
   <div id="gotwRequestSection" class="hidden panel-body">
     <p class="dashed-hint">— Claude Request — copy and paste into Claude chat</p>
     <div class="out-header">
-      <span class="out-label">Copy this into Claude</span>
+      <span class="out-label">Copy this into Claude<span class="req-timestamp" id="gotwRequestTime"></span></span>
       <button class="copy-btn" onclick="copyValue('gotwRequest',this)">Copy</button>
     </div>
     <textarea class="mono-box request-box" id="gotwRequest" rows="10"></textarea>
@@ -368,12 +386,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <div class="gotw-graphic">
     <p class="gotw-graphic-title">🎨 GOTW Graphic Prompt</p>
     <p class="gotw-graphic-desc">Generates a Gemini image prompt based on your matchup. Open Claude chat, paste this in, and Claude will look up the correct stadiums and mascots and return a ready-to-use image prompt.</p>
-    <button class="btn-req" style="margin-top:0" onclick="requestImagePrompt()">Build image prompt request ↗</button>
-    <p class="hint" style="margin-top:8px">A copyable Claude request will appear below after clicking.</p>
+    <button class="btn-req" id="imgBtn" style="margin-top:0" onclick="requestImagePrompt()" disabled>Build image prompt request ↗</button>
+    <p class="hint" style="margin-top:8px">Fill in both team names above to enable this button.</p>
     <div id="imgRequestSection" class="hidden panel-body">
       <p class="dashed-hint">— Claude Request — copy and paste into Claude chat</p>
       <div class="out-header">
-        <span class="out-label">Copy this into Claude</span>
+        <span class="out-label">Copy this into Claude<span class="req-timestamp" id="imgRequestTime"></span></span>
         <button class="copy-btn" onclick="copyValue('imgRequest',this)">Copy</button>
       </div>
       <textarea class="mono-box request-box" id="imgRequest" rows="6"></textarea>
@@ -423,7 +441,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
     <label>Receiving votes (one per line)</label>
     <textarea id="receiving" rows="5" style="resize:vertical" placeholder="One team per line"></textarea>
   </div>
-  <p class="hint">Teams receiving votes but not ranked in the Top 25 this week only.</p>
+  <p class="hint">Teams receiving votes but not ranked in the Top 25 this week only. Tip: press <strong style="color:#F5F5F7">Ctrl/Cmd+Enter</strong> in the rankings box to generate.</p>
 </div>
 
 <div class="action-row">
@@ -434,10 +452,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 <div id="output" class="hidden">
   <div class="output-section">
     <div class="out-header">
-      <span class="out-label">✓ Top 25 Poll — Output</span>
+      <span class="out-label">✓ Top 25 Poll — Output (editable)</span>
       <button class="copy-btn" onclick="copyValue('t25Post',this)">Copy</button>
     </div>
-    <div class="post-box" id="t25Post"></div>
+    <textarea class="mono-box output-box" id="t25Post" rows="20"></textarea>
   </div>
 </div>
 
@@ -447,7 +465,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 // ============ Constants & storage keys ============
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFNE1VvmzOA--kOJX06QzrcGLp9SZrHu3hG388Kudz_Fzr4YJC2w_-mPRpdrfAtGAgcA/exec';
 const DIV = '━━━━━━━━━━━━━━━━━━━━';
-const STORAGE = { lastWeek: 'clos_last_week_v1', webhook: 'clos_webhook_url' };
+const STORAGE = { lastWeek: 'clos_last_week_v1', webhook: 'clos_webhook_url', season: 'clos_season' };
 const ROSTER_TIMEOUT_MS = 10000;
 
 // ============ Week-type config (single source of truth) ============
@@ -547,8 +565,14 @@ function toggleRoster() { $('rosterPanel').classList.toggle('hidden'); }
 // ============ Request builders ============
 // All three sections (advance / GOTW / image prompt) share the same
 // "drop text into a textarea, reveal the panel, scroll to it" flow.
+function timestamp() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 function showRequest(sectionId, textareaId, body) {
   $(textareaId).value = body;
+  const tsEl = $(textareaId + 'Time');
+  if (tsEl) tsEl.textContent = '· generated ' + timestamp();
   const section = $(sectionId);
   show(section);
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -716,7 +740,7 @@ function generate() {
       recv.forEach(t => { post += t + '\n'; });
     }
 
-    $('t25Post').textContent = post;
+    $('t25Post').value = post;
     show($('output'));
 
     // Snapshot this week's teams for next week's diff.
@@ -747,9 +771,8 @@ function clearGOTW() {
 }
 
 function clearTop25() {
-  clearValues(['top25', 'last25', 'receiving']);
+  clearValues(['top25', 'last25', 'receiving', 't25Post']);
   hide($('output'));
-  $('t25Post').textContent = '';
   try { localStorage.removeItem(STORAGE.lastWeek); } catch (e) {}
 }
 
@@ -757,11 +780,14 @@ function clearAll() {
   // Advance
   clearValues(['advRequest', 'advPaste']);
   hide($('advRequestSection'));
+  $('advRequestTime').textContent = '';
   const status = $('postStatus');
   status.textContent = ''; hide(status);
   resetPostButton();
   // GOTW + image prompt
   clearGOTW();
+  $('gotwRequestTime').textContent = '';
+  $('imgRequestTime').textContent = '';
   // Top 25
   clearTop25();
 }
@@ -849,6 +875,9 @@ async function postToDiscord() {
       status.textContent = 'Advance post sent to Discord. CLOS Report will fire automatically.';
       status.style.color = '#4caf50';
       show(status);
+      // Clear the output so repeat clicks can't re-send the same post by accident.
+      // To post again, the user has to regenerate + repaste.
+      $('advPaste').value = '';
       // Only auto-reset on success. On failure we leave the red state so the user sees it.
       setTimeout(resetPostButton, 3000);
     } else {
@@ -864,6 +893,57 @@ async function postToDiscord() {
     show(status);
     setPostButtonFailed();
   }
+}
+
+// ============ Season persistence ============
+function saveSeason() {
+  const v = $('seasonNum').value;
+  try { localStorage.setItem(STORAGE.season, v); } catch (e) {}
+  updateNowBuilding();
+}
+
+function loadSeason() {
+  try {
+    const v = localStorage.getItem(STORAGE.season);
+    if (v) $('seasonNum').value = v;
+  } catch (e) {}
+}
+
+// ============ Live "now building" label ============
+function updateNowBuilding() {
+  const w = currentWeek();
+  const s = $('seasonNum').value || '1';
+  $('nowBuilding').textContent = 'Building for: ' + w.label + ' · Season ' + s;
+}
+
+// ============ GOTW button enable/disable ============
+// Buttons are disabled until both team name fields are non-empty.
+function updateGotwButtons() {
+  const hasTeams = $('g1team').value.trim() && $('g2team').value.trim();
+  $('gotwBtn').disabled = !hasTeams;
+  $('imgBtn').disabled  = !hasTeams;
+}
+
+// ============ Copy all outputs ============
+// Bundles whichever of the three final outputs have content into a single
+// clipboard payload with clear section headers.
+function copyAllOutputs(btn) {
+  const parts = [];
+  const adv   = $('advPaste').value.trim();
+  const gotw  = $('gotwPaste').value.trim();
+  const top25 = $('t25Post').value.trim();
+  if (adv)   parts.push('===== ADVANCE POST =====\n\n' + adv);
+  if (gotw)  parts.push('===== GAME OF THE WEEK =====\n\n' + gotw);
+  if (top25) parts.push('===== TOP 25 POLL =====\n\n' + top25);
+  if (!parts.length) { alert('No outputs to copy yet. Paste or generate something first.'); return; }
+  const payload = parts.join('\n\n\n');
+  navigator.clipboard.writeText(payload).then(() => {
+    btn.textContent = 'Copied ' + parts.length + '!';
+    setTimeout(() => { btn.textContent = 'Copy all outputs'; }, 2000);
+  }).catch(() => {
+    btn.textContent = 'Copy failed';
+    setTimeout(() => { btn.textContent = 'Copy all outputs'; }, 2000);
+  });
 }
 
 // ============ Init ============
@@ -884,10 +964,29 @@ function loadLastTop25() {
   } catch (e) {}
 }
 
+function wireKeyboardShortcuts() {
+  // Ctrl/Cmd+Enter while focused in the rankings box triggers generate.
+  $('top25').addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      generate();
+    }
+  });
+}
+
+function wireGotwButtonGuard() {
+  ['g1team', 'g2team'].forEach(id => $(id).addEventListener('input', updateGotwButtons));
+  updateGotwButtons();
+}
+
 function init() {
   populateWeekDropdown();
+  loadSeason();
   loadLastTop25();
   loadWebhook();
+  updateNowBuilding();
+  wireGotwButtonGuard();
+  wireKeyboardShortcuts();
   fetchRoster();
 }
 
