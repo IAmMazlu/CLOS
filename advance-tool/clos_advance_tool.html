@@ -1057,11 +1057,6 @@ function loadRoleId() {
   } catch (e) {}
 }
 
-function getRoleMention() {
-  const id = ($('roleId').value || '').trim();
-  return id ? '<@&' + id + '>' : '';
-}
-
 function forgetWebhook() {
   $('webhookUrl').value = '';
   $('roleId').value = '';
@@ -1094,13 +1089,14 @@ async function testWebhook(btn) {
   btn.textContent = 'Pinging...';
   btn.disabled = true;
   try {
-    const mention = getRoleMention();
+    const roleId = ($('roleId').value || '').trim();
+    const pingPrefix = roleId ? '<@&' + roleId + '> ' : '';
     const testPayload = {
-      content: (mention ? mention + ' ' : '') + '🛠️ CLOS Advance Tool — webhook test ping at ' + timestamp() + '. You can delete this message.',
+      content: pingPrefix + '🛠️ CLOS Advance Tool — webhook test ping at ' + timestamp() + '. You can delete this message.',
       username: 'CLOS Advance Bot'
     };
-    if (mention) {
-      testPayload.allowed_mentions = { roles: [($('roleId').value || '').trim()] };
+    if (roleId) {
+      testPayload.allowed_mentions = { roles: [roleId] };
     }
     const res = await fetch(url, {
       method: 'POST',
@@ -1158,19 +1154,19 @@ async function postToDiscord() {
   // context as a footer.
   const w = currentWeek();
   const season = $('seasonNum').value;
-  const mention = getRoleMention();
+  // If a role ID is configured, swap the cosmetic "@CLOS Coach" text with
+  // Discord's real role mention syntax so the ping actually fires.
+  const roleId = ($('roleId').value || '').trim();
+  const discordContent = roleId
+    ? content.replace(/@CLOS Coach/gi, '<@&' + roleId + '>')
+    : content;
+
   const payload = {
-    username: 'CLOS Advance Bot',
-    embeds: [{
-      description: content,
-      color: 0x0D1B2A,
-      footer: { text: 'CLOS · ' + w.label + ' · Season ' + season }
-    }]
+    content: discordContent,
+    username: 'CLOS Advance Bot'
   };
-  // If a role ID is configured, ping the role above the embed.
-  if (mention) {
-    payload.content = mention;
-    payload.allowed_mentions = { roles: [($('roleId').value || '').trim()] };
+  if (roleId) {
+    payload.allowed_mentions = { roles: [roleId] };
   }
 
   try {
