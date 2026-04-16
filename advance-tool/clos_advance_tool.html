@@ -330,11 +330,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
       <input type="text" id="webhookUrl" placeholder="https://discord.com/api/webhooks/..." oninput="saveWebhook()"/>
     </div>
     <p class="status-msg status-msg--error hidden" id="webhookFormatWarn">That doesn't look like a Discord webhook URL. It should start with <code>https://discord.com/api/webhooks/</code>.</p>
-    <div class="fg" style="margin-top:6px">
-      <label>Role ID for @mention <span style="color:#A8B2BB;font-weight:400">(optional — pings on post)</span></label>
-      <input type="text" id="roleId" placeholder="e.g. 1494142269102755962" oninput="saveRoleId()"/>
+    <div class="grid2" style="margin-top:6px">
+      <div class="fg">
+        <label>Role ID for @CLOS Coach <span style="color:#A8B2BB;font-weight:400">(optional)</span></label>
+        <input type="text" id="roleId" placeholder="e.g. 1494142269102755962" oninput="saveRoleId()"/>
+      </div>
+      <div class="fg">
+        <label>Channel ID for #scheduling <span style="color:#A8B2BB;font-weight:400">(optional)</span></label>
+        <input type="text" id="channelId" placeholder="e.g. 1494150887239716924" oninput="saveChannelId()"/>
+      </div>
     </div>
-    <p class="hint">Right-click the role in Discord → Copy Role ID (requires Developer Mode). When set, the role gets pinged above the embed when you Post to Discord.</p>
+    <p class="hint">Right-click the role or channel in Discord → Copy ID (requires Developer Mode). When set, @CLOS Coach and #scheduling become real pings and links on post.</p>
     <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
       <button class="btn-sm hidden" id="webhookTest" onclick="testWebhook(this)">Send test ping</button>
       <button class="btn-sm hidden" id="webhookForget" onclick="forgetWebhook()">Forget saved URL</button>
@@ -535,6 +541,7 @@ const STORAGE = {
   lastWeek:    'clos_last_week_v1',
   webhook:     'clos_webhook_url',
   roleId:      'clos_role_id',
+  channelId:   'clos_channel_id',
   season:      'clos_season',
   weekType:    'clos_week_type',
   gotwDraft:   'clos_gotw_draft_v1',
@@ -1046,8 +1053,11 @@ function saveWebhook() {
 }
 
 function saveRoleId() {
-  const id = $('roleId').value.trim();
-  try { localStorage.setItem(STORAGE.roleId, id); } catch (e) {}
+  try { localStorage.setItem(STORAGE.roleId, $('roleId').value.trim()); } catch (e) {}
+}
+
+function saveChannelId() {
+  try { localStorage.setItem(STORAGE.channelId, $('channelId').value.trim()); } catch (e) {}
 }
 
 function loadRoleId() {
@@ -1057,11 +1067,20 @@ function loadRoleId() {
   } catch (e) {}
 }
 
+function loadChannelId() {
+  try {
+    const id = localStorage.getItem(STORAGE.channelId);
+    if (id) $('channelId').value = id;
+  } catch (e) {}
+}
+
 function forgetWebhook() {
   $('webhookUrl').value = '';
   $('roleId').value = '';
+  $('channelId').value = '';
   try { localStorage.removeItem(STORAGE.webhook); } catch (e) {}
   try { localStorage.removeItem(STORAGE.roleId); } catch (e) {}
+  try { localStorage.removeItem(STORAGE.channelId); } catch (e) {}
   saveWebhook();
 }
 
@@ -1074,6 +1093,7 @@ function loadWebhook() {
     }
   } catch (e) {}
   loadRoleId();
+  loadChannelId();
 }
 
 async function testWebhook(btn) {
@@ -1154,12 +1174,13 @@ async function postToDiscord() {
   // context as a footer.
   const w = currentWeek();
   const season = $('seasonNum').value;
-  // If a role ID is configured, swap the cosmetic "@CLOS Coach" text with
-  // Discord's real role mention syntax so the ping actually fires.
+  // Swap cosmetic text with Discord's real mention/link syntax so pings
+  // and channel links actually work. Output box stays human-readable.
+  let discordContent = content;
   const roleId = ($('roleId').value || '').trim();
-  const discordContent = roleId
-    ? content.replace(/@CLOS Coach/gi, '<@&' + roleId + '>')
-    : content;
+  const channelId = ($('channelId').value || '').trim();
+  if (roleId)    discordContent = discordContent.replace(/@CLOS Coach/gi, '<@&' + roleId + '>');
+  if (channelId) discordContent = discordContent.replace(/#scheduling/gi, '<#' + channelId + '>');
 
   const payload = {
     content: discordContent,
