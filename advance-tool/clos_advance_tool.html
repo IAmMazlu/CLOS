@@ -363,7 +363,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   </div>
   <div class="wheel-toggle hidden" id="wheelToggleBox">
     <input type="checkbox" id="wheelToggle" onchange="saveWheel()" checked/>
-    <label for="wheelToggle">🎡 Wheel of Fortune active this cycle</label>
+    <label for="wheelToggle">🎡 Wheel of Fortune active this season</label>
   </div>
   <button class="btn-req" onclick="requestAdvance()">Build advance post request ↗</button>
   <p class="hint" style="margin-top:8px">A copyable Claude request will appear below after clicking.</p>
@@ -568,11 +568,11 @@ const TONE = {
 
   // Offseason — End of Season Recap (Wheel of Fortune spins this week)
   eosOn:     'Champion crowned. Season closed. But the real story this week is the Wheel of Fortune — eligible coaches get their Tier 1 through Tier 5 offers, 24-hour decision clocks start, and half the league\'s future gets decided before the week ends. Tone: reflective on what just ended but crackling with carousel tension. Every coach is watching to see who\'s on the move.',
-  eosOff:    'Champion crowned. Season closed. No Wheel of Fortune this cycle — either nobody applied or nobody cleared the bar. Tone: measured and reflective. Look back at the biggest storylines of the year, the programs that over-delivered, the ones that cratered. A week to breathe before the offseason machinery fires up.',
+  eosOff:    'Champion crowned. Season closed. No Wheel of Fortune this season — either nobody applied or nobody cleared the bar. Tone: measured and reflective. Look back at the biggest storylines of the year, the programs that over-delivered, the ones that cratered. A week to breathe before the offseason machinery fires up.',
 
   // Offseason — Players Leaving (accepted Wheel offers execute; retention negotiations run)
   plOn:      'Wheel commitments come due. Coaches who accepted their offers delete their current head coach and rebuild at the new school — achievements wiped, records reset, slates blank. Meanwhile every program in the league is working the phones, pitching outgoing stars to stay before the portal opens. Tone: kinetic, high-stakes, transformational. The map of the league redraws overnight.',
-  plOff:     'No Wheel moves this cycle — this week is pure retention work. Every program is pitching outgoing stars to stay before the portal opens. Tone: tactical and tense. Coaches making their cases, players weighing their options, depth charts starting to wobble.',
+  plOff:     'No Wheel moves this season — this week is pure retention work. Every program is pitching outgoing stars to stay before the portal opens. Tone: tactical and tense. Coaches making their cases, players weighing their options, depth charts starting to wobble.',
 
   // Offseason — Transfer Portal windows
   portal1:   'Transfer Portal opens. First wave hits. Tone: market bell ringing. Stars departing, stars available, every roster under construction.',
@@ -725,7 +725,7 @@ function requestAdvance() {
   const isNatty = w.key === 'natty';
 
   // EoS and Players Leaving have two tone variants depending on whether the
-  // Wheel of Fortune is active this cycle. For all other weeks, use w.tone.
+  // Wheel of Fortune is active this season. For all other weeks, use w.tone.
   let tone = w.tone;
   if (usesWheelToggle(w.key) && !$('wheelToggle').checked && w.toneOff) {
     tone = w.toneOff;
