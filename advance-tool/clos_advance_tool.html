@@ -37,8 +37,17 @@ h1{
   color:#0A0A0A;background:#A8B2BB;
   text-transform:uppercase;letter-spacing:.08em;
   padding:4px 10px;border-radius:999px;
+  margin-bottom:.5rem;
+}
+
+/* ===== Progress checklist ===== */
+.progress-row{
+  display:flex;gap:16px;
+  font-size:11px;color:#A8B2BB;
   margin-bottom:1.25rem;
 }
+.progress-item{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.progress-item.is-done{color:#4caf50}
 
 /* ===== Sticky top bar ===== */
 .sticky-bar{
@@ -100,7 +109,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 }
 .tool-header-sub{font-size:12px;color:#A8B2BB;margin-top:3px}
 .row-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
-.panel-body{margin-top:.75rem}
+.panel-body{margin-top:.75rem;scroll-margin-top:80px}
 .dashed-hint{font-size:11px;color:#A8B2BB;margin-bottom:6px}
 .team-label{font-size:12px;font-weight:600;color:#A8B2BB;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
 
@@ -150,6 +159,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 }
 .copy-btn:hover{border-color:#A8B2BB}
 .copy-btn--discord{background:#4caf50;color:#0A0A0A;border-color:#4caf50;font-weight:600}
+.copy-btn--discord.is-failed{background:#f44336;border-color:#f44336}
 .req-timestamp{font-size:11px;color:#A8B2BB;font-weight:400;text-transform:none;letter-spacing:0;margin-left:8px}
 
 /* ===== Inline warning / error / info banners ===== */
@@ -160,9 +170,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 }
 .warn-box ul{margin:4px 0 0 18px}
 .warn-box li{margin:2px 0}
-.err-text{color:#f44336;font-size:12px;margin-top:6px}
-.info-text{color:#A8B2BB;font-size:12px;margin-top:6px}
-.success-text{color:#4caf50;font-size:12px;margin-top:6px}
+.status-msg{font-size:12px;margin-top:6px}
+.status-msg--error{color:#f44336}
+.status-msg--success{color:#4caf50}
 
 /* Small ghost icon button (used for Week +1 arrow) */
 .btn-icon{
@@ -265,7 +275,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <div class="sticky-inner">
     <span class="sticky-label">Season</span>
     <input class="sticky-input" type="number" id="seasonNum" min="1" max="20" value="1" oninput="saveSeason()"/>
-    <select class="sticky-select" id="weekType" onchange="updateNowBuilding()"></select>
+    <select class="sticky-select" id="weekType" onchange="saveWeekType();updateNowBuilding()"></select>
     <button class="btn-icon" id="weekNextBtn" onclick="advanceWeek()" title="Advance to next week type">→</button>
     <button class="btn-clear" id="copyAllBtn" onclick="copyAllOutputs(this)">Copy all outputs</button>
     <button class="btn-clear" onclick="confirmClearAll()">Clear all outputs</button>
@@ -275,6 +285,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 <h1>CLOS ADVANCE TOOL</h1>
 <p class="sub">Campus Legends of Saturday — Advance Day Post Generator &nbsp;·&nbsp; Start by setting your Week, Season, and Week Type in the bar above — then work through each section top to bottom.</p>
 <div class="now-building" id="nowBuilding">Building for: Week 0 — Season Kickoff · Season 1</div>
+<div class="progress-row" id="progressRow">
+  <span class="progress-item" id="progAdvance">☐ Advance</span>
+  <span class="progress-item" id="progGOTW">☐ GOTW</span>
+  <span class="progress-item" id="progTop25">☐ Top 25</span>
+</div>
 
 <!-- ===== Coach Roster ===== -->
 <div class="section">
@@ -286,7 +301,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
         <div class="tool-header-sub">Synced live from the Team Info Sheet on load</div>
       </div>
     </div>
-    <button class="btn-sm" onclick="toggleRoster()">Show / Hide</button>
+    <button class="btn-sm" onclick="togglePanel('rosterPanel')">Show / Hide</button>
   </div>
   <div id="rosterPanel" class="hidden panel-body">
     <p class="sec-sub">Pulled live from the Team Info Sheet. Update the Sheet after the carousel — the tool syncs automatically on load.</p>
@@ -306,7 +321,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
         <div class="tool-header-sub">Set once — stored locally, never uploaded</div>
       </div>
     </div>
-    <button class="btn-sm" onclick="document.getElementById('webhookPanel').classList.toggle('hidden')">Show / Hide</button>
+    <button class="btn-sm" onclick="togglePanel('webhookPanel')">Show / Hide</button>
   </div>
   <div id="webhookPanel" class="hidden panel-body">
     <p class="sec-sub">Paste your #clos-announcements webhook URL below. This is saved in your browser only — never sent anywhere except Discord.</p>
@@ -314,13 +329,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
       <label>Webhook URL</label>
       <input type="text" id="webhookUrl" placeholder="https://discord.com/api/webhooks/..." oninput="saveWebhook()"/>
     </div>
-    <p class="err-text hidden" id="webhookFormatWarn">That doesn't look like a Discord webhook URL. It should start with <code>https://discord.com/api/webhooks/</code>.</p>
+    <p class="status-msg status-msg--error hidden" id="webhookFormatWarn">That doesn't look like a Discord webhook URL. It should start with <code>https://discord.com/api/webhooks/</code>.</p>
     <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
       <button class="btn-sm hidden" id="webhookTest" onclick="testWebhook(this)">Send test ping</button>
       <button class="btn-sm hidden" id="webhookForget" onclick="forgetWebhook()">Forget saved URL</button>
     </div>
     <p class="ok hidden" id="webhookSaveMsg">Webhook saved to browser storage.</p>
-    <p class="info-text hidden" id="webhookTestMsg"></p>
+    <p class="hidden" id="webhookTestMsg"></p>
   </div>
 </div>
 
@@ -515,7 +530,9 @@ const STORAGE = {
   lastWeek:    'clos_last_week_v1',
   webhook:     'clos_webhook_url',
   season:      'clos_season',
+  weekType:    'clos_week_type',
   gotwDraft:   'clos_gotw_draft_v1',
+  top25Draft:  'clos_top25_draft_v1',
   wheelActive: 'clos_wheel_active'
 };
 const WEBHOOK_PATTERN = /^https:\/\/(canary\.|ptb\.)?discord(app)?\.com\/api\/webhooks\/\d+\/[\w-]+/i;
@@ -670,7 +687,7 @@ function renderRoster(data) {
   });
 }
 
-function toggleRoster() { $('rosterPanel').classList.toggle('hidden'); }
+function togglePanel(id) { $(id).classList.toggle('hidden'); }
 
 // ============ Request builders ============
 // All three sections (advance / GOTW / image prompt) share the same
@@ -685,14 +702,14 @@ function showRequest(sectionId, textareaId, body) {
   if (tsEl) tsEl.textContent = '· generated ' + timestamp();
   const section = $(sectionId);
   show(section);
+  // scroll-margin-top on .panel-body handles the sticky-bar offset via CSS.
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  setTimeout(() => window.scrollBy({ top: -80, behavior: 'smooth' }), 300);
 }
 
 function requestAdvance() {
   const w = currentWeek();
   const season = $('seasonNum').value;
-  const isNatty = w.label === 'National Championship';
+  const isNatty = w.key === 'natty';
 
   // EoS and Players Leaving have two tone variants depending on whether the
   // Wheel of Fortune is active this cycle. For all other weeks, use w.tone.
@@ -919,12 +936,17 @@ function generate() {
   }
 }
 
-// ============ Clear handlers ============
-const GOTW_FIELDS = [
+// ============ GOTW field lists ============
+// GOTW_INPUT_FIELDS = the user-facing matchup form fields (saved as drafts).
+// GOTW_FIELDS = input fields + the three generated request/output textareas (used by clearGOTW).
+const GOTW_INPUT_FIELDS = [
   'g1team','g1coach','g1rec','g1rank','g1result','g1narrative','g1players',
   'g2team','g2coach','g2rec','g2rank','g2result','g2narrative','g2players',
-  'gotwCtx','gotwHome','gotwRequest','gotwPaste','imgRequest'
+  'gotwCtx','gotwHome'
 ];
+const GOTW_FIELDS = GOTW_INPUT_FIELDS.concat(['gotwRequest', 'gotwPaste', 'imgRequest']);
+
+// ============ Clear handlers ============
 
 function clearValues(ids) {
   ids.forEach(id => { const el = $(id); if (el) el.value = ''; });
@@ -944,6 +966,7 @@ function clearTop25() {
   hide($('top25Warnings'));
   $('top25Warnings').innerHTML = '';
   try { localStorage.removeItem(STORAGE.lastWeek); } catch (e) {}
+  try { localStorage.removeItem(STORAGE.top25Draft); } catch (e) {}
 }
 
 function clearAll() {
@@ -1038,7 +1061,7 @@ async function testWebhook(btn) {
   const msgEl = $('webhookTestMsg');
   if (!isValidWebhook(url)) {
     msgEl.textContent = 'URL format looks wrong — fix it first.';
-    msgEl.className = 'err-text';
+    msgEl.className = 'status-msg status-msg--error';
     show(msgEl);
     return;
   }
@@ -1056,19 +1079,19 @@ async function testWebhook(btn) {
     });
     if (res.ok || res.status === 204) {
       msgEl.textContent = '✓ Test ping sent. Check your Discord channel.';
-      msgEl.className = 'success-text';
+      msgEl.className = 'status-msg status-msg--success';
     } else if (res.status === 429) {
       const body = await res.json().catch(() => ({}));
       const retry = body.retry_after ? Math.ceil(body.retry_after) : '?';
       msgEl.textContent = 'Rate-limited by Discord. Try again in ' + retry + 's.';
-      msgEl.className = 'err-text';
+      msgEl.className = 'status-msg status-msg--error';
     } else {
       msgEl.textContent = 'Failed: HTTP ' + res.status + '.';
-      msgEl.className = 'err-text';
+      msgEl.className = 'status-msg status-msg--error';
     }
   } catch (e) {
     msgEl.textContent = 'Network error: ' + e.message;
-    msgEl.className = 'err-text';
+    msgEl.className = 'status-msg status-msg--error';
   }
   show(msgEl);
   btn.textContent = orig;
@@ -1078,17 +1101,14 @@ async function testWebhook(btn) {
 function resetPostButton() {
   const btn = $('postBtn');
   btn.textContent = 'Post to Discord';
-  btn.style.background = '#4caf50';
-  btn.style.borderColor = '#4caf50';
-  btn.style.color = '#0A0A0A';
+  btn.classList.remove('is-failed');
   btn.disabled = false;
 }
 
 function setPostButtonFailed() {
   const btn = $('postBtn');
   btn.textContent = 'Failed';
-  btn.style.background = '#f44336';
-  btn.style.borderColor = '#f44336';
+  btn.classList.add('is-failed');
   btn.disabled = false;
 }
 
@@ -1103,15 +1123,28 @@ async function postToDiscord() {
   btn.textContent = 'Posting...';
   btn.disabled = true;
 
+  // Build a Discord webhook payload with a rich embed. The embed uses the
+  // CLOS Deep Navy (#0D1B2A) sidebar stripe and includes the week/season
+  // context as a footer.
+  const w = currentWeek();
+  const season = $('seasonNum').value;
+  const payload = {
+    username: 'CLOS Advance Bot',
+    embeds: [{
+      description: content,
+      color: 0x0D1B2A,
+      footer: { text: 'CLOS · ' + w.label + ' · Season ' + season }
+    }]
+  };
+
   try {
     const res = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, username: 'CLOS Advance Bot' })
+      body: JSON.stringify(payload)
     });
     if (res.ok || res.status === 204) {
       btn.textContent = '✓ Posted!';
-      btn.style.background = '#4caf50';
       status.textContent = 'Advance post sent to Discord. CLOS Report will fire automatically.';
       status.style.color = '#4caf50';
       show(status);
@@ -1142,7 +1175,7 @@ async function postToDiscord() {
   }
 }
 
-// ============ Season persistence ============
+// ============ Season & week-type persistence ============
 function saveSeason() {
   const v = $('seasonNum').value;
   try { localStorage.setItem(STORAGE.season, v); } catch (e) {}
@@ -1156,12 +1189,54 @@ function loadSeason() {
   } catch (e) {}
 }
 
+function saveWeekType() {
+  try { localStorage.setItem(STORAGE.weekType, $('weekType').value); } catch (e) {}
+}
+
+function loadWeekType() {
+  try {
+    const v = localStorage.getItem(STORAGE.weekType);
+    if (v && WEEK_BY_KEY[v]) $('weekType').value = v;
+  } catch (e) {}
+}
+
 // ============ Live "now building" label ============
 function updateNowBuilding() {
   const w = currentWeek();
   const s = $('seasonNum').value || '1';
   $('nowBuilding').textContent = 'Building for: ' + w.label + ' · Season ' + s;
-  updateOffseasonState();
+  updateSectionVisibility();
+  updateProgress();
+}
+
+// ============ Progress checklist ============
+// Updates the ☐/☑ indicators based on whether each output section has content.
+// Called after paste/type events on output boxes and after generate/clear.
+function updateProgress() {
+  const w = currentWeek();
+  const checks = [
+    { id: 'progAdvance', has: ($('advPaste').value || '').trim(), always: true },
+    { id: 'progGOTW',    has: ($('gotwPaste').value || '').trim(), always: hasGOTW(w.key) },
+    { id: 'progTop25',   has: ($('t25Post').value || '').trim(),   always: !isOffseason(w.key) }
+  ];
+  checks.forEach(({ id, has, always }) => {
+    const el = $(id);
+    if (!always) {
+      // Section not applicable for this week — show dash
+      el.textContent = '— ' + id.replace('prog', '');
+      el.classList.remove('is-done');
+      el.style.opacity = '.35';
+      return;
+    }
+    el.style.opacity = '';
+    if (has) {
+      el.textContent = '☑ ' + id.replace('prog', '');
+      el.classList.add('is-done');
+    } else {
+      el.textContent = '☐ ' + id.replace('prog', '');
+      el.classList.remove('is-done');
+    }
+  });
 }
 
 // ============ Section visibility ============
@@ -1169,7 +1244,7 @@ function updateNowBuilding() {
 // of Fortune checkbox based on the currently-selected week type. GOTW hides
 // during Week 14, Bowl Season, Natty, and offseason (no matchup previews).
 // Top 25 hides only during offseason (final poll still runs after Natty).
-function updateOffseasonState() {
+function updateSectionVisibility() {
   const w = currentWeek();
 
   const gotw = $('gotwSection');
@@ -1212,17 +1287,33 @@ function advanceWeek() {
   }
 
   $('weekType').value = next.key;
+  saveWeekType();
   updateNowBuilding();
 }
 
-// ============ GOTW draft auto-save ============
-// Input fields only — not the generated request textarea or pasted article.
-const GOTW_INPUT_FIELDS = [
-  'g1team','g1coach','g1rec','g1rank','g1result','g1narrative','g1players',
-  'g2team','g2coach','g2rec','g2rank','g2result','g2narrative','g2players',
-  'gotwCtx','gotwHome'
-];
+// ============ Top 25 draft auto-save ============
+const TOP25_DRAFT_FIELDS = ['top25', 'receiving'];
 
+function saveTop25Draft() {
+  try {
+    const draft = {};
+    TOP25_DRAFT_FIELDS.forEach(id => { draft[id] = $(id).value; });
+    localStorage.setItem(STORAGE.top25Draft, JSON.stringify(draft));
+  } catch (e) {}
+}
+
+function loadTop25Draft() {
+  try {
+    const raw = localStorage.getItem(STORAGE.top25Draft);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    TOP25_DRAFT_FIELDS.forEach(id => {
+      if (typeof draft[id] === 'string') $(id).value = draft[id];
+    });
+  } catch (e) {}
+}
+
+// ============ GOTW draft auto-save ============
 function saveGotwDraft() {
   try {
     const draft = {};
@@ -1262,7 +1353,7 @@ function copyAllOutputs(btn) {
   if (gotw)  parts.push('===== GAME OF THE WEEK =====\n\n' + gotw);
   if (top25) parts.push('===== TOP 25 POLL =====\n\n' + top25);
   if (!parts.length) { alert('No outputs to copy yet. Paste or generate something first.'); return; }
-  const payload = parts.join('\n\n\n');
+  const payload = parts.join('\n\n');
   navigator.clipboard.writeText(payload).then(() => {
     btn.textContent = 'Copied ' + parts.length + '!';
     setTimeout(() => { btn.textContent = 'Copy all outputs'; }, 2000);
@@ -1311,16 +1402,33 @@ function wireGotwDraftSave() {
   });
 }
 
+function wireTop25DraftSave() {
+  TOP25_DRAFT_FIELDS.forEach(id => {
+    $(id).addEventListener('input', saveTop25Draft);
+  });
+}
+
+function wireProgressTracking() {
+  // Update checklist when users type/paste into the three output boxes.
+  ['advPaste', 'gotwPaste', 't25Post'].forEach(id => {
+    $(id).addEventListener('input', updateProgress);
+  });
+}
+
 function init() {
   populateWeekDropdown();
   loadSeason();
+  loadWeekType();
   loadLastTop25();
+  loadTop25Draft();
   loadWebhook();
   loadGotwDraft();
   loadWheel();
   updateNowBuilding();
   wireGotwButtonGuard();
   wireGotwDraftSave();
+  wireTop25DraftSave();
+  wireProgressTracking();
   wireKeyboardShortcuts();
   fetchRoster();
 }
