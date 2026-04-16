@@ -361,9 +361,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
       <div class="tool-header-sub">Generate a fresh advance post for this week</div>
     </div>
   </div>
-  <div class="wheel-toggle hidden" id="wheelToggleBox">
-    <input type="checkbox" id="wheelToggle" onchange="saveWheel()" checked/>
-    <label for="wheelToggle">🎡 Wheel of Fortune active this season</label>
+  <div class="hidden" id="wheelToggleBox">
+    <div class="wheel-toggle">
+      <input type="checkbox" id="wheelToggle" onchange="saveWheel()" checked/>
+      <label for="wheelToggle">🎡 Wheel of Fortune active this season</label>
+    </div>
+    <div class="fg hidden" id="wheelDateBox" style="margin-top:8px">
+      <label>Wheel date/time <span style="color:#A8B2BB;font-weight:400">(optional — leave blank to stay vague)</span></label>
+      <input type="text" id="wheelDate" placeholder="e.g. Saturday at 8pm EST" oninput="saveWheelDate()"/>
+    </div>
   </div>
   <button class="btn-req" onclick="requestAdvance()">Build advance post request ↗</button>
   <p class="hint" style="margin-top:8px">A copyable Claude request will appear below after clicking.</p>
@@ -546,7 +552,8 @@ const STORAGE = {
   weekType:    'clos_week_type',
   gotwDraft:   'clos_gotw_draft_v1',
   top25Draft:  'clos_top25_draft_v1',
-  wheelActive: 'clos_wheel_active'
+  wheelActive: 'clos_wheel_active',
+  wheelDate:   'clos_wheel_date'
 };
 const WEBHOOK_PATTERN = /^https:\/\/(canary\.|ptb\.)?discord(app)?\.com\/api\/webhooks\/\d+\/[\w-]+/i;
 const ROSTER_TIMEOUT_MS = 10000;
@@ -729,6 +736,13 @@ function requestAdvance() {
   let tone = w.tone;
   if (usesWheelToggle(w.key) && !$('wheelToggle').checked && w.toneOff) {
     tone = w.toneOff;
+  }
+  // If on EoS with Wheel active, append date/time info (or vague hype).
+  if (w.key === 'eos' && $('wheelToggle').checked) {
+    const wheelDate = ($('wheelDate').value || '').trim();
+    tone += wheelDate
+      ? '\n\nThe Wheel of Fortune spins ' + wheelDate + '. Reference this specific date/time in the post.'
+      : '\n\nDo not mention a specific date or time for the Wheel — just build anticipation. It\'s coming soon, stay tuned, keep your eyes on announcements.';
   }
 
   // Offseason weeks don't have games to schedule, so drop the #scheduling
@@ -1308,11 +1322,28 @@ function updateSectionVisibility() {
 
   const wheelBox = $('wheelToggleBox');
   if (usesWheelToggle(w.key)) show(wheelBox); else hide(wheelBox);
+
+  // Wheel date field only shows on EoS when the toggle is checked.
+  const dateBox = $('wheelDateBox');
+  if (w.key === 'eos' && $('wheelToggle').checked) show(dateBox); else hide(dateBox);
 }
 
 // ============ Wheel of Fortune toggle ============
 function saveWheel() {
   try { localStorage.setItem(STORAGE.wheelActive, $('wheelToggle').checked ? 'true' : 'false'); } catch (e) {}
+  // Re-run visibility so the date field shows/hides with the toggle.
+  updateSectionVisibility();
+}
+
+function saveWheelDate() {
+  try { localStorage.setItem(STORAGE.wheelDate, $('wheelDate').value); } catch (e) {}
+}
+
+function loadWheelDate() {
+  try {
+    const v = localStorage.getItem(STORAGE.wheelDate);
+    if (v) $('wheelDate').value = v;
+  } catch (e) {}
 }
 
 function loadWheel() {
@@ -1477,6 +1508,7 @@ function init() {
   loadWebhook();
   loadGotwDraft();
   loadWheel();
+  loadWheelDate();
   updateNowBuilding();
   wireGotwButtonGuard();
   wireGotwDraftSave();
