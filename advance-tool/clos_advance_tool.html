@@ -4,6 +4,13 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CLOS Advance Tool</title>
+<meta name="description" content="Campus Legends of Saturday — Advance Day Post Generator"/>
+<meta property="og:title" content="CLOS Advance Tool"/>
+<meta property="og:description" content="Campus Legends of Saturday — Advance Day Post Generator"/>
+<meta property="og:image" content="https://iammazlu.github.io/CLOS/CLOS_Universal_Header_v6.png"/>
+<meta property="og:type" content="website"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230D1B2A'/><text x='16' y='22' font-family='Arial Black,Arial,sans-serif' font-size='16' font-weight='900' text-anchor='middle' fill='%23F5F5F7' letter-spacing='1'>CL</text></svg>"/>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Inter:wght@400;600;700&display=swap');
 
@@ -266,6 +273,45 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;
 }
 .gotw-graphic-desc{font-size:12px;color:#A8B2BB;margin-bottom:8px}
+
+/* ===== Char count (Advance post length guard) ===== */
+.char-count{
+  font-size:11px;color:#A8B2BB;font-weight:400;
+  letter-spacing:0;text-transform:none;margin-left:8px;
+}
+.char-count--over{color:#f44336;font-weight:700}
+
+/* ===== Discord preview (collapsible) ===== */
+.discord-preview{margin-top:10px}
+.discord-preview summary{
+  font-size:12px;color:#A8B2BB;cursor:pointer;
+  padding:6px 10px;border:1px solid #1C1C1E;border-radius:6px;
+  list-style:none;user-select:none;display:inline-block;
+}
+.discord-preview summary::-webkit-details-marker{display:none}
+.discord-preview summary:hover{border-color:#A8B2BB}
+.discord-preview[open] summary{border-color:#A8B2BB;margin-bottom:8px}
+.discord-preview-box{
+  background:#0A0A0A;border:1px solid #1C1C1E;border-radius:6px;
+  color:#F5F5F7;font-size:12px;font-family:'Courier New',monospace;
+  padding:.75rem;line-height:1.55;white-space:pre-wrap;
+  max-height:280px;overflow:auto;
+}
+.discord-preview-footer{
+  margin-top:6px;padding:6px 10px;border-left:3px solid #0D1B2A;
+  background:#0D1B2A;color:#A8B2BB;font-size:11px;border-radius:0 4px 4px 0;
+}
+
+/* ===== Focus-visible rings (a11y) ===== */
+.btn:focus-visible,
+.btn-sm:focus-visible,
+.btn-req:focus-visible,
+.btn-icon:focus-visible,
+.btn-clear:focus-visible,
+.copy-btn:focus-visible,
+.primer-copy:focus-visible{
+  outline:2px solid #A8B2BB;outline-offset:2px;
+}
 </style>
 </head>
 <body>
@@ -274,18 +320,18 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 <div class="sticky-bar">
   <div class="sticky-inner">
     <span class="sticky-label">Season</span>
-    <input class="sticky-input" type="number" id="seasonNum" min="1" max="20" value="1" oninput="saveSeason()"/>
-    <select class="sticky-select" id="weekType" onchange="saveWeekType();updateNowBuilding()"></select>
-    <button class="btn-icon" id="weekNextBtn" onclick="advanceWeek()" title="Advance to next week type">→</button>
-    <button class="btn-clear" id="copyAllBtn" onclick="copyAllOutputs(this)">Copy all outputs</button>
-    <button class="btn-clear" onclick="confirmClearAll()">Clear all outputs</button>
+    <input class="sticky-input" type="number" id="seasonNum" min="1" max="20" value="1" oninput="saveSeason()" aria-label="Season number"/>
+    <select class="sticky-select" id="weekType" onchange="saveWeekType();updateNowBuilding()" aria-label="Week type"></select>
+    <button class="btn-icon" id="weekNextBtn" onclick="advanceWeek()" title="Advance to next week type" aria-label="Advance to next week type">→</button>
+    <button class="btn-clear" id="copyAllBtn" onclick="copyAllOutputs(this)" aria-label="Copy all outputs">Copy all outputs</button>
+    <button class="btn-clear" onclick="confirmClearAll()" aria-label="Clear all outputs">Clear all outputs</button>
   </div>
 </div>
 
 <h1>CLOS ADVANCE TOOL</h1>
 <p class="sub">Campus Legends of Saturday — Advance Day Post Generator &nbsp;·&nbsp; Start by setting your Week, Season, and Week Type in the bar above — then work through each section top to bottom.</p>
 <div class="now-building" id="nowBuilding">Building for: Week 0 — Season Kickoff · Season 1</div>
-<div class="progress-row" id="progressRow">
+<div class="progress-row" id="progressRow" aria-live="polite" aria-label="Section completion progress">
   <span class="progress-item" id="progAdvance">☐ Advance</span>
   <span class="progress-item" id="progGOTW">☐ GOTW</span>
   <span class="progress-item" id="progTop25">☐ Top 25</span>
@@ -324,29 +370,48 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
     <button class="btn-sm" onclick="togglePanel('webhookPanel')">Show / Hide</button>
   </div>
   <div id="webhookPanel" class="hidden panel-body">
-    <p class="sec-sub">Paste your #clos-announcements webhook URL below. This is saved in your browser only — never sent anywhere except Discord.</p>
+    <p class="sec-sub">Saved in your browser only — never sent anywhere except Discord.</p>
     <div class="fg">
-      <label>Webhook URL</label>
+      <label for="webhookUrl">Main webhook URL <span style="color:#A8B2BB;font-weight:400">(Advance posts — text channel)</span></label>
       <input type="text" id="webhookUrl" placeholder="https://discord.com/api/webhooks/..." oninput="saveWebhook()"/>
     </div>
     <p class="status-msg status-msg--error hidden" id="webhookFormatWarn">That doesn't look like a Discord webhook URL. It should start with <code>https://discord.com/api/webhooks/</code>.</p>
+    <div class="fg">
+      <label for="forumWebhookUrl">Forum webhook URL <span style="color:#A8B2BB;font-weight:400">(GOTW + Top 25 — forum channel)</span></label>
+      <input type="text" id="forumWebhookUrl" placeholder="https://discord.com/api/webhooks/..." oninput="saveForumWebhook()"/>
+    </div>
+    <p class="status-msg status-msg--error hidden" id="forumWebhookFormatWarn">That doesn't look like a Discord webhook URL. It should start with <code>https://discord.com/api/webhooks/</code>.</p>
     <div class="grid2" style="margin-top:6px">
       <div class="fg">
-        <label>Role ID for @CLOS Coach <span style="color:#A8B2BB;font-weight:400">(optional)</span></label>
+        <label for="roleId">Role ID for @CLOS Coach <span style="color:#A8B2BB;font-weight:400">(optional)</span></label>
         <input type="text" id="roleId" placeholder="e.g. 1494142269102755962" oninput="saveRoleId()"/>
       </div>
       <div class="fg">
-        <label>Channel ID for #scheduling <span style="color:#A8B2BB;font-weight:400">(optional)</span></label>
+        <label for="channelId">Channel ID for #scheduling <span style="color:#A8B2BB;font-weight:400">(optional)</span></label>
         <input type="text" id="channelId" placeholder="e.g. 1494150887239716924" oninput="saveChannelId()"/>
       </div>
     </div>
-    <p class="hint">Right-click the role or channel in Discord → Copy ID (requires Developer Mode). When set, @CLOS Coach and #scheduling become real pings and links on post.</p>
+    <p class="hint">Right-click the role or channel in Discord → Copy ID (requires Developer Mode). When set, @CLOS Coach and #scheduling become real pings and links on post. Forum webhook posts create a new thread per post.</p>
     <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
-      <button class="btn-sm hidden" id="webhookTest" onclick="testWebhook(this)">Send test ping</button>
-      <button class="btn-sm hidden" id="webhookForget" onclick="forgetWebhook()">Forget saved URL</button>
+      <button class="btn-sm hidden" id="webhookTest" onclick="testWebhook(this)" aria-label="Send test ping to main webhook">Send test ping</button>
+      <button class="btn-sm hidden" id="forumWebhookTest" onclick="testForumWebhook(this)" aria-label="Send test ping to forum webhook">Test forum webhook</button>
+      <button class="btn-sm hidden" id="webhookForget" onclick="forgetWebhook()" aria-label="Forget saved webhook URLs">Forget saved URLs</button>
     </div>
-    <p class="ok hidden" id="webhookSaveMsg">Webhook saved to browser storage.</p>
+    <p class="ok hidden" id="webhookSaveMsg">Webhooks saved to browser storage.</p>
     <p class="hidden" id="webhookTestMsg"></p>
+    <hr class="divider" style="margin:1rem 0"/>
+    <div class="row-header">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#F5F5F7;text-transform:uppercase;letter-spacing:.04em">State export / import</div>
+        <div class="hint" style="margin-top:2px">Bundle all CLOS settings and drafts into a JSON file — restore on another browser or device.</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn-sm" onclick="exportState()" aria-label="Export all CLOS settings as JSON">⇩ Export state</button>
+      <button class="btn-sm" onclick="document.getElementById('importFile').click()" aria-label="Import CLOS settings from JSON">⇧ Import state</button>
+      <input type="file" id="importFile" accept="application/json,.json" class="hidden" onchange="importState(event)"/>
+    </div>
+    <p class="hidden" id="ioMsg"></p>
   </div>
 </div>
 
@@ -386,14 +451,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 
 <div class="output-section">
   <div class="out-header">
-    <span class="out-label">✓ Advance Post — Output</span>
+    <span class="out-label">✓ Advance Post — Output<span class="char-count" id="advCharCount">0 / 2000</span></span>
     <div class="out-btns">
-      <button class="copy-btn" onclick="copyValue('advPaste',this)">Copy</button>
+      <button class="copy-btn" onclick="copyValue('advPaste',this)" aria-label="Copy advance post">Copy</button>
       <button class="copy-btn copy-btn--discord" id="postBtn" onclick="postToDiscord()">Post to Discord</button>
     </div>
   </div>
   <textarea class="mono-box output-box" id="advPaste" rows="5" placeholder="Paste Claude's advance post here..."></textarea>
-  <p class="ok hidden" id="postStatus"></p>
+  <p class="status-msg hidden" id="postStatus"></p>
+  <details class="discord-preview">
+    <summary>Preview what Discord will see</summary>
+    <div class="discord-preview-box" id="advPreviewBox">Paste a post above to see the preview.</div>
+    <div class="discord-preview-footer" id="advPreviewFooter"></div>
+  </details>
 </div>
 
 <!-- GOTW section — hidden during Week 14, Bowls, Natty, and all offseason weeks -->
@@ -472,9 +542,18 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 <div class="output-section">
   <div class="out-header">
     <span class="out-label">✓ Game of the Week Article — Output</span>
-    <button class="copy-btn" onclick="copyValue('gotwPaste',this)">Copy</button>
+    <div class="out-btns">
+      <button class="copy-btn" onclick="copyValue('gotwPaste',this)" aria-label="Copy GOTW article">Copy</button>
+      <button class="copy-btn copy-btn--discord" id="gotwPostBtn" onclick="postGOTWToDiscord()">Post to Discord</button>
+    </div>
   </div>
   <textarea class="mono-box output-box" id="gotwPaste" rows="12" placeholder="Paste Claude's GOTW article here..."></textarea>
+  <p class="status-msg hidden" id="gotwPostStatus"></p>
+  <details class="discord-preview">
+    <summary>Preview what Discord will see</summary>
+    <div class="discord-preview-box" id="gotwPreviewBox">Paste a GOTW article above to see the preview.</div>
+    <div class="discord-preview-footer" id="gotwPreviewFooter"></div>
+  </details>
 </div>
 
 </div><!-- /#gotwSection -->
@@ -529,9 +608,18 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
   <div class="output-section">
     <div class="out-header">
       <span class="out-label">✓ Top 25 Poll — Output (editable)</span>
-      <button class="copy-btn" onclick="copyValue('t25Post',this)">Copy</button>
+      <div class="out-btns">
+        <button class="copy-btn" onclick="copyValue('t25Post',this)" aria-label="Copy Top 25 poll">Copy</button>
+        <button class="copy-btn copy-btn--discord" id="t25PostBtn" onclick="postTop25ToDiscord()">Post to Discord</button>
+      </div>
     </div>
     <textarea class="mono-box output-box" id="t25Post" rows="20"></textarea>
+    <p class="status-msg hidden" id="t25PostStatus"></p>
+    <details class="discord-preview">
+      <summary>Preview what Discord will see</summary>
+      <div class="discord-preview-box" id="t25PreviewBox">Generate the Top 25 above to see the preview.</div>
+      <div class="discord-preview-footer" id="t25PreviewFooter"></div>
+    </details>
   </div>
 </div>
 
@@ -544,19 +632,24 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#A8B2BB}
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFNE1VvmzOA--kOJX06QzrcGLp9SZrHu3hG388Kudz_Fzr4YJC2w_-mPRpdrfAtGAgcA/exec';
 const DIV = '━━━━━━━━━━━━━━━━━━━━';
 const STORAGE = {
-  lastWeek:    'clos_last_week_v1',
-  webhook:     'clos_webhook_url',
-  roleId:      'clos_role_id',
-  channelId:   'clos_channel_id',
-  season:      'clos_season',
-  weekType:    'clos_week_type',
-  gotwDraft:   'clos_gotw_draft_v1',
-  top25Draft:  'clos_top25_draft_v1',
-  wheelActive: 'clos_wheel_active',
-  wheelDate:   'clos_wheel_date'
+  lastWeek:     'clos_last_week_v1',
+  webhook:      'clos_webhook_url',
+  forumWebhook: 'clos_forum_webhook_url',
+  roleId:       'clos_role_id',
+  channelId:    'clos_channel_id',
+  season:       'clos_season',
+  weekType:     'clos_week_type',
+  gotwDraft:    'clos_gotw_draft_v1',
+  top25Draft:   'clos_top25_draft_v1',
+  wheelActive:  'clos_wheel_active',
+  wheelDate:    'clos_wheel_date'
 };
 const WEBHOOK_PATTERN = /^https:\/\/(canary\.|ptb\.)?discord(app)?\.com\/api\/webhooks\/\d+\/[\w-]+/i;
 const ROSTER_TIMEOUT_MS = 10000;
+const DISCORD_CONTENT_LIMIT = 2000;
+const DISCORD_THREAD_NAME_LIMIT = 100;
+// Deep Navy #0D1B2A as decimal — used as the sidebar color on all embeds.
+const EMBED_COLOR = 0x0D1B2A;
 
 // ============ Week-type config (single source of truth) ============
 // Drives the dropdown options, short codes, display labels, and tone
@@ -952,6 +1045,8 @@ function generate() {
 
     $('t25Post').value = post;
     show($('output'));
+    updateT25Preview();
+    updateProgress();
 
     // Snapshot this week's teams for next week's diff.
     try {
@@ -985,6 +1080,8 @@ function clearGOTW() {
   hide($('imgRequestSection'));
   try { localStorage.removeItem(STORAGE.gotwDraft); } catch (e) {}
   updateGotwButtons();
+  updateGotwPreview();
+  updateProgress();
 }
 
 function clearTop25() {
@@ -994,6 +1091,8 @@ function clearTop25() {
   $('top25Warnings').innerHTML = '';
   try { localStorage.removeItem(STORAGE.lastWeek); } catch (e) {}
   try { localStorage.removeItem(STORAGE.top25Draft); } catch (e) {}
+  updateT25Preview();
+  updateProgress();
 }
 
 function clearAll() {
@@ -1003,13 +1102,24 @@ function clearAll() {
   $('advRequestTime').textContent = '';
   const status = $('postStatus');
   status.textContent = ''; hide(status);
-  resetPostButton();
+  resetPostButton($('postBtn'), 'Post to Discord');
+  updateAdvCharCount();
+  updateAdvPreview();
   // GOTW + image prompt
   clearGOTW();
   $('gotwRequestTime').textContent = '';
   $('imgRequestTime').textContent = '';
+  const gotwStatus = $('gotwPostStatus');
+  gotwStatus.textContent = ''; hide(gotwStatus);
+  resetPostButton($('gotwPostBtn'), 'Post to Discord');
+  updateGotwPreview();
   // Top 25
   clearTop25();
+  const t25Status = $('t25PostStatus');
+  t25Status.textContent = ''; hide(t25Status);
+  resetPostButton($('t25PostBtn'), 'Post to Discord');
+  updateT25Preview();
+  updateProgress();
 }
 
 function confirmClearAll() {
@@ -1043,27 +1153,105 @@ function isValidWebhook(url) {
   return WEBHOOK_PATTERN.test(url);
 }
 
+// Shared embed attached to every CLOS post — brand color sidebar + footer with
+// season/week context. No title/description so mentions in `content` still ping.
+function buildEmbed() {
+  const w = currentWeek();
+  const season = $('seasonNum').value || '1';
+  return {
+    color: EMBED_COLOR,
+    footer: { text: 'CLOS · Season ' + season + ' · ' + w.label }
+  };
+}
+
+// Unified webhook POST. Returns { ok, status, retryAfter?, error? }.
+// Callers own the UI messaging; this just handles the transport.
+async function sendWebhook(url, payload) {
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok || res.status === 204) return { ok: true, status: res.status };
+    if (res.status === 429) {
+      const body = await res.json().catch(() => ({}));
+      return { ok: false, status: 429, retryAfter: body.retry_after ? Math.ceil(body.retry_after) : null };
+    }
+    const err = await res.text().catch(() => '');
+    return { ok: false, status: res.status, error: err };
+  } catch (e) {
+    return { ok: false, status: 0, error: e.message };
+  }
+}
+
+// Substitute cosmetic @CLOS Coach / #scheduling text with real Discord
+// mention + channel-link syntax so pings and links fire on post.
+function applyDiscordSubs(content, roleId, channelId) {
+  let out = content;
+  if (roleId)    out = out.replace(/@CLOS Coach/gi, '<@&' + roleId + '>');
+  if (channelId) out = out.replace(/#scheduling/gi, '<#' + channelId + '>');
+  return out;
+}
+
+// Clip forum thread names to the Discord 100-char limit.
+function clipThreadName(s) {
+  s = (s || '').trim();
+  if (s.length <= DISCORD_THREAD_NAME_LIMIT) return s;
+  return s.slice(0, DISCORD_THREAD_NAME_LIMIT - 1) + '…';
+}
+
+// Set a status element to a typed message using the .status-msg class system
+// (so colors come from CSS, not inline styles).
+function setStatus(el, text, kind) {
+  el.textContent = text;
+  el.className = 'status-msg' + (kind ? ' status-msg--' + kind : '');
+  show(el);
+}
+
 function saveWebhook() {
   const url = $('webhookUrl').value.trim();
   try { localStorage.setItem(STORAGE.webhook, url); } catch (e) {}
-  const badge     = $('webhookBadge');
-  const msg       = $('webhookSaveMsg');
-  const forgetBtn = $('webhookForget');
-  const testBtn   = $('webhookTest');
-  const formatWarn = $('webhookFormatWarn');
-  const testMsg   = $('webhookTestMsg');
+  refreshWebhookPanelUi();
+}
+
+function saveForumWebhook() {
+  const url = $('forumWebhookUrl').value.trim();
+  try { localStorage.setItem(STORAGE.forumWebhook, url); } catch (e) {}
+  refreshWebhookPanelUi();
+}
+
+// Central UI refresh for the Webhook panel — reads both fields and decides
+// which badges, format warnings, test buttons, and the shared forget button
+// should be visible. Called whenever either input changes or on load.
+function refreshWebhookPanelUi() {
+  const mainUrl  = $('webhookUrl').value.trim();
+  const forumUrl = $('forumWebhookUrl').value.trim();
+  const badge       = $('webhookBadge');
+  const saveMsg     = $('webhookSaveMsg');
+  const forgetBtn   = $('webhookForget');
+  const testMainBtn = $('webhookTest');
+  const testForumBtn = $('forumWebhookTest');
+  const mainWarn    = $('webhookFormatWarn');
+  const forumWarn   = $('forumWebhookFormatWarn');
+  const testMsg     = $('webhookTestMsg');
   hide(testMsg);
 
-  if (!url) {
-    hide(badge); hide(msg); hide(forgetBtn); hide(testBtn); hide(formatWarn);
-    return;
-  }
-  if (!isValidWebhook(url)) {
-    show(formatWarn); hide(badge); hide(msg); show(forgetBtn); hide(testBtn);
-    return;
-  }
-  hide(formatWarn);
-  show(badge); show(msg); show(forgetBtn); show(testBtn);
+  const mainOk  = mainUrl  && isValidWebhook(mainUrl);
+  const forumOk = forumUrl && isValidWebhook(forumUrl);
+
+  // Format warnings
+  if (mainUrl && !isValidWebhook(mainUrl)) show(mainWarn); else hide(mainWarn);
+  if (forumUrl && !isValidWebhook(forumUrl)) show(forumWarn); else hide(forumWarn);
+
+  // Test buttons — only show when the corresponding URL is valid
+  if (mainOk)  show(testMainBtn);  else hide(testMainBtn);
+  if (forumOk) show(testForumBtn); else hide(testForumBtn);
+
+  // Forget + saved badge + save message show if either URL is present
+  const anyPresent = !!(mainUrl || forumUrl);
+  if (anyPresent) { show(forgetBtn); } else { hide(forgetBtn); }
+  if (mainOk || forumOk) { show(badge); show(saveMsg); } else { hide(badge); hide(saveMsg); }
 }
 
 function saveRoleId() {
@@ -1090,156 +1278,300 @@ function loadChannelId() {
 
 function forgetWebhook() {
   $('webhookUrl').value = '';
+  $('forumWebhookUrl').value = '';
   $('roleId').value = '';
   $('channelId').value = '';
   try { localStorage.removeItem(STORAGE.webhook); } catch (e) {}
+  try { localStorage.removeItem(STORAGE.forumWebhook); } catch (e) {}
   try { localStorage.removeItem(STORAGE.roleId); } catch (e) {}
   try { localStorage.removeItem(STORAGE.channelId); } catch (e) {}
-  saveWebhook();
+  refreshWebhookPanelUi();
 }
 
 function loadWebhook() {
   try {
     const url = localStorage.getItem(STORAGE.webhook);
-    if (url) {
-      $('webhookUrl').value = url;
-      saveWebhook();
-    }
+    if (url) $('webhookUrl').value = url;
+  } catch (e) {}
+  try {
+    const forumUrl = localStorage.getItem(STORAGE.forumWebhook);
+    if (forumUrl) $('forumWebhookUrl').value = forumUrl;
   } catch (e) {}
   loadRoleId();
   loadChannelId();
+  refreshWebhookPanelUi();
 }
 
-async function testWebhook(btn) {
-  const url = $('webhookUrl').value.trim();
+async function runWebhookTest(btn, url, opts) {
   const msgEl = $('webhookTestMsg');
   if (!isValidWebhook(url)) {
-    msgEl.textContent = 'URL format looks wrong — fix it first.';
-    msgEl.className = 'status-msg status-msg--error';
-    show(msgEl);
+    setStatus(msgEl, 'URL format looks wrong — fix it first.', 'error');
     return;
   }
   const orig = btn.textContent;
   btn.textContent = 'Pinging...';
   btn.disabled = true;
-  try {
-    const roleId = ($('roleId').value || '').trim();
-    const pingPrefix = roleId ? '<@&' + roleId + '> ' : '';
-    const testPayload = {
-      content: pingPrefix + '🛠️ CLOS Advance Tool — webhook test ping at ' + timestamp() + '. You can delete this message.',
-      username: 'CLOS Advance Bot'
-    };
-    if (roleId) {
-      testPayload.allowed_mentions = { roles: [roleId] };
-    }
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(testPayload)
-    });
-    if (res.ok || res.status === 204) {
-      msgEl.textContent = '✓ Test ping sent. Check your Discord channel.';
-      msgEl.className = 'status-msg status-msg--success';
-    } else if (res.status === 429) {
-      const body = await res.json().catch(() => ({}));
-      const retry = body.retry_after ? Math.ceil(body.retry_after) : '?';
-      msgEl.textContent = 'Rate-limited by Discord. Try again in ' + retry + 's.';
-      msgEl.className = 'status-msg status-msg--error';
-    } else {
-      msgEl.textContent = 'Failed: HTTP ' + res.status + '.';
-      msgEl.className = 'status-msg status-msg--error';
-    }
-  } catch (e) {
-    msgEl.textContent = 'Network error: ' + e.message;
-    msgEl.className = 'status-msg status-msg--error';
+
+  const roleId = ($('roleId').value || '').trim();
+  const pingPrefix = roleId ? '<@&' + roleId + '> ' : '';
+  const payload = {
+    content: pingPrefix + '🛠️ CLOS Advance Tool — ' + opts.label + ' test ping at ' + timestamp() + '. You can delete this message.',
+    username: 'CLOS Advance Bot'
+  };
+  if (roleId) payload.allowed_mentions = { roles: [roleId] };
+  // Forum webhooks require thread_name on every post (the post IS the thread).
+  if (opts.isForum) payload.thread_name = clipThreadName('CLOS webhook test · ' + timestamp());
+
+  const result = await sendWebhook(url, payload);
+  if (result.ok) {
+    setStatus(msgEl, '✓ Test ping sent. Check your Discord channel.', 'success');
+  } else if (result.status === 429) {
+    setStatus(msgEl, 'Rate-limited by Discord. Try again in ' + (result.retryAfter || '?') + 's.', 'error');
+  } else if (result.status === 0) {
+    setStatus(msgEl, 'Network error: ' + (result.error || 'unknown'), 'error');
+  } else {
+    setStatus(msgEl, 'Failed: HTTP ' + result.status + '.', 'error');
   }
-  show(msgEl);
   btn.textContent = orig;
   btn.disabled = false;
 }
 
-function resetPostButton() {
-  const btn = $('postBtn');
-  btn.textContent = 'Post to Discord';
+function testWebhook(btn) {
+  return runWebhookTest(btn, $('webhookUrl').value.trim(), { label: 'main', isForum: false });
+}
+
+function testForumWebhook(btn) {
+  return runWebhookTest(btn, $('forumWebhookUrl').value.trim(), { label: 'forum', isForum: true });
+}
+
+// Reset a post button back to its idle state (shared across post flows).
+function resetPostButton(btn, label) {
+  btn.textContent = label;
   btn.classList.remove('is-failed');
   btn.disabled = false;
 }
 
-function setPostButtonFailed() {
-  const btn = $('postBtn');
+function setPostButtonFailed(btn) {
   btn.textContent = 'Failed';
   btn.classList.add('is-failed');
   btn.disabled = false;
 }
 
-async function postToDiscord() {
-  const webhookUrl = $('webhookUrl').value.trim();
-  if (!webhookUrl) { alert('Set your webhook URL first (Discord Webhook section above).'); return; }
-  const content = $('advPaste').value.trim();
-  if (!content)   { alert('Paste the advance post into the output box first.'); return; }
+// Shared post-to-Discord pipeline used by Advance / GOTW / Top 25. Each caller
+// supplies its own button, status element, content, idle label, webhook URL,
+// optional thread_name (for forum webhooks), and success-side-effects.
+async function postContent({ btn, status, content, idleLabel, webhookUrl, threadName, onSuccess, successMsg }) {
+  if (!webhookUrl) {
+    alert('Set the appropriate webhook URL first (Discord Webhook section above).');
+    return;
+  }
+  if (!content) {
+    alert('Nothing to post yet — fill the output above first.');
+    return;
+  }
+  if (content.length > DISCORD_CONTENT_LIMIT) {
+    setStatus(status, 'Post is ' + content.length + ' chars — Discord caps at ' + DISCORD_CONTENT_LIMIT + '. Shorten and try again.', 'error');
+    return;
+  }
 
-  const btn = $('postBtn');
-  const status = $('postStatus');
   btn.textContent = 'Posting...';
   btn.disabled = true;
 
-  // Build a Discord webhook payload with a rich embed. The embed uses the
-  // CLOS Deep Navy (#0D1B2A) sidebar stripe and includes the week/season
-  // context as a footer.
-  const w = currentWeek();
-  const season = $('seasonNum').value;
-  // Swap cosmetic text with Discord's real mention/link syntax so pings
-  // and channel links actually work. Output box stays human-readable.
-  let discordContent = content;
-  const roleId = ($('roleId').value || '').trim();
+  const roleId    = ($('roleId').value || '').trim();
   const channelId = ($('channelId').value || '').trim();
-  if (roleId)    discordContent = discordContent.replace(/@CLOS Coach/gi, '<@&' + roleId + '>');
-  if (channelId) discordContent = discordContent.replace(/#scheduling/gi, '<#' + channelId + '>');
+  const discordContent = applyDiscordSubs(content, roleId, channelId);
 
   const payload = {
     content: discordContent,
-    username: 'CLOS Advance Bot'
+    username: 'CLOS Advance Bot',
+    embeds: [buildEmbed()]
   };
-  if (roleId) {
-    payload.allowed_mentions = { roles: [roleId] };
-  }
+  if (roleId) payload.allowed_mentions = { roles: [roleId] };
+  if (threadName) payload.thread_name = clipThreadName(threadName);
 
-  try {
-    const res = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (res.ok || res.status === 204) {
-      btn.textContent = '✓ Posted!';
-      status.textContent = 'Advance post sent to Discord. CLOS Report will fire automatically.';
-      status.style.color = '#4caf50';
-      show(status);
-      // Clear the output so repeat clicks can't re-send the same post by accident.
-      // To post again, the user has to regenerate + repaste.
-      $('advPaste').value = '';
-      // Only auto-reset on success. On failure we leave the red state so the user sees it.
-      setTimeout(resetPostButton, 3000);
-    } else if (res.status === 429) {
-      const body = await res.json().catch(() => ({}));
-      const retry = body.retry_after ? Math.ceil(body.retry_after) : '?';
-      status.textContent = 'Rate-limited by Discord. Try again in ' + retry + 's.';
-      status.style.color = '#f44336';
-      show(status);
-      setPostButtonFailed();
-    } else {
-      const err = await res.text();
-      status.textContent = 'Error: ' + res.status + ' — ' + err;
-      status.style.color = '#f44336';
-      show(status);
-      setPostButtonFailed();
-    }
-  } catch (e) {
-    status.textContent = 'Error: ' + e.message;
-    status.style.color = '#f44336';
-    show(status);
-    setPostButtonFailed();
+  const result = await sendWebhook(webhookUrl, payload);
+  if (result.ok) {
+    btn.textContent = '✓ Posted!';
+    setStatus(status, successMsg, 'success');
+    if (typeof onSuccess === 'function') onSuccess();
+    setTimeout(() => resetPostButton(btn, idleLabel), 3000);
+  } else if (result.status === 429) {
+    setStatus(status, 'Rate-limited by Discord. Try again in ' + (result.retryAfter || '?') + 's.', 'error');
+    setPostButtonFailed(btn);
+  } else if (result.status === 0) {
+    setStatus(status, 'Network error: ' + (result.error || 'unknown'), 'error');
+    setPostButtonFailed(btn);
+  } else {
+    setStatus(status, 'Error: ' + result.status + ' — ' + (result.error || ''), 'error');
+    setPostButtonFailed(btn);
   }
+}
+
+async function postToDiscord() {
+  await postContent({
+    btn: $('postBtn'),
+    status: $('postStatus'),
+    content: $('advPaste').value.trim(),
+    idleLabel: 'Post to Discord',
+    webhookUrl: $('webhookUrl').value.trim(),
+    successMsg: 'Advance post sent to Discord. CLOS Report will fire automatically.',
+    onSuccess: () => {
+      // Clear so repeat clicks can't re-send. To post again, regenerate + repaste.
+      $('advPaste').value = '';
+      updateAdvCharCount();
+      updateAdvPreview();
+      updateProgress();
+    }
+  });
+}
+
+async function postGOTWToDiscord() {
+  const w = currentWeek();
+  const season = $('seasonNum').value || '1';
+  const g1 = $('g1team').value.trim();
+  const g2 = $('g2team').value.trim();
+  const matchup = (g1 && g2) ? (g1 + ' vs ' + g2) : 'Matchup';
+  const threadName = 'GOTW — ' + matchup + ' — Week ' + w.short + ' S' + season;
+  await postContent({
+    btn: $('gotwPostBtn'),
+    status: $('gotwPostStatus'),
+    content: $('gotwPaste').value.trim(),
+    idleLabel: 'Post to Discord',
+    webhookUrl: $('forumWebhookUrl').value.trim(),
+    threadName: threadName,
+    successMsg: 'GOTW article posted as a new forum thread.',
+    onSuccess: () => {
+      $('gotwPaste').value = '';
+      updateGotwPreview();
+      updateProgress();
+    }
+  });
+}
+
+async function postTop25ToDiscord() {
+  const w = currentWeek();
+  const season = $('seasonNum').value || '1';
+  const threadName = 'CLOS Top 25 — Week ' + w.short + ' | Season ' + season;
+  await postContent({
+    btn: $('t25PostBtn'),
+    status: $('t25PostStatus'),
+    content: $('t25Post').value.trim(),
+    idleLabel: 'Post to Discord',
+    webhookUrl: $('forumWebhookUrl').value.trim(),
+    threadName: threadName,
+    successMsg: 'Top 25 poll posted as a new forum thread.',
+    onSuccess: () => {
+      // Intentionally NOT clearing t25Post — the user may want to edit/repost;
+      // but regenerating next week will overwrite it anyway.
+      updateT25Preview();
+    }
+  });
+}
+
+// ============ Char count + length guard (Advance post) ============
+// Advance content field in Discord webhooks caps at 2000 chars. This keeps a
+// live counter under the output header and disables the post button over cap.
+function updateAdvCharCount() {
+  const len = ($('advPaste').value || '').length;
+  const el  = $('advCharCount');
+  el.textContent = len + ' / ' + DISCORD_CONTENT_LIMIT;
+  const over = len > DISCORD_CONTENT_LIMIT;
+  el.classList.toggle('char-count--over', over);
+  const btn = $('postBtn');
+  btn.disabled = over;
+  btn.title = over ? 'Post exceeds ' + DISCORD_CONTENT_LIMIT + '-char Discord limit' : '';
+}
+
+// ============ Discord preview renderers ============
+// Applies the same mention/channel substitutions used on post, so the user
+// can eyeball exactly what Discord will render before clicking Post.
+function previewForBox(raw, boxId, footerId) {
+  const box = $(boxId);
+  const footer = $(footerId);
+  const text = (raw || '').trim();
+  if (!text) {
+    box.textContent = 'Nothing to preview yet.';
+    footer.textContent = '';
+    return;
+  }
+  const roleId    = ($('roleId').value || '').trim();
+  const channelId = ($('channelId').value || '').trim();
+  box.textContent = applyDiscordSubs(text, roleId, channelId);
+  const w = currentWeek();
+  const season = $('seasonNum').value || '1';
+  footer.textContent = 'Embed footer — CLOS · Season ' + season + ' · ' + w.label;
+}
+
+function updateAdvPreview()  { previewForBox($('advPaste').value,  'advPreviewBox',  'advPreviewFooter'); }
+function updateGotwPreview() { previewForBox($('gotwPaste').value, 'gotwPreviewBox', 'gotwPreviewFooter'); }
+function updateT25Preview()  { previewForBox($('t25Post').value,   't25PreviewBox',  't25PreviewFooter'); }
+
+// ============ State export / import ============
+// Bundles every clos_* localStorage key into a JSON blob for download, and
+// restores the same shape from an uploaded file. UI state is re-read via the
+// existing load* functions so the page reflects the restored values.
+function exportState() {
+  const payload = { _exportedAt: new Date().toISOString(), version: 1, data: {} };
+  Object.values(STORAGE).forEach(key => {
+    try {
+      const v = localStorage.getItem(key);
+      if (v !== null) payload.data[key] = v;
+    } catch (e) {}
+  });
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  a.href = url;
+  a.download = 'clos-state-' + stamp + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  const msg = $('ioMsg');
+  setStatus(msg, '✓ Exported ' + Object.keys(payload.data).length + ' keys.', 'success');
+}
+
+function importState(event) {
+  const file = event.target.files && event.target.files[0];
+  const msg = $('ioMsg');
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      const data = (parsed && parsed.data) ? parsed.data : parsed;
+      if (!data || typeof data !== 'object') throw new Error('Invalid file format');
+      const validKeys = new Set(Object.values(STORAGE));
+      let count = 0;
+      Object.entries(data).forEach(([k, v]) => {
+        if (validKeys.has(k) && typeof v === 'string') {
+          try { localStorage.setItem(k, v); count++; } catch (e2) {}
+        }
+      });
+      // Re-hydrate the UI from storage.
+      loadSeason();
+      loadWeekType();
+      loadLastTop25();
+      loadTop25Draft();
+      loadWebhook();
+      loadGotwDraft();
+      loadWheel();
+      loadWheelDate();
+      updateNowBuilding();
+      updateGotwButtons();
+      updateAdvCharCount();
+      updateAdvPreview();
+      updateGotwPreview();
+      updateT25Preview();
+      setStatus(msg, '✓ Imported ' + count + ' keys.', 'success');
+    } catch (err) {
+      setStatus(msg, 'Import failed: ' + err.message, 'error');
+    }
+    event.target.value = '';
+  };
+  reader.onerror = () => { setStatus(msg, 'Could not read file.', 'error'); };
+  reader.readAsText(file);
 }
 
 // ============ Season & week-type persistence ============
@@ -1450,8 +1782,10 @@ function copyAllOutputs(btn) {
 // ============ Init ============
 function populateWeekDropdown() {
   const sel = $('weekType');
+  // No default selected attribute — loadWeekType() hydrates from storage,
+  // and the browser defaults to the first option otherwise.
   sel.innerHTML = WEEK_TYPES.map(w =>
-    '<option value="' + w.key + '"' + (w.key === 'kickoff' ? ' selected' : '') + '>' + w.label + '</option>'
+    '<option value="' + w.key + '">' + w.label + '</option>'
   ).join('');
 }
 
@@ -1472,6 +1806,41 @@ function wireKeyboardShortcuts() {
       e.preventDefault();
       generate();
     }
+  });
+  // Ctrl/Cmd+Enter in the Advance paste box triggers Post to Discord, as
+  // long as the post button isn't disabled (over-length guard from F1).
+  $('advPaste').addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (!$('postBtn').disabled && ($('advPaste').value || '').trim()) {
+        postToDiscord();
+      }
+    }
+  });
+}
+
+function wireCharCount() {
+  const el = $('advPaste');
+  el.addEventListener('input', updateAdvCharCount);
+  updateAdvCharCount();
+}
+
+function wirePreviewUpdates() {
+  // Keep each preview in sync as the user types / pastes / generates.
+  $('advPaste').addEventListener('input', updateAdvPreview);
+  $('gotwPaste').addEventListener('input', updateGotwPreview);
+  $('t25Post').addEventListener('input', updateT25Preview);
+  // Role/channel IDs and week/season changes also affect the rendered preview.
+  ['roleId', 'channelId'].forEach(id => {
+    $(id).addEventListener('input', () => {
+      updateAdvPreview(); updateGotwPreview(); updateT25Preview();
+    });
+  });
+  $('seasonNum').addEventListener('input', () => {
+    updateAdvPreview(); updateGotwPreview(); updateT25Preview();
+  });
+  $('weekType').addEventListener('change', () => {
+    updateAdvPreview(); updateGotwPreview(); updateT25Preview();
   });
 }
 
@@ -1515,6 +1884,11 @@ function init() {
   wireTop25DraftSave();
   wireProgressTracking();
   wireKeyboardShortcuts();
+  wireCharCount();
+  wirePreviewUpdates();
+  updateAdvPreview();
+  updateGotwPreview();
+  updateT25Preview();
   fetchRoster();
 }
 
