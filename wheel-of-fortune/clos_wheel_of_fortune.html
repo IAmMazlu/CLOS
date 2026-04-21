@@ -649,6 +649,103 @@
   }
 
   /* ─── Responsive ────────────────────────────────────────────────────────── */
+  /* ─── Toast notifications ──────────────────────────────────────────────── */
+  .toast-stack {
+    position: fixed; bottom: 20px; right: 20px; z-index: 1100;
+    display: flex; flex-direction: column; gap: 8px;
+    pointer-events: none;
+  }
+  .toast {
+    background: #1A1A1A; border-left: 3px solid #A8B2BB;
+    color: #F5F5F7; font-size: 13px; padding: 10px 16px;
+    border-radius: 4px; min-width: 200px; max-width: 360px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    opacity: 0; transform: translateX(20px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: auto; font-family: 'Inter', sans-serif;
+  }
+  .toast.show { opacity: 1; transform: translateX(0); }
+  .toast--error   { border-left-color: #E24B4A; }
+  .toast--success { border-left-color: #4CAF50; }
+  .toast--warn    { border-left-color: #C9A84C; }
+
+  /* ─── Broadcast view mode (?broadcast=1) ──────────────────────────────── */
+  body.is-broadcast .show-header > div:last-child > button,
+  body.is-broadcast .show-header > div:last-child > .btn-pause,
+  body.is-broadcast .show-header > div:last-child > .mute-wrap,
+  body.is-broadcast .spacebar-hint,
+  body.is-broadcast .pause-overlay,
+  body.is-broadcast .hotkey-overlay {
+    display: none !important;
+  }
+  body.is-broadcast .show-main { padding: 40px 56px; }
+  body.is-broadcast .coach-name-hero { font-size: clamp(72px, 11vw, 160px); }
+  body.is-broadcast .show-spin-count { font-size: 15px; color: #888; }
+  body.is-broadcast .show-sidebar { width: 340px; }
+
+  /* ─── Reroll marker in sidebar ─────────────────────────────────────────── */
+  .sidebar-entry.is-reroll {
+    background: #1A1208; border-left-color: #C9A84C !important;
+  }
+  .sidebar-entry-reroll-tag {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    color: #C9A84C; letter-spacing: 1px; background: #2A1E08;
+    padding: 1px 6px; border-radius: 2px; margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  /* ─── Conflict preview banner (F5) ─────────────────────────────────────── */
+  .tb-preview-banner {
+    font-size: clamp(13px, 1.4vw, 17px); font-weight: 700;
+    color: #C9A84C; letter-spacing: 3px;
+    margin-top: 14px; opacity: 0;
+    animation: fadeIn 0.45s ease forwards;
+  }
+
+  /* ─── Undo-depth indicator (F9) ────────────────────────────────────────── */
+  .undo-depth {
+    font-size: 11px; color: #555; letter-spacing: 1px;
+    margin-top: 4px; text-align: center;
+  }
+  .undo-depth-school { color: #888; }
+
+  /* ─── Per-channel mute panel (F7) ──────────────────────────────────────── */
+  .mute-wrap { position: relative; display: inline-block; }
+  .mute-panel {
+    position: absolute; top: calc(100% + 6px); right: 0; z-index: 50;
+    background: #1A1A1A; border: 1px solid #2A2A2A; border-radius: 6px;
+    padding: 10px 12px; min-width: 180px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+  .mute-panel-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 0; font-size: 12px; color: #A8B2BB;
+    font-family: 'Inter', sans-serif; letter-spacing: 0.5px;
+    cursor: pointer; user-select: none;
+  }
+  .mute-panel-row:hover { color: #F5F5F7; }
+  .mute-panel-check {
+    width: 14px; height: 14px; border: 1px solid #444; border-radius: 3px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #0A0A0A; background: transparent;
+  }
+  .mute-panel-check.on { background: #C9A84C; border-color: #C9A84C; }
+
+  /* ─── Next-button class variants (C2) ──────────────────────────────────── */
+  .btn-next--final  { background: #C9A84C; color: #0A0A0A; }
+  .btn-next--normal { background: #F5F5F7; color: #0A0A0A; }
+
+  /* ─── Dry-run badge ────────────────────────────────────────────────────── */
+  body.is-dryrun::before {
+    content: "DRY-RUN / REHEARSAL — no live data saved";
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1050;
+    background: #C9A84C; color: #0A0A0A;
+    text-align: center; font-size: 11px; font-weight: 700;
+    letter-spacing: 2px; padding: 4px 0;
+    font-family: 'Barlow Condensed', sans-serif;
+    pointer-events: none;
+  }
+
   @media (max-width: 1024px) {
     .show-sidebar { width: 240px; }
     .coach-card { min-width: 320px; padding: 24px 36px; }
@@ -900,6 +997,41 @@ const TIER_BADGE = {
 
 const PO = ["A+","A","A-","B+","B","B-","C+","C","C-","D+","D","D-","F"];
 
+// B3: normalize prestige strings (trim + fix casing) so "b+" and "B+" compare
+// equally in breakTie. Returns the matched PO entry or the original input.
+function normalizePrestige(raw) {
+  if (raw == null) return "C";
+  const s = String(raw).trim().toUpperCase().replace(/\s+/g, "");
+  return PO.indexOf(s) !== -1 ? s : raw;
+}
+
+// ─── URL PARAMS ──────────────────────────────────────────────────────────────
+const URL_PARAMS   = new URLSearchParams(location.search);
+const IS_BROADCAST = URL_PARAMS.get("broadcast") === "1";
+const IS_DRYRUN    = URL_PARAMS.get("dryrun") === "1";
+
+if (IS_BROADCAST) document.body.classList.add("is-broadcast");
+if (IS_DRYRUN)    document.body.classList.add("is-dryrun");
+
+// ─── TOAST NOTIFICATIONS ─────────────────────────────────────────────────────
+function toast(message, kind) {
+  let stack = document.querySelector(".toast-stack");
+  if (!stack) {
+    stack = document.createElement("div");
+    stack.className = "toast-stack";
+    document.body.appendChild(stack);
+  }
+  const el = document.createElement("div");
+  el.className = "toast" + (kind ? " toast--" + kind : "");
+  el.textContent = message;
+  stack.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("show"));
+  setTimeout(() => {
+    el.classList.remove("show");
+    setTimeout(() => el.remove(), 300);
+  }, 3200);
+}
+
 // ─── TIMING CONSTANTS ────────────────────────────────────────────────────────
 const TIMING = {
   SLOT_TICKS:        44,    // total ticks before the main slot settles
@@ -929,6 +1061,10 @@ const TIMING = {
   FINAL_EASE_START:  38,    // easing starts later
   FINAL_BASE_SPEED:  50,    // slightly faster base
   FINAL_AFTER_DELAY: 4500,  // longer pause after settle
+
+  // F5 — conflict preview: pause on the "Both landed on X" panel before
+  // the tiebreaker slot starts flashing coach names.
+  TB_PREVIEW_DELAY:  1500,
 };
 
 /*
@@ -956,6 +1092,10 @@ let state = {
   assignments: {}, pools: {}, ss: "idle", slotPool: [], slotResult: null,
   slotTimer: null, conflict: null, undoSnapshot: null,
   spinGen: 0, // incremented each spin; stale callbacks check this to self-abort
+  runLog: [], // F2 — append-only audit trail of every confirmed spin + tiebreaker
+  // F6 — set of "coach|tier" keys whose assignment came from a reroll queue
+  // entry (isReroll on the queue item). Drives the sidebar reroll marker.
+  rerollKeys: [],
   lastRevealedQi: -1, // tracks which qi had its card flip, prevents replay on re-render
   paused: false, showBoard: false,
   apiUrl: "https://script.google.com/macros/s/AKfycbyfO4OeT8OHyEXar-6qHB2Y3nYZl5ZVRdlBj70cxbUVc45NsW-lXMvWEjD3SqDuSHfIQw/exec",
@@ -1018,7 +1158,11 @@ function breakTie(a, b) {
 // ─── AUDIO ───────────────────────────────────────────────────────────────────
 const AUDIO = (() => {
   let ctx = null;
-  let muted = false;
+  // F7 — per-channel mute. Channels:
+  //   ticks:   slot-machine click ticks during a spin
+  //   fanfare: reveal sweep + tier chord + results/round stingers
+  //   ui:      settle punch, round-end thud, undo cue — UI feedback sounds
+  let channels = { ticks: false, fanfare: false, ui: false };
 
   function init() {
     if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1052,12 +1196,21 @@ const AUDIO = (() => {
     return reverbNode;
   }
 
-  function mute(on) { muted = on; }
-  function isMuted() { return muted; }
+  // Legacy mute(on) still works — flips all channels together. Also accepts
+  // a partial { ticks, fanfare, ui } object to set specific channels.
+  function mute(arg) {
+    if (typeof arg === "boolean") {
+      channels.ticks = channels.fanfare = channels.ui = arg;
+    } else if (arg && typeof arg === "object") {
+      for (const k of ["ticks","fanfare","ui"]) if (k in arg) channels[k] = !!arg[k];
+    }
+  }
+  function isMuted() { return channels.ticks && channels.fanfare && channels.ui; }
+  function getChannels() { return { ...channels }; }
 
   // Short percussive click — pitch varies inversely with slot speed
   function tick(speed) {
-    if (muted) return;
+    if (channels.ticks) return;
     const ac = init();
     const now = ac.currentTime;
     const freq = Math.max(400, 1400 - speed * 3.2);
@@ -1073,7 +1226,7 @@ const AUDIO = (() => {
 
   // Low punch when the reel locks in
   function settle() {
-    if (muted) return;
+    if (channels.ui) return;
     const ac = init();
     const now = ac.currentTime;
     const osc = ac.createOscillator();
@@ -1089,7 +1242,7 @@ const AUDIO = (() => {
 
   // Rising sawtooth sweep timed to the color animation, then tier fanfare
   function reveal(tier) {
-    if (muted) return;
+    if (channels.fanfare) return;
     const ac = init();
     const now = ac.currentTime;
 
@@ -1152,7 +1305,7 @@ const AUDIO = (() => {
 
   // Escalating drum roll for round transitions
   function roundStart() {
-    if (muted) return;
+    if (channels.fanfare) return;
     const ac = init();
     const now = ac.currentTime;
     const HITS = 7;
@@ -1173,7 +1326,7 @@ const AUDIO = (() => {
 
   // Tension riser before the final spin
   function finalSpinIntro() {
-    if (muted) return;
+    if (channels.fanfare) return;
     const ac = init();
     const now = ac.currentTime;
     // Rising filtered noise + escalating drum hits
@@ -1214,7 +1367,7 @@ const AUDIO = (() => {
 
   // Descending close when a tier round wraps up — bookend to roundStart
   function roundEnd() {
-    if (muted) return;
+    if (channels.fanfare) return;
     const ac = init();
     const now = ac.currentTime;
     // Low thud to mark the close
@@ -1244,7 +1397,7 @@ const AUDIO = (() => {
 
   // Grand reveal stinger for the final results page
   function resultsReveal() {
-    if (muted) return;
+    if (channels.fanfare) return;
     const ac = init();
     const now = ac.currentTime;
     const arp = [261.63, 329.63, 392, 523.25];
@@ -1284,7 +1437,7 @@ const AUDIO = (() => {
 
   // Descending two-note cue for undo
   function undo() {
-    if (muted) return;
+    if (channels.ui) return;
     const ac = init();
     const now = ac.currentTime;
     [740, 523].forEach((freq, i) => {
@@ -1299,7 +1452,7 @@ const AUDIO = (() => {
     });
   }
 
-  return { init, mute, isMuted, tick, settle, reveal, roundStart, roundEnd, resultsReveal, finalSpinIntro, undo };
+  return { init, mute, isMuted, getChannels, tick, settle, reveal, roundStart, roundEnd, resultsReveal, finalSpinIntro, undo };
 })();
 
 
@@ -1473,6 +1626,10 @@ function renderSpinButton(tier, isLast) {
 }
 
 function renderTiebreakerPanel(item, conflict) {
+  // F5 — show a brief "COLLISION — TIEBREAKER INCOMING" banner naming the
+  // two coaches before the slot starts spinning. The setTimeout in afterSpin
+  // gives the audience TB_PREVIEW_DELAY ms to read this.
+  const otherName = conflict.other ? conflict.other.name : "";
   return `
     <div style="text-align:center;width:100%;max-width:600px">
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:20px">
@@ -1482,25 +1639,48 @@ function renderTiebreakerPanel(item, conflict) {
       </div>
       <div style="font-size:clamp(13px,1.3vw,16px);color:#666;margin-bottom:6px">Both landed on</div>
       <div class="bc tb-school-name">${esc(conflict.result).toUpperCase()}</div>
-      <div id="tb-slot-box" class="tb-slot-box">
+      <div class="bc tb-preview-banner">${esc(item.coach.name).toUpperCase()} &nbsp;vs&nbsp; ${esc(otherName).toUpperCase()}</div>
+      <div id="tb-slot-box" class="tb-slot-box" style="margin-top:14px">
         <div id="tb-slot-val" class="bc tb-slot-val slot-spinning">VS</div>
       </div>
     </div>`;
 }
 
 function renderEmptyPoolCard(tierLabel, isLast) {
+  const nextCls = isLast ? "btn-next--final" : "btn-next--normal";
+  const nextLabel = isLast ? "SEE RESULTS" : "NEXT SPIN";
   return `
     <div class="empty-pool-card">
       <div class="bc empty-pool-title">NO SCHOOLS AVAILABLE</div>
       <div class="empty-pool-sub">This ${tierLabel} offer was skipped — pool is empty.</div>
       <div class="btn-row">
         ${state.undoSnapshot ? `<button onclick="undoLast()" class="bc btn-undo">↩ UNDO</button>` : ""}
-        ${isLast
-          ? `<button onclick="nextSpin()" class="bc btn-next" style="background:#C9A84C;color:#0A0A0A">SEE RESULTS</button>`
-          : `<button onclick="nextSpin()" class="bc btn-next" style="background:#F5F5F7;color:#0A0A0A">NEXT SPIN</button>`
-        }
+        <button onclick="nextSpin()" class="bc btn-next ${nextCls}">${nextLabel}</button>
       </div>
+      ${renderUndoDepthHint()}
     </div>`;
+}
+
+// F9 — undo-depth indicator. When an undo snapshot exists, surface what the
+// next Ctrl+Z / U press would actually roll back, so the user isn't flying
+// blind.
+function renderUndoDepthHint() {
+  const snap = state.undoSnapshot;
+  if (!snap) return "";
+  const item = state.queue[snap.qi];
+  if (!item || !item.coach) return "";
+  // Find what was most recently assigned to this coach at this tier in the
+  // *current* state — that's what undo will erase.
+  const cur = state.assignments[item.coach.name];
+  const school = cur ? cur[item.tier] : null;
+  const snapCur = snap.assignments[item.coach.name];
+  const prevSchool = snapCur ? snapCur[item.tier] : null;
+  // If current has an assignment that snap didn't, undo removes that.
+  const undoneSchool = (school && school !== prevSchool) ? school : null;
+  const label = undoneSchool
+    ? `Undo will revert <span class="undo-depth-school">${esc(item.coach.name)} → ${esc(undoneSchool)}</span>`
+    : `Undo available`;
+  return `<div class="undo-depth">${label}</div>`;
 }
 
 function renderDraftBoard() {
@@ -1605,14 +1785,18 @@ function renderSidebar() {
   if (!grouped.length)
     return '<div class="no-offers" style="color:#333;font-size:12px;font-style:italic;padding:8px">No offers yet</div>';
 
+  const rerollSet = new Set(state.rerollKeys);
   return grouped.map(g => `
     <div style="margin-bottom:12px" data-tier="${g.tier}">
       <div class="sidebar-tier-label">${TIER_LABEL[g.tier]}</div>
-      ${g.entries.map(({n,t,s}) => `
-        <div class="sidebar-entry" style="border-left:3px solid ${schoolAccentColor(s, t)}">
-          <div class="sidebar-entry-name">${esc(n)}</div>
+      ${g.entries.map(({n,t,s}) => {
+        const isReroll = rerollSet.has(n + "|" + t);
+        return `
+        <div class="sidebar-entry ${isReroll ? 'is-reroll' : ''}" style="border-left:3px solid ${schoolAccentColor(s, t)}">
+          <div class="sidebar-entry-name">${esc(n)}${isReroll ? '<span class="sidebar-entry-reroll-tag">RE-ROLL</span>' : ''}</div>
           <div class="sidebar-entry-school">${esc(s)}</div>
-        </div>`).join("")}
+        </div>`;
+      }).join("")}
     </div>`).join("");
 }
 
@@ -1752,7 +1936,32 @@ function renderSetup() {
       <div class="setup-start-area">
         <button onclick="startShow()" class="bc btn-start-show">START THE WHEEL OF FORTUNE</button>
       </div>`:""}
+
+    <div style="text-align:center;margin-top:18px;padding-bottom:8px">
+      <button onclick="startDryRun()" class="bc" style="background:transparent;color:#C9A84C;border:1px dashed #C9A84C;font-size:12px;padding:8px 20px;letter-spacing:2px" title="Rehearse a full run with throwaway data — nothing saved">🛠 DRY-RUN / REHEARSAL</button>
+      <div style="font-size:11px;color:#333;margin-top:6px">Seeds 6 fake coaches for a practice run. No state persists.</div>
+    </div>
   </div>`;
+}
+
+// F4 — dry-run / rehearsal: seeds fake coaches, marks the session as dryrun
+// (so saveShowState is a no-op), and starts the show. Everything else works
+// normally — spinning, tiebreakers, export log — but nothing persists.
+function startDryRun() {
+  // Flag the whole page so the banner shows and save logic bails out.
+  document.body.classList.add("is-dryrun");
+  window.__CLOS_DRYRUN__ = true;
+  state.coaches = [
+    { name: "Practice Coach 1", tier: 1, prestige: "A",  winPct: 0.78, top25wins: 12 },
+    { name: "Practice Coach 2", tier: 2, prestige: "A-", winPct: 0.70, top25wins: 8  },
+    { name: "Practice Coach 3", tier: 2, prestige: "B+", winPct: 0.65, top25wins: 6  },
+    { name: "Practice Coach 4", tier: 3, prestige: "B",  winPct: 0.55, top25wins: 3  },
+    { name: "Practice Coach 5", tier: 4, prestige: "B-", winPct: 0.48, top25wins: 1  },
+    { name: "Practice Coach 6", tier: 5, prestige: "C+", winPct: 0.40, top25wins: 0  }
+  ];
+  state.occupied = [];
+  startShow();
+  toast("Dry-run started — no data will be saved.", "warn");
 }
 
 function renderShow() {
@@ -1794,7 +2003,10 @@ function renderShow() {
           <div class="show-spin-count">Spin ${spinInRound} of ${totalInRound} this round &nbsp;·&nbsp; ${state.qi+1} of ${state.queue.length} overall</div>
           <button onclick="toggleBoard()" class="btn-pause" title="Offer Board (B)">▦</button>
           <button onclick="togglePause()" class="btn-pause" title="Pause (P)">⏸</button>
-          <button onclick="toggleMute()" id="mute-btn" class="mute-btn" style="color:${AUDIO.isMuted()?'#555':'#A8B2BB'}" title="${AUDIO.isMuted()?'Unmute':'Mute'}">${AUDIO.isMuted()?'🔇':'🔊'}</button>
+          <span class="mute-wrap">
+            <button onclick="toggleMute()" id="mute-btn" class="mute-btn" style="color:${AUDIO.isMuted()?'#555':'#A8B2BB'}" title="${AUDIO.isMuted()?'Unmute':'Mute'}">${AUDIO.isMuted()?'🔇':'🔊'}</button>
+            <button onclick="toggleMutePanel()" id="mute-panel-btn" class="mute-btn" title="Per-channel mute" style="color:#666">⚙</button>
+          </span>
         </div>
       </div>
       <div class="progress-track">
@@ -1833,6 +2045,8 @@ function renderResults() {
     <div id="results-buttons" class="results-buttons-hidden" style="text-align:center;margin-top:36px;padding-bottom:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
       <button onclick="toggleBoard()" style="background:transparent;color:#A8B2BB;font-size:15px;padding:12px 32px;letter-spacing:2px;border:1px solid #333" class="bc">OFFER BOARD</button>
       <button id="share-results-btn" onclick="shareResults()" style="background:#C9A84C;color:#0A0A0A;font-size:15px;padding:12px 32px;letter-spacing:2px" class="bc">SHARE LINK</button>
+      <button onclick="exportRunLog('json')" style="background:transparent;color:#A8B2BB;font-size:15px;padding:12px 24px;letter-spacing:2px;border:1px solid #333" class="bc" title="Download a JSON audit log of every spin">LOG (JSON)</button>
+      <button onclick="exportRunLog('csv')" style="background:transparent;color:#A8B2BB;font-size:15px;padding:12px 24px;letter-spacing:2px;border:1px solid #333" class="bc" title="Download a CSV audit log of every spin">LOG (CSV)</button>
       <button onclick="resetAll()" style="background:transparent;color:#A8B2BB;font-size:15px;padding:12px 32px;letter-spacing:2px;border:1px solid #333" class="bc">NEW SESSION</button>
     </div>
   </div>`;
@@ -1856,7 +2070,7 @@ async function fetchData() {
     state.coaches = data.coaches.map(c => ({
       name: String(c.name || ""),
       tier: parseInt(c.tier) || 3,
-      prestige: String(c.prestige || "C"),
+      prestige: normalizePrestige(c.prestige),
       winPct: parseFloat(c.winPct) || 0,
       top25wins: parseInt(c.top25wins) || 0,
     })).filter(c => c.name);
@@ -1884,7 +2098,7 @@ function addCoach() {
   }
   if (winPct > 1 && winPct <= 100) winPct = winPct / 100;
   winPct = Math.max(0, Math.min(1, winPct));
-  state.coaches.push({ name, tier:+document.getElementById("c-tier").value, prestige:document.getElementById("c-prestige").value, winPct, top25wins:+document.getElementById("c-top25").value||0 });
+  state.coaches.push({ name, tier:+document.getElementById("c-tier").value, prestige: normalizePrestige(document.getElementById("c-prestige").value), winPct, top25wins:+document.getElementById("c-top25").value||0 });
   state.form = { name:"", tier:document.getElementById("c-tier").value, prestige:document.getElementById("c-prestige").value, winPct:"", top25:"", error:"" };
   render();
 }
@@ -1913,6 +2127,7 @@ function startShow() {
   state.qi=0; state.assignments={}; state.ss="roundTransition";
   state.slotPool=[]; state.slotResult=null; state.conflict=null; state.undoSnapshot=null;
   state.spinGen=0; state.lastRevealedQi=-1; state.paused=false; state.showBoard=false;
+  state.runLog=[]; state.rerollKeys=[];
   state.phase="show";
   render();
 }
@@ -2132,7 +2347,11 @@ function runSlot(gen, isFinal) {
       speed = Math.min(baseSpeed + Math.pow(t, TIMING.SLOT_EASE_POWER) * TIMING.SLOT_EASE_RANGE, TIMING.SLOT_MAX_SPEED);
     }
     if (count <= easeStart ? count % 2 === 0 : true) AUDIO.tick(speed);
-    el.textContent = state.slotPool[Math.floor(Math.random()*state.slotPool.length)];
+    // B4: if the pool somehow emptied mid-spin, keep the text static rather
+    // than producing `undefined`/NaN from a 0-length Math.floor(random()*0).
+    if (state.slotPool.length) {
+      el.textContent = state.slotPool[Math.floor(Math.random()*state.slotPool.length)];
+    }
     state.slotTimer = setTimeout(tick, speed);
   };
   state.slotTimer = setTimeout(tick, speed);
@@ -2140,6 +2359,9 @@ function runSlot(gen, isFinal) {
 
 function afterSpin() {
   const item = state.queue[state.qi];
+  // Guard: if the queue index somehow slipped past the end (corrupt snapshot,
+  // double-advance, etc.), don't crash — bail out to idle and let render() recover.
+  if (!item || !item.coach) { state.ss = "idle"; render(); return; }
   const result = state.slotResult;
   let conflictName = null;
   for (const [n,ts] of Object.entries(state.assignments)) {
@@ -2150,7 +2372,9 @@ function afterSpin() {
     state.conflict = { result, other, resolution:breakTie(item.coach,other) };
     state.ss = "tiebreaker-drama";
     render();
-    runTiebreakerSlot();
+    // F5: pause briefly on the "Both landed on X" panel before the slot spins
+    // so the audience can register the collision before names start flashing.
+    setTimeout(() => { if (state.ss === "tiebreaker-drama") runTiebreakerSlot(); }, TIMING.TB_PREVIEW_DELAY);
   } else {
     injectNextButton();
   }
@@ -2237,9 +2461,9 @@ function injectNextButton() {
     ? `<button onclick="undoLast()" class="bc btn-undo">↩ UNDO</button>`
     : "";
   const nextLabel = isLast ? "SEE RESULTS" : "NEXT SPIN";
-  const nextBg = isLast ? "#C9A84C" : "#F5F5F7";
-  const nextHtml = `<button onclick="confirmAndAdvance()" class="bc btn-next" style="background:${nextBg};color:#0A0A0A">${nextLabel}</button>`;
-  btnDiv.innerHTML = `<div class="btn-row">${undoHtml}${nextHtml}</div><div class="spacebar-hint">press spacebar</div>`;
+  const nextCls = isLast ? "btn-next--final" : "btn-next--normal";
+  const nextHtml = `<button onclick="confirmAndAdvance()" class="bc btn-next ${nextCls}">${nextLabel}</button>`;
+  btnDiv.innerHTML = `<div class="btn-row">${undoHtml}${nextHtml}</div><div class="spacebar-hint">press spacebar</div>${renderUndoDepthHint()}`;
   const showMain = document.querySelector(".show-main");
   if (showMain) {
     showMain.appendChild(btnDiv);
@@ -2275,9 +2499,10 @@ function injectSidebarEntry() {
     if (!inserted) sidebarList.appendChild(tierGroup);
   }
   const entry = document.createElement("div");
-  entry.className = "sidebar-entry";
+  entry.className = "sidebar-entry" + (item.isReroll ? " is-reroll" : "");
   entry.style.cssText = `border-left:3px solid ${accentColor};transform:translateY(24px);opacity:0;transition:transform 0.5s cubic-bezier(0.34,1.2,0.64,1),opacity 0.4s ease`;
-  entry.innerHTML = `<div class="sidebar-entry-name">${esc(item.coach.name)}</div><div class="sidebar-entry-school">${esc(result)}</div>`;
+  const rerollTag = item.isReroll ? '<span class="sidebar-entry-reroll-tag">RE-ROLL</span>' : '';
+  entry.innerHTML = `<div class="sidebar-entry-name">${esc(item.coach.name)}${rerollTag}</div><div class="sidebar-entry-school">${esc(result)}</div>`;
   tierGroup.appendChild(entry);
   setTimeout(() => { entry.style.transform = "translateY(0)"; entry.style.opacity = "1"; }, 50);
   setTimeout(() => sidebarList.scrollTo({ top: sidebarList.scrollHeight, behavior: "smooth" }), 100);
@@ -2300,22 +2525,40 @@ function goToResults() {
 function doConfirm(result) {
   saveUndo();
   const item = state.queue[state.qi];
+  if (!item || !item.coach) { state.ss = "idle"; render(); return; }
   if (!state.assignments[item.coach.name]) state.assignments[item.coach.name]={};
   state.assignments[item.coach.name][item.tier]=result;
   state.pools[item.tier]=state.pools[item.tier].filter(s=>s!==result);
   state.conflict=null;
   state.ss="confirmed";
+  // F6 — remember reroll provenance so the sidebar can mark the entry.
+  if (item.isReroll) state.rerollKeys.push(item.coach.name + "|" + item.tier);
+  // F2: append to the run log for export on the results page.
+  state.runLog.push({
+    at: new Date().toISOString(),
+    qi: state.qi,
+    coach: item.coach.name,
+    baseTier: item.coach.tier,
+    offerTier: item.tier,
+    school: result,
+    isReroll: !!item.isReroll,
+    tiebreaker: null
+  });
   saveShowState();
 }
 
 function confirmTiebreaker() {
   const item = state.queue[state.qi];
+  if (!item || !item.coach || !state.conflict) { state.ss = "idle"; render(); return; }
   const { result, other, resolution } = state.conflict;
   const winner=resolution.winner, loser=resolution.loser;
   if (winner.name===item.coach.name) {
     // Current spinner wins — they get the school
     if (item.tier===loser.tier) state.queue.splice(state.qi+1,0,{coach:loser,tier:item.tier,isReroll:true});
+    // Stamp tiebreaker detail onto the run log (doConfirm will append the entry).
     doConfirm(result);
+    const last = state.runLog[state.runLog.length - 1];
+    if (last) last.tiebreaker = { winner: winner.name, loser: loser.name, reason: resolution.reason };
     nextSpin();
   } else {
     // Other coach wins — assign school to the winner, current spinner may re-roll
@@ -2327,6 +2570,17 @@ function confirmTiebreaker() {
     state.assignments[winner.name][item.tier]=result;
     state.pools[item.tier]=state.pools[item.tier].filter(s=>s!==result);
     state.conflict=null;
+    // F2: log the tiebreaker-driven assignment (no doConfirm entry in this branch).
+    state.runLog.push({
+      at: new Date().toISOString(),
+      qi: state.qi,
+      coach: winner.name,
+      baseTier: winner.tier,
+      offerTier: item.tier,
+      school: result,
+      isReroll: false,
+      tiebreaker: { winner: winner.name, loser: loser.name, reason: resolution.reason, lostToSpinner: item.coach.name }
+    });
     saveShowState();
     nextSpin();
   }
@@ -2368,9 +2622,15 @@ function revealResults() {
   const cards = document.querySelectorAll(".result-card-hidden");
   const STAGGER = 350; // ms between each card reveal
   const INITIAL_DELAY = 600; // ms after page renders before first card
+  // B2: snapshot the phase/spinGen so stale setTimeouts bailed out by a user
+  // reset don't mutate the DOM or fire confetti on an unrelated screen.
+  const phaseAtStart = state.phase;
+  const genAtStart   = state.spinGen;
+  const stillOnResults = () => state.phase === phaseAtStart && state.spinGen === genAtStart;
 
   cards.forEach((card, i) => {
     setTimeout(() => {
+      if (!stillOnResults()) return;
       card.classList.remove("result-card-hidden");
       card.classList.add("result-card-revealing");
 
@@ -2380,7 +2640,7 @@ function revealResults() {
         const topOffer = (state.assignments[coach.name] || {})[coach.tier];
         const sc = topOffer && SCHOOL_COLORS[topOffer] ? SCHOOL_COLORS[topOffer] : null;
         if (sc && coach.tier <= 2) {
-          setTimeout(() => launchConfetti(coach.tier + 1, sc.p, sc.s, card), 200);
+          setTimeout(() => { if (stillOnResults()) launchConfetti(coach.tier + 1, sc.p, sc.s, card); }, 200);
         }
       }
     }, INITIAL_DELAY + i * STAGGER);
@@ -2466,6 +2726,46 @@ function loadFromHash() {
   } catch(e) { return false; }
 }
 
+// F2 — download a structured audit log of the run. Triggered from the
+// results page; writes either JSON or a CSV with one row per log entry.
+function exportRunLog(format) {
+  const rows = (state.runLog || []).map(r => ({
+    at: r.at,
+    qi: r.qi,
+    coach: r.coach,
+    baseTier: r.baseTier,
+    offerTier: r.offerTier,
+    school: r.school,
+    isReroll: r.isReroll,
+    tiebreakerWinner: r.tiebreaker ? r.tiebreaker.winner : "",
+    tiebreakerLoser: r.tiebreaker ? r.tiebreaker.loser : "",
+    tiebreakerReason: r.tiebreaker ? r.tiebreaker.reason : "",
+    lostToSpinner: r.tiebreaker && r.tiebreaker.lostToSpinner ? r.tiebreaker.lostToSpinner : ""
+  }));
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+  let blob, filename;
+  if (format === "csv") {
+    const cols = Object.keys(rows[0] || { at:"", qi:"", coach:"", baseTier:"", offerTier:"", school:"", isReroll:"", tiebreakerWinner:"", tiebreakerLoser:"", tiebreakerReason:"", lostToSpinner:"" });
+    const csvCell = v => {
+      const s = String(v == null ? "" : v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [cols.join(","), ...rows.map(r => cols.map(c => csvCell(r[c])).join(","))].join("\n");
+    blob = new Blob([csv], { type: "text/csv" });
+    filename = "clos-wof-log-" + stamp + ".csv";
+  } else {
+    const payload = { exportedAt: new Date().toISOString(), coaches: state.coaches, occupied: state.occupied, assignments: state.assignments, runLog: rows };
+    blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    filename = "clos-wof-log-" + stamp + ".json";
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast("Run log downloaded: " + filename, "success");
+}
+
 function copyResults() {
   const lines = ["CLOS // WHEEL OF FORTUNE — RESULTS", ""];
   state.coaches.forEach(coach => {
@@ -2490,21 +2790,82 @@ function toggleMute() {
     btn.style.color  = AUDIO.isMuted() ? "#555" : "#A8B2BB";
     btn.title        = AUDIO.isMuted() ? "Unmute" : "Mute";
   }
+  // Refresh the per-channel panel if open.
+  const panel = document.getElementById("mute-panel");
+  if (panel) { panel.remove(); toggleMutePanel(); }
+}
+
+// F7 — per-channel mute popover. Shows three toggles (Ticks / Fanfare / UI)
+// next to the main mute button. Mute-panel rows set individual channels;
+// the main mute button still does an all-on/all-off toggle.
+function toggleMutePanel() {
+  const existing = document.getElementById("mute-panel");
+  if (existing) { existing.remove(); return; }
+  const wrap = document.querySelector(".mute-wrap");
+  if (!wrap) return;
+  const ch = AUDIO.getChannels();
+  const panel = document.createElement("div");
+  panel.id = "mute-panel";
+  panel.className = "mute-panel";
+  const row = (key, label) => `
+    <div class="mute-panel-row" data-ch="${key}">
+      <span>${label}</span>
+      <span class="mute-panel-check ${ch[key] ? '' : 'on'}">${ch[key] ? '' : '✓'}</span>
+    </div>`;
+  panel.innerHTML = row('ticks','Slot ticks') + row('fanfare','Fanfare / reveal') + row('ui','UI cues (settle, undo)');
+  panel.onclick = e => {
+    const row = e.target.closest(".mute-panel-row");
+    if (!row) return;
+    const key = row.dataset.ch;
+    const cur = AUDIO.getChannels();
+    AUDIO.mute({ [key]: !cur[key] });
+    // Rebuild panel to reflect new state and sync the main mute button icon.
+    panel.remove();
+    toggleMutePanel();
+    const mbtn = document.getElementById("mute-btn");
+    if (mbtn) {
+      mbtn.textContent = AUDIO.isMuted() ? "🔇" : "🔊";
+      mbtn.style.color = AUDIO.isMuted() ? "#555" : "#A8B2BB";
+    }
+  };
+  wrap.appendChild(panel);
+  // Close on outside click.
+  setTimeout(() => {
+    const close = ev => {
+      if (!panel.contains(ev.target) && ev.target.id !== "mute-panel-btn") {
+        panel.remove();
+        document.removeEventListener("click", close, true);
+      }
+    };
+    document.addEventListener("click", close, true);
+  }, 0);
 }
 
 // ─── LOCAL STORAGE CRASH RECOVERY ────────────────────────────────────────────
 const STORAGE_KEY = "clos_wof_session";
+const STORAGE_VERSION = 2; // F3 — bump when the snapshot shape changes
+let saveQuotaWarned = false; // C3 — only toast the quota failure once per session
 
 function saveShowState() {
+  // Dry-run sessions never persist — they're throwaway rehearsals.
+  if (IS_DRYRUN || window.__CLOS_DRYRUN__) return;
   try {
     const snap = {
+      version: STORAGE_VERSION,
       coaches: state.coaches, occupied: state.occupied,
       queue: state.queue, qi: state.qi,
       assignments: state.assignments, pools: state.pools,
+      runLog: state.runLog,
       savedAt: Date.now(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(snap));
-  } catch(e) { /* quota or private browsing — silently skip */ }
+  } catch(e) {
+    // C3 — surface the failure once so the user knows recovery is offline.
+    if (!saveQuotaWarned) {
+      saveQuotaWarned = true;
+      toast("Couldn't save session (storage unavailable). Crash recovery disabled.", "warn");
+    }
+  }
 }
 
 function loadSavedShow() {
@@ -2515,6 +2876,12 @@ function loadSavedShow() {
     if (!snap.coaches || !snap.queue || !snap.assignments) return null;
     // Expire after 6 hours
     if (Date.now() - snap.savedAt > 6 * 60 * 60 * 1000) { clearSavedShow(); return null; }
+    // F3 — version gate. Older snapshots get cleared rather than crashed into.
+    if ((snap.version || 1) !== STORAGE_VERSION) {
+      clearSavedShow();
+      toast("Older saved session cleared — format has changed.", "warn");
+      return null;
+    }
     return snap;
   } catch(e) { return null; }
 }
@@ -2526,6 +2893,7 @@ function resumeSavedShow(snap) {
   state.qi = snap.qi;
   state.assignments = snap.assignments;
   state.pools = snap.pools;
+  state.runLog = Array.isArray(snap.runLog) ? snap.runLog : [];
   state.ss = "idle";
   state.phase = "show";
   state.spinGen = 0;
@@ -2550,9 +2918,15 @@ function dismissRecovery() {
 
 function resetAll() {
   clearSavedShow();
+  // Clear the dry-run flag so a reset after a rehearsal goes back to real mode.
+  // (IS_DRYRUN stays true if the URL param was used — that's intentional.)
+  if (!IS_DRYRUN) {
+    window.__CLOS_DRYRUN__ = false;
+    document.body.classList.remove("is-dryrun");
+  }
   state = { phase:"setup", coaches:[], occupied:[], queue:[], qi:0, assignments:{}, pools:{},
     ss:"idle", slotPool:[], slotResult:null, slotTimer:null, conflict:null, undoSnapshot:null,
-    spinGen:0, lastRevealedQi:-1, paused:false, showBoard:false, apiUrl:state.apiUrl, fetchStatus:"idle", fetchError:"",
+    spinGen:0, runLog:[], rerollKeys:[], lastRevealedQi:-1, paused:false, showBoard:false, apiUrl:state.apiUrl, fetchStatus:"idle", fetchError:"",
     form:{name:"",tier:"3",prestige:"B",winPct:"",top25:"",error:""} };
   render();
 }
