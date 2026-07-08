@@ -149,6 +149,18 @@
   .finale .fsub{position:relative;font-size:12px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:var(--silver)}
   .confetti{position:fixed;top:-20px;width:9px;height:14px;z-index:75;pointer-events:none;border-radius:1px}
 
+  /* export overlay */
+  .export-ov{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;
+    background:rgba(4,9,15,.72);backdrop-filter:blur(3px)}
+  .export-ov.show{display:flex}
+  .export-box{width:min(560px,90vw);background:linear-gradient(180deg,#173251,#0c1b2b);
+    border:1px solid var(--line-2);border-radius:16px;padding:26px;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+  .export-h{font-family:var(--disp);font-weight:900;font-size:30px;text-transform:uppercase;color:var(--gold)}
+  .export-sub{color:var(--silver);font-size:12.5px;margin:6px 0 14px;line-height:1.5}
+  .export-box textarea{width:100%;min-height:110px;background:#0a1622;color:var(--white);
+    border:1px solid var(--line-2);border-radius:9px;padding:12px;font-family:monospace;font-size:11px;resize:vertical}
+  .export-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+
   /* team crest + color bar */
   .crest-wrap{display:flex;justify-content:center;margin:2px 0 12px}
   .crest{width:90px;height:90px;border-radius:20px;border:3px solid #fff;display:flex;
@@ -202,6 +214,7 @@
     <button class="btn-ghost" id="autoBtn">Auto</button>
     <button class="btn-ghost on" id="soundBtn">Sound: On</button>
     <button class="btn-ghost" id="resetBtn">Reset</button>
+    <button class="btn-ghost" id="exportBtn" disabled>Export Groups</button>
   </div>
   <div class="note">Pure random draw &middot; each pick rotates through Groups A&ndash;H</div>
 </div>
@@ -222,6 +235,19 @@
 <div class="finale" id="finale">
   <div class="fbig">Groups Are Set</div>
   <div class="fsub">CLOS Cup &middot; The Draw</div>
+</div>
+
+<!-- export overlay -->
+<div class="export-ov" id="exportOv">
+  <div class="export-box">
+    <div class="export-h">Groups Exported</div>
+    <div class="export-sub">Copied to your clipboard. Paste it into the Group Stage tracker's &ldquo;Load From Paste&rdquo; box. If the copy didn't take, select the text below and copy it manually.</div>
+    <textarea id="exportText" readonly></textarea>
+    <div class="export-btns">
+      <button class="btn-ghost" id="exportCopy">Copy Again</button>
+      <button class="btn-draw" id="exportClose" style="font-size:16px;padding:12px 26px">Close</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -447,6 +473,7 @@
     buildBoards();
     updateProgress();
     drawBtn.disabled=false; drawBtn.textContent='Draw Next';
+    document.getElementById('exportBtn').disabled=true;
   }
 
   function updateProgress(){
@@ -587,6 +614,7 @@
   // ---- finale ----
   function doFinale(){
     chord();
+    document.getElementById('exportBtn').disabled=false;
     finale.classList.add('show');
     if(!reduce) confettiBurst();
     setTimeout(function(){ finale.classList.remove('show'); }, 4600);
@@ -636,6 +664,32 @@
     soundBtn.textContent='Sound: '+(soundOn?'On':'Off');
   });
   resetBtn.addEventListener('click',reset);
+
+  function groupsJSON(){
+    var g={};
+    for(var gi=0;gi<8;gi++){
+      g[LETTERS[gi]]=[order[gi].team, order[gi+8].team, order[gi+16].team, order[gi+24].team];
+    }
+    return JSON.stringify(g);
+  }
+  var exportOv=document.getElementById('exportOv');
+  var exportText=document.getElementById('exportText');
+  function doCopy(txt){
+    try{ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt);return;} }catch(e){}
+    try{ exportText.focus(); exportText.select(); document.execCommand('copy'); }catch(e){}
+  }
+  document.getElementById('exportBtn').addEventListener('click',function(){
+    if(idx<32) return;
+    var json=groupsJSON();
+    exportText.value=json;
+    exportOv.classList.add('show');
+    exportText.focus(); exportText.select();
+    doCopy(json);
+  });
+  document.getElementById('exportCopy').addEventListener('click',function(){ doCopy(exportText.value); });
+  document.getElementById('exportClose').addEventListener('click',function(){ exportOv.classList.remove('show'); });
+  exportOv.addEventListener('click',function(e){ if(e.target===exportOv) exportOv.classList.remove('show'); });
+
   window.addEventListener('keydown',function(e){
     if(e.code==='Space'||e.code==='Enter'){ e.preventDefault(); if(!busy&&idx<32){actx();drawNext();} }
   });
