@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLOS Cup // The Draw</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#0A0A0A;
+    --navy:#0D1B2A;
+    --navy-2:#12263B;
+    --navy-3:#0A1622;
+    --charcoal:#1C1C1E;
+    --white:#F5F5F7;
+    --silver:#A8B2BB;
+    --gold:#E5B84A;
+    --gold-2:#F1CF6E;
+    --gold-deep:#B8862E;
+    --line:rgba(168,178,187,.14);
+    --line-2:rgba(168,178,187,.28);
+    --disp:'Barlow Condensed',Impact,'Arial Narrow',sans-serif;
+    --body:'Inter',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--body);
+    color:var(--white);
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #16324c 0%, rgba(22,50,76,0) 60%),
+      radial-gradient(900px 900px at 100% 120%, #12263b 0%, rgba(18,38,59,0) 55%),
+      linear-gradient(180deg,#0A1622 0%,#070d15 100%);
+    min-height:100%;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* faint texture + vignette */
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(120% 90% at 50% 40%, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%);
+  }
+  .wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:22px 20px 40px}
+
+  /* ---------- HEADER ---------- */
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
+    border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:22px}
+  .brand{display:flex;flex-direction:column;gap:2px}
+  .eyebrow{font-family:var(--body);font-weight:700;font-size:11px;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:10px}
+  .eyebrow::before{content:"";width:26px;height:2px;background:var(--gold);display:inline-block}
+  .title{font-family:var(--disp);font-weight:900;line-height:.86;letter-spacing:.01em;
+    text-transform:uppercase;font-size:clamp(38px,6vw,74px);
+    background:linear-gradient(180deg,#ffffff 0%,#cdd6df 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;margin-top:6px}
+  .title .draw{color:transparent;background:linear-gradient(180deg,var(--gold-2),var(--gold-deep));
+    -webkit-background-clip:text;background-clip:text}
+  .meta{display:flex;gap:26px;text-align:right;flex-wrap:wrap;justify-content:flex-end}
+  .meta .stat{display:flex;flex-direction:column;align-items:flex-end}
+  .meta .num{font-family:var(--disp);font-weight:800;font-size:34px;line-height:1;color:var(--white)}
+  .meta .lab{font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--silver);margin-top:4px}
+
+  /* ---------- PROGRESS ---------- */
+  .progress{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+  .bar{flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden;
+    border:1px solid var(--line)}
+  .bar>i{display:block;height:100%;width:0%;border-radius:99px;
+    background:linear-gradient(90deg,var(--gold-deep),var(--gold-2));transition:width .5s cubic-bezier(.22,1,.36,1)}
+  .pcount{font-family:var(--disp);font-weight:700;font-size:20px;letter-spacing:.04em;white-space:nowrap;color:var(--silver)}
+  .pcount b{color:var(--white)}
+
+  /* ---------- GROUP GRID ---------- */
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .group{background:linear-gradient(180deg,rgba(18,38,59,.65),rgba(10,22,34,.65));
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    opacity:0;transform:translateY(14px);animation:rise .6s cubic-bezier(.22,1,.36,1) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .group-head{display:flex;align-items:center;gap:10px;padding:12px 14px;
+    background:linear-gradient(90deg,rgba(13,27,42,.9),rgba(13,27,42,.4));border-bottom:1px solid var(--line)}
+  .g-letter{font-family:var(--disp);font-weight:900;font-size:30px;line-height:.8;
+    color:var(--gold);text-shadow:0 0 18px rgba(229,184,74,.25)}
+  .g-word{font-size:9.5px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--silver)}
+  .g-count{margin-left:auto;font-family:var(--disp);font-weight:700;font-size:16px;color:var(--silver)}
+  .slots{display:flex;flex-direction:column}
+  .slot{display:flex;align-items:center;gap:10px;padding:10px 14px;min-height:52px;
+    border-top:1px solid rgba(168,178,187,.07)}
+  .slot:first-child{border-top:none}
+  .slot .snum{font-family:var(--disp);font-weight:700;font-size:15px;color:rgba(168,178,187,.45);
+    width:16px;flex:none;text-align:center}
+  .slot .sempty{font-family:var(--disp);font-weight:600;font-size:18px;color:rgba(168,178,187,.22);letter-spacing:.1em}
+  .slot .steam{font-family:var(--disp);font-weight:700;font-size:19px;line-height:1;letter-spacing:.01em;color:var(--white)}
+  .slot .scoach{font-size:10.5px;font-weight:600;color:var(--silver);margin-top:3px;letter-spacing:.02em}
+  .slot .sbody{display:flex;flex-direction:column;min-width:0}
+  .slot.filled{background:linear-gradient(90deg,rgba(229,184,74,.05),transparent)}
+  .slot.flash{animation:flash .7s ease-out}
+  @keyframes flash{0%{background:rgba(229,184,74,.55)}100%{background:linear-gradient(90deg,rgba(229,184,74,.05),transparent)}}
+  .tag{font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+    border:1px solid rgba(229,184,74,.35);border-radius:4px;padding:2px 5px;margin-left:auto;flex:none;white-space:nowrap}
+
+  /* ---------- CONTROLS ---------- */
+  .controls{position:sticky;bottom:0;z-index:40;margin-top:26px;padding:16px 0 6px;
+    display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+  button{font-family:var(--disp);font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+    cursor:pointer;border:none;border-radius:10px;transition:transform .12s ease,box-shadow .2s ease,opacity .2s}
+  .btn-draw{font-size:24px;padding:15px 40px;color:#1a1204;
+    background:linear-gradient(180deg,var(--gold-2),var(--gold));
+    box-shadow:0 8px 30px rgba(229,184,74,.28),inset 0 1px 0 rgba(255,255,255,.5)}
+  .btn-draw:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 38px rgba(229,184,74,.4)}
+  .btn-draw:active:not(:disabled){transform:translateY(0)}
+  .btn-ghost{font-size:15px;padding:14px 20px;color:var(--white);background:rgba(255,255,255,.05);
+    border:1px solid var(--line-2)}
+  .btn-ghost:hover:not(:disabled){background:rgba(255,255,255,.1)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .btn-ghost.on{color:var(--gold);border-color:rgba(229,184,74,.5)}
+
+  /* ---------- REVEAL CARD ---------- */
+  .stage{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+    pointer-events:none;opacity:0;transition:opacity .25s}
+  .stage.show{opacity:1}
+  .stage::before{content:"";position:absolute;inset:0;background:rgba(4,9,15,.62);backdrop-filter:blur(3px)}
+  .reveal{position:relative;width:min(440px,86vw);border-radius:18px;padding:34px 30px 26px;text-align:center;
+    background:linear-gradient(180deg,#173251,#0c1b2b);
+    border:1px solid var(--line-2);
+    box-shadow:0 30px 90px rgba(0,0,0,.6);
+    transform:scale(.7);opacity:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s}
+  .stage.show .reveal{transform:scale(1);opacity:1}
+  .reveal.locked{border-color:rgba(229,184,74,.7);
+    box-shadow:0 0 0 1px rgba(229,184,74,.35),0 0 60px rgba(229,184,74,.35),0 30px 90px rgba(0,0,0,.6)}
+  .r-conf{font-size:11px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+  .r-team{font-family:var(--disp);font-weight:900;text-transform:uppercase;line-height:.9;
+    font-size:clamp(40px,9vw,64px);
+    background:linear-gradient(180deg,#fff,#d4dde6);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .reveal.locked .r-team{background:linear-gradient(180deg,var(--gold-2),var(--gold));-webkit-background-clip:text;background-clip:text}
+  .r-coach{font-family:var(--disp);font-weight:600;font-size:22px;color:var(--silver);margin-top:8px;letter-spacing:.03em}
+  .r-dest{font-family:var(--disp);font-weight:800;font-size:26px;letter-spacing:.05em;color:var(--gold);
+    margin-top:18px;opacity:0;transition:opacity .3s}
+  .fly{position:fixed;z-index:70;pointer-events:none;transform-origin:0 0}
+
+  /* ---------- FINALE ---------- */
+  .finale{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:8px;text-align:center;opacity:0;pointer-events:none;transition:opacity .5s}
+  .finale.show{opacity:1}
+  .finale::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,rgba(229,184,74,.18),rgba(4,9,15,.86) 60%)}
+  .finale .fbig{position:relative;font-family:var(--disp);font-weight:900;text-transform:uppercase;
+    font-size:clamp(46px,10vw,120px);line-height:.85;
+    background:linear-gradient(180deg,var(--gold-2),var(--gold-deep));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .finale .fsub{position:relative;font-size:12px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:var(--silver)}
+  .confetti{position:fixed;top:-20px;width:9px;height:14px;z-index:75;pointer-events:none;border-radius:1px}
+
+  /* team crest + color bar */
+  .crest-wrap{display:flex;justify-content:center;margin:2px 0 12px}
+  .crest{width:90px;height:90px;border-radius:20px;border:3px solid #fff;display:flex;
+    align-items:center;justify-content:center;font-family:var(--disp);font-weight:800;
+    font-size:33px;letter-spacing:.01em;position:relative;overflow:hidden;
+    box-shadow:0 8px 26px rgba(0,0,0,.5)}
+  .crest.sm{width:34px;height:34px;border-radius:9px;border-width:2px;font-size:13px;
+    box-shadow:none;flex:none}
+  .crest-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+    padding:15%;background:#F5F5F7;box-sizing:border-box}
+  .crest.sm .crest-img{padding:13%}
+  .crest-wrap .crest{transform:scale(.4);opacity:0;
+    transition:transform .45s cubic-bezier(.34,1.56,.64,1),opacity .3s}
+  .crest-wrap.in .crest{transform:scale(1);opacity:1}
+  .r-bar{position:absolute;top:0;left:0;right:0;height:8px;border-radius:17px 17px 0 0;
+    opacity:0;transition:opacity .35s}
+
+  .note{text-align:center;color:var(--silver);font-size:11px;letter-spacing:.02em;margin-top:14px;opacity:.7}
+
+  @media(max-width:920px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.meta{gap:16px}.meta .num{font-size:26px}.btn-draw{font-size:20px;padding:13px 28px}}
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms!important;transition-duration:.05ms!important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="eyebrow">Campus Legends of Saturday</div>
+      <h1 class="title">CLOS Cup<br><span class="draw">The Draw</span></h1>
+    </div>
+    <div class="meta">
+      <div class="stat"><span class="num">32</span><span class="lab">Coaches</span></div>
+      <div class="stat"><span class="num">8</span><span class="lab">Groups</span></div>
+      <div class="stat"><span class="num">4</span><span class="lab">Per Group</span></div>
+    </div>
+  </header>
+
+  <div class="progress">
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="pcount"><b id="drawn">0</b> / 32 Drawn</div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="controls">
+    <button class="btn-draw" id="drawBtn">Draw Next</button>
+    <button class="btn-ghost" id="autoBtn">Auto</button>
+    <button class="btn-ghost on" id="soundBtn">Sound: On</button>
+    <button class="btn-ghost" id="resetBtn">Reset</button>
+  </div>
+  <div class="note">Pure random draw &middot; each pick rotates through Groups A&ndash;H</div>
+</div>
+
+<!-- reveal stage -->
+<div class="stage" id="stage">
+  <div class="reveal" id="reveal">
+    <div class="r-bar" id="rBar"></div>
+    <div class="r-conf" id="rConf">AAC</div>
+    <div class="crest-wrap" id="rCrest"></div>
+    <div class="r-team" id="rTeam">North Texas</div>
+    <div class="r-coach" id="rCoach">@Mazlu</div>
+    <div class="r-dest" id="rDest">&rarr; Group A</div>
+  </div>
+</div>
+
+<!-- finale -->
+<div class="finale" id="finale">
+  <div class="fbig">Groups Are Set</div>
+  <div class="fsub">CLOS Cup &middot; The Draw</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---- FIELD (pulled from Team Info Sheet) ----
+  var COACHES = [
+    {team:"Temple", coach:"AdHoc", conf:"AAC"},
+    {team:"UAB", coach:"Alex Lew", conf:"AAC"},
+    {team:"USF", coach:"Lonnie", conf:"AAC"},
+    {team:"North Texas", coach:"Mazlu", conf:"AAC"},
+    {team:"Charlotte", coach:"RichHype", conf:"AAC"},
+    {team:"Kennesaw State", coach:"Big Red", conf:"C-USA"},
+    {team:"Middle Tennessee", coach:"Buddy", conf:"C-USA"},
+    {team:"Delaware", coach:"Genie", conf:"C-USA"},
+    {team:"Western Kentucky", coach:"Helmzee", conf:"C-USA"},
+    {team:"Liberty", coach:"MikeTitan", conf:"C-USA"},
+    {team:"New Mexico State", coach:"Prodigee", conf:"C-USA"},
+    {team:"Western Michigan", coach:"Austin", conf:"MAC"},
+    {team:"Sacramento State", coach:"DEpps", conf:"MAC"},
+    {team:"Eastern Michigan", coach:"hi-keif", conf:"MAC"},
+    {team:"Central Michigan", coach:"Imprfkt", conf:"MAC"},
+    {team:"Ohio", coach:"Pwat", conf:"MAC"},
+    {team:"Miami (OH)", coach:"RealDiehl", conf:"MAC"},
+    {team:"UTEP", coach:"CP", conf:"MW"},
+    {team:"North Dakota State", coach:"Fear", conf:"MW"},
+    {team:"Wyoming", coach:"ike723", conf:"MW"},
+    {team:"San Jose State", coach:"Rogeezy", conf:"MW"},
+    {team:"Nevada", coach:"VinceTumbleson", conf:"MW"},
+    {team:"Colorado State", coach:"Amir", conf:"PAC-12"},
+    {team:"Texas State", coach:"CMU", conf:"PAC-12"},
+    {team:"San Diego State", coach:"Eae2106", conf:"PAC-12"},
+    {team:"Fresno State", coach:"GGB", conf:"PAC-12"},
+    {team:"Utah State", coach:"Nysguy", conf:"PAC-12"},
+    {team:"Troy", coach:"Chevy", conf:"SUN BELT"},
+    {team:"Coastal Carolina", coach:"Cproffitt3", conf:"SUN BELT"},
+    {team:"Louisiana", coach:"Marko", conf:"SUN BELT"},
+    {team:"Appalachian State", coach:"Phil", conf:"SUN BELT"},
+    {team:"Arkansas State", coach:"Shaggy", conf:"SUN BELT"}
+  ];
+  var LETTERS = ["A","B","C","D","E","F","G","H"];
+
+  // ---- team colors + crest (merged onto COACHES). [primary, secondary, monogram] ----
+  // Drop-in real logos later: set t.logo = "logos/<file>.png" and it overrides the monogram.
+  var THEME={
+    "Temple":["#9D2235","#EDEDED","TEM"],
+    "UAB":["#1E6B52","#F4C300","UAB"],
+    "USF":["#006747","#CFC493","USF"],
+    "North Texas":["#00853E","#EDEDED","UNT"],
+    "Charlotte":["#00583D","#A49665","CLT"],
+    "Kennesaw State":["#FFC72C","#101010","KENN"],
+    "Middle Tennessee":["#0066A2","#EDEDED","MT"],
+    "Delaware":["#00539F","#FFD200","DEL"],
+    "Western Kentucky":["#C60C30","#EDEDED","WKU"],
+    "Liberty":["#A6192E","#0A2340","LIB"],
+    "New Mexico State":["#8C1D40","#EDEDED","NMSU"],
+    "Western Michigan":["#B5A268","#5E2D18","WMU"],
+    "Sacramento State":["#00573F","#C4B581","SAC"],
+    "Eastern Michigan":["#00694E","#EDEDED","EMU"],
+    "Central Michigan":["#6A0032","#FFC82E","CMU"],
+    "Ohio":["#00694E","#EDEDED","OHIO"],
+    "Miami (OH)":["#B61E2E","#EDEDED","M-OH"],
+    "UTEP":["#FF8200","#041E42","UTEP"],
+    "North Dakota State":["#00593C","#FFC72C","NDSU"],
+    "Wyoming":["#FFC425","#492F24","WYO"],
+    "San Jose State":["#0055A2","#E5A823","SJSU"],
+    "Nevada":["#14396B","#B4BBC0","NEV"],
+    "Colorado State":["#1E4D2B","#C8C372","CSU"],
+    "Texas State":["#862633","#B4975A","TXST"],
+    "San Diego State":["#A6192E","#1A1A1A","SDSU"],
+    "Fresno State":["#DB0032","#002E5D","FS"],
+    "Utah State":["#17324D","#C9CDD0","USU"],
+    "Troy":["#8A2432","#B4BBC0","TROY"],
+    "Coastal Carolina":["#007073","#A27752","CCU"],
+    "Louisiana":["#CE181E","#EDEDED","UL"],
+    "Appalachian State":["#FFCC00","#101010","APP"],
+    "Arkansas State":["#CC092F","#1A1A1A","ARST"]
+  };
+  var ESPN_ID={
+    "Temple":218,"UAB":5,"USF":58,"North Texas":249,"Charlotte":2429,
+    "Kennesaw State":338,"Middle Tennessee":2393,"Delaware":48,"Western Kentucky":98,
+    "Liberty":2335,"New Mexico State":166,"Western Michigan":2711,"Sacramento State":16,
+    "Eastern Michigan":2199,"Central Michigan":2117,"Ohio":195,"Miami (OH)":193,
+    "UTEP":2638,"North Dakota State":2449,"Wyoming":2751,"San Jose State":23,"Nevada":2440,
+    "Colorado State":36,"Texas State":326,"San Diego State":21,"Fresno State":278,
+    "Utah State":328,"Troy":2653,"Coastal Carolina":324,"Louisiana":309,
+    "Appalachian State":2026,"Arkansas State":2032
+  };
+  COACHES.forEach(function(t){
+    var x=THEME[t.team]||["#1C1C1E","#A8B2BB",t.team.slice(0,3).toUpperCase()];
+    t.c1=x[0]; t.c2=x[1]; t.abbr=x[2];
+    t.eid = ESPN_ID[t.team] || 0;
+  });
+
+  // ---- color helpers ----
+  function hexRGB(h){h=h.replace('#','');if(h.length===3){h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];}
+    return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
+  function _lin(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);}
+  function lumRGB(c){return 0.2126*_lin(c[0])+0.7152*_lin(c[1])+0.0722*_lin(c[2]);}
+  function lum(h){return lumRGB(hexRGB(h));}
+  function txtOn(h){return lum(h)>0.45?'#0A0A0A':'#F7F7F9';}
+  function brighter(a,b){return lum(a)>=lum(b)?a:b;}
+  function crestHTML(t,size){
+    var cls=size==='sm'?'crest sm':'crest';
+    var st='background-color:'+t.c1+';color:'+txtOn(t.c1)+';border-color:'+t.c2+';';
+    var inner=t.abbr;
+    if(t.eid){
+      var loc='logos/'+t.eid+'.png';
+      var esp='https://a.espncdn.com/i/teamlogos/ncaa/500/'+t.eid+'.png';
+      inner=t.abbr+'<img class="crest-img" src="'+loc+'" alt="" '
+        +'onerror="if(this.dataset.f){this.remove();}else{this.dataset.f=1;this.src=\''+esp+'\';}">';
+    }
+    return '<div class="'+cls+'" style="'+st+'">'+inner+'</div>';
+  }
+  // ---- ESPN logo fetch (runtime, in the browser) ----
+  var ALIAS={"Appalachian State":"app state","USF":"south florida"};
+  function normName(s){return (s||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
+  function espnLogo(t){
+    if(t.logos&&t.logos.length){
+      for(var i=0;i<t.logos.length;i++){var L=t.logos[i];
+        if(L.href&&L.rel&&L.rel.indexOf('default')>=0&&L.href.indexOf('/500/')>=0)return L.href;}
+      if(t.logos[0].href)return t.logos[0].href;
+    }
+    return 'https://a.espncdn.com/i/teamlogos/ncaa/500/'+t.id+'.png';
+  }
+  function loadLogos(){
+    var done=false;
+    function finish(){ if(done)return; done=true; ready=true;
+      drawBtn.disabled=false; drawBtn.textContent='Draw Next'; }
+    var timer=setTimeout(finish,7000);
+    try{
+      fetch('https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams?limit=700')
+        .then(function(r){return r.json();})
+        .then(function(data){
+          var teams=data.sports[0].leagues[0].teams, byLoc={}, byAbbr={};
+          teams.forEach(function(w){var t=w.team;
+            byLoc[normName(t.location)]=t; byLoc[normName(t.displayName)]=t;
+            if(t.abbreviation)byAbbr[t.abbreviation.toUpperCase()]=t;});
+          COACHES.forEach(function(c){
+            var t=byLoc[normName(c.team)]||byAbbr[c.team.toUpperCase()];
+            if(!t&&ALIAS[c.team])t=byLoc[normName(ALIAS[c.team])];
+            if(t)c.logo=espnLogo(t);
+          });
+          clearTimeout(timer); finish();
+        })
+        .catch(function(){ clearTimeout(timer); finish(); });
+    }catch(e){ clearTimeout(timer); finish(); }
+  }
+  function applyTheme(t){
+    var g=hexRGB(brighter(t.c1,t.c2));
+    if(lumRGB(g)<0.16){g=[Math.round(g[0]+(255-g[0])*0.45),Math.round(g[1]+(255-g[1])*0.45),Math.round(g[2]+(255-g[2])*0.45)];}
+    var gs=g[0]+','+g[1]+','+g[2];
+    rCrest.innerHTML=crestHTML(t); rCrest.classList.add('in');
+    rBar.style.background='linear-gradient(90deg,'+t.c1+' 0 50%,'+t.c2+' 50% 100%)';
+    rBar.style.opacity='1';
+    reveal.style.borderColor='rgba('+gs+',.8)';
+    reveal.style.boxShadow='0 0 0 1px rgba('+gs+',.4),0 0 60px rgba('+gs+',.42),0 30px 90px rgba(0,0,0,.6)';
+    rConf.style.color='rgb('+gs+')'; rDest.style.color='rgb('+gs+')';
+  }
+  function clearTheme(){
+    rCrest.classList.remove('in'); rCrest.innerHTML='';
+    rBar.style.opacity='0';
+    reveal.style.borderColor=''; reveal.style.boxShadow='';
+    rConf.style.color=''; rDest.style.color='';
+  }
+
+  // ---- els ----
+  var grid=document.getElementById('grid');
+  var stage=document.getElementById('stage');
+  var reveal=document.getElementById('reveal');
+  var rConf=document.getElementById('rConf');
+  var rTeam=document.getElementById('rTeam');
+  var rCoach=document.getElementById('rCoach');
+  var rDest=document.getElementById('rDest');
+  var drawBtn=document.getElementById('drawBtn');
+  var autoBtn=document.getElementById('autoBtn');
+  var soundBtn=document.getElementById('soundBtn');
+  var resetBtn=document.getElementById('resetBtn');
+  var barFill=document.getElementById('barFill');
+  var drawnEl=document.getElementById('drawn');
+  var finale=document.getElementById('finale');
+  var rBar=document.getElementById('rBar');
+  var rCrest=document.getElementById('rCrest');
+
+  var order=[], idx=0, busy=false, auto=false, soundOn=true, ready=false;
+  var reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  // ---- build boards ----
+  function buildBoards(){
+    grid.innerHTML='';
+    for(var g=0; g<8; g++){
+      var el=document.createElement('div');
+      el.className='group';
+      el.style.animationDelay=(g*0.05)+'s';
+      var slots='';
+      for(var s=0;s<4;s++){
+        slots+='<div class="slot" id="slot-'+g+'-'+s+'">'
+             +'<span class="snum">'+(s+1)+'</span>'
+             +'<span class="sempty">&mdash;</span></div>';
+      }
+      el.innerHTML='<div class="group-head"><span class="g-letter">'+LETTERS[g]+'</span>'
+        +'<span class="g-word">Group '+LETTERS[g]+'</span>'
+        +'<span class="g-count" id="gc-'+g+'">0/4</span></div>'
+        +'<div class="slots">'+slots+'</div>';
+      grid.appendChild(el);
+    }
+  }
+
+  function shuffle(a){
+    var arr=a.slice();
+    for(var i=arr.length-1;i>0;i--){
+      var j=Math.floor(Math.random()*(i+1));
+      var t=arr[i];arr[i]=arr[j];arr[j]=t;
+    }
+    return arr;
+  }
+
+  function reset(){
+    order=shuffle(COACHES); idx=0; busy=false; auto=false;
+    autoBtn.classList.remove('on'); autoBtn.textContent='Auto';
+    finale.classList.remove('show');
+    buildBoards();
+    updateProgress();
+    drawBtn.disabled=false; drawBtn.textContent='Draw Next';
+  }
+
+  function updateProgress(){
+    drawnEl.textContent=idx;
+    barFill.style.width=((idx/32)*100)+'%';
+  }
+
+  function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
+
+  function setReveal(c){
+    rConf.textContent=c.conf;
+    rTeam.textContent=c.team;
+    rCoach.textContent='@'+c.coach;
+  }
+
+  // ---- WebAudio blips ----
+  var ac=null;
+  function actx(){ if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}} if(ac&&ac.state==='suspended'){ac.resume();} return ac; }
+  function tone(freq,dur,type,vol){
+    if(!soundOn) return; var c=actx(); if(!c) return;
+    try{
+      var o=c.createOscillator(),g=c.createGain();
+      o.type=type||'sine'; o.frequency.value=freq;
+      g.gain.setValueAtTime(0,c.currentTime);
+      g.gain.linearRampToValueAtTime(vol||0.08,c.currentTime+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+dur);
+      o.connect(g);g.connect(c.destination);
+      o.start();o.stop(c.currentTime+dur+0.02);
+    }catch(e){}
+  }
+  function tick(){ tone(220+Math.random()*90,0.05,'square',0.03); }
+  function lockSweep(){ tone(180,0.18,'sawtooth',0.05); setTimeout(function(){tone(360,0.22,'triangle',0.06);},70); }
+  function thunk(){ tone(90,0.22,'sine',0.12); }
+  function chord(){ [392,494,587,784].forEach(function(f,i){ setTimeout(function(){tone(f,0.9,'triangle',0.07);}, i*90); }); }
+
+  // ---- the draw sequence ----
+  function drawNext(){
+    if(!ready||busy||idx>=32) return Promise.resolve();
+    busy=true; drawBtn.disabled=true;
+    var pick=order[idx];
+    var g=idx%8, s=Math.floor(idx/8);
+
+    stage.classList.add('show');
+    reveal.classList.remove('locked');
+    clearTheme();
+    rDest.style.opacity=0;
+
+    var chain=Promise.resolve();
+
+    if(reduce){
+      setReveal(pick);
+      reveal.classList.add('locked'); applyTheme(pick);
+      rDest.textContent='\u2192 Group '+LETTERS[g];
+      rDest.style.opacity=1; lockSweep();
+      chain=wait(600);
+    }else{
+      // slot-machine cycle, decelerating
+      var swaps=28, delay=34;
+      for(var i=0;i<swaps;i++){
+        (function(d){ chain=chain.then(function(){
+          setReveal(COACHES[Math.floor(Math.random()*COACHES.length)]); tick(); return wait(d);
+        });})(delay);
+        delay*=1.085;
+      }
+      chain=chain.then(function(){
+        setReveal(pick);
+        reveal.classList.add('locked'); applyTheme(pick); lockSweep();
+        rDest.textContent='\u2192 Group '+LETTERS[g];
+        rDest.style.opacity=1;
+        return wait(850);
+      });
+    }
+
+    return chain.then(function(){ return flyToSlot(pick,g,s); })
+      .then(function(){
+        idx++; updateProgress(); busy=false;
+        if(idx>=32){ drawBtn.disabled=true; drawBtn.textContent='Complete'; doFinale(); }
+        else{ drawBtn.disabled=false; }
+      });
+  }
+
+  function fillSlot(pick,g,s){
+    var slot=document.getElementById('slot-'+g+'-'+s);
+    slot.className='slot filled flash';
+    slot.style.borderLeft='4px solid '+pick.c1;
+    slot.innerHTML='<span class="snum">'+(s+1)+'</span>'
+      +crestHTML(pick,'sm')
+      +'<div class="sbody"><span class="steam">'+pick.team+'</span>'
+      +'<span class="scoach">@'+pick.coach+' &middot; '+pick.conf+'</span></div>';
+    var gc=document.getElementById('gc-'+g);
+    var n=parseInt(gc.textContent)+1; gc.textContent=n+'/4';
+    thunk();
+  }
+
+  function flyToSlot(pick,g,s){
+    var slot=document.getElementById('slot-'+g+'-'+s);
+    if(reduce){
+      stage.classList.remove('show'); fillSlot(pick,g,s); return wait(120);
+    }
+    return new Promise(function(resolve){
+      var cardRect=reveal.getBoundingClientRect();
+      var slotRect=slot.getBoundingClientRect();
+      var clone=reveal.cloneNode(true);
+      clone.classList.add('fly');
+      clone.classList.remove('locked');
+      var dst=clone.querySelector('#rDest'); if(dst) dst.style.display='none';
+      clone.style.margin='0';
+      clone.style.left=cardRect.left+'px';
+      clone.style.top=cardRect.top+'px';
+      clone.style.width=cardRect.width+'px';
+      clone.style.transform='none';
+      clone.style.transition='transform .7s cubic-bezier(.6,0,.2,1),opacity .7s ease';
+      document.body.appendChild(clone);
+      // hide the centered reveal, keep clone
+      stage.classList.remove('show');
+
+      var dx=slotRect.left-cardRect.left;
+      var dy=slotRect.top-cardRect.top;
+      var sc=Math.max(0.12, slotRect.width/cardRect.width);
+      // force reflow then animate
+      clone.getBoundingClientRect();
+      requestAnimationFrame(function(){
+        clone.style.transform='translate('+dx+'px,'+dy+'px) scale('+sc+')';
+        clone.style.opacity='0.15';
+      });
+      var done=false;
+      function finish(){
+        if(done) return; done=true;
+        if(clone.parentNode) clone.parentNode.removeChild(clone);
+        fillSlot(pick,g,s);
+        resolve();
+      }
+      clone.addEventListener('transitionend',finish);
+      setTimeout(finish,820); // fallback
+    });
+  }
+
+  // ---- finale ----
+  function doFinale(){
+    chord();
+    finale.classList.add('show');
+    if(!reduce) confettiBurst();
+    setTimeout(function(){ finale.classList.remove('show'); }, 4600);
+  }
+  function confettiBurst(){
+    var colors=['#E5B84A','#F1CF6E','#F5F5F7','#B8862E'];
+    for(var i=0;i<70;i++){
+      (function(){
+        var c=document.createElement('div');
+        c.className='confetti';
+        c.style.left=(Math.random()*100)+'vw';
+        c.style.background=colors[i%colors.length];
+        c.style.opacity=String(0.7+Math.random()*0.3);
+        var dur=2.4+Math.random()*2.2, delay=Math.random()*0.8;
+        var rot=Math.random()*360, drift=(Math.random()*2-1)*160;
+        document.body.appendChild(c);
+        c.animate([
+          {transform:'translate(0,0) rotate(0deg)',opacity:1},
+          {transform:'translate('+drift+'px,105vh) rotate('+rot+'deg)',opacity:0.9}
+        ],{duration:dur*1000,delay:delay*1000,easing:'cubic-bezier(.3,.6,.5,1)'});
+        setTimeout(function(){ if(c.parentNode) c.parentNode.removeChild(c); },(dur+delay)*1000+80);
+      })();
+    }
+  }
+
+  // ---- auto mode ----
+  function runAuto(){
+    if(!auto||idx>=32) return;
+    drawNext().then(function(){
+      if(auto&&idx<32){ setTimeout(runAuto,700); }
+      else{ auto=false; autoBtn.classList.remove('on'); autoBtn.textContent='Auto'; }
+    });
+  }
+
+  // ---- events ----
+  drawBtn.addEventListener('click',function(){ actx(); if(!busy) drawNext(); });
+  autoBtn.addEventListener('click',function(){
+    actx();
+    auto=!auto;
+    autoBtn.classList.toggle('on',auto);
+    autoBtn.textContent=auto?'Auto: On':'Auto';
+    if(auto&&!busy) runAuto();
+  });
+  soundBtn.addEventListener('click',function(){
+    soundOn=!soundOn;
+    soundBtn.classList.toggle('on',soundOn);
+    soundBtn.textContent='Sound: '+(soundOn?'On':'Off');
+  });
+  resetBtn.addEventListener('click',reset);
+  window.addEventListener('keydown',function(e){
+    if(e.code==='Space'||e.code==='Enter'){ e.preventDefault(); if(!busy&&idx<32){actx();drawNext();} }
+  });
+
+  ready=true;
+  reset();
+})();
+</script>
+</body>
+</html>
