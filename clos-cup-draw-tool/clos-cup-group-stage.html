@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLOS Cup // Group Stage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#0A0A0A; --navy:#0D1B2A; --navy-2:#12263B; --charcoal:#1C1C1E;
+    --white:#F5F5F7; --silver:#A8B2BB; --gold:#E5B84A; --gold-2:#F1CF6E; --gold-deep:#B8862E;
+    --line:rgba(168,178,187,.14); --line-2:rgba(168,178,187,.28);
+    --win:#3FB950; --loss:#E5534B;
+    --disp:'Barlow Condensed',Impact,'Arial Narrow',sans-serif;
+    --body:'Inter',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--body);color:var(--white);
+    background:radial-gradient(1100px 600px at 50% -10%, #16324c 0%, rgba(22,50,76,0) 60%),
+      linear-gradient(180deg,#0A1622 0%,#070d15 100%);
+    min-height:100%;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1280px;margin:0 auto;padding:22px 20px 60px}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
+    border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+  .eyebrow{font-weight:700;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);
+    display:flex;align-items:center;gap:10px}
+  .eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
+  .title{font-family:var(--disp);font-weight:900;line-height:.86;text-transform:uppercase;
+    font-size:clamp(34px,5vw,60px);margin-top:6px;
+    background:linear-gradient(180deg,#fff,#cdd6df);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .title .g{background:linear-gradient(180deg,var(--gold-2),var(--gold-deep));-webkit-background-clip:text;background-clip:text}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button{font-family:var(--disp);font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    cursor:pointer;border:none;border-radius:9px;transition:transform .1s,background .2s,opacity .2s}
+  .btn{font-size:14px;padding:10px 15px;color:var(--white);background:rgba(255,255,255,.05);border:1px solid var(--line-2)}
+  .btn:hover{background:rgba(255,255,255,.1)}
+  .btn.gold{color:#1a1204;background:linear-gradient(180deg,var(--gold-2),var(--gold));border:none}
+  .btn.gold:hover{transform:translateY(-1px)}
+  .stat-pill{font-family:var(--disp);font-weight:700;font-size:15px;color:var(--silver);
+    padding:8px 14px;border:1px solid var(--line);border-radius:9px}
+  .stat-pill b{color:var(--gold)}
+
+  /* setup */
+  .setup{background:linear-gradient(180deg,rgba(18,38,59,.6),rgba(10,22,34,.6));
+    border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:22px}
+  .setup h2{font-family:var(--disp);font-weight:800;font-size:24px;text-transform:uppercase;margin-bottom:4px}
+  .setup p{color:var(--silver);font-size:13px;margin-bottom:16px;line-height:1.5}
+  .setup textarea{width:100%;min-height:90px;background:#0a1622;color:var(--white);
+    border:1px solid var(--line-2);border-radius:9px;padding:12px;font-family:monospace;font-size:12px;resize:vertical}
+  .setup .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+  .divider{display:flex;align-items:center;gap:12px;color:var(--silver);font-size:11px;
+    letter-spacing:.2em;text-transform:uppercase;margin:20px 0}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+  .manual{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .mgroup{border:1px solid var(--line);border-radius:10px;padding:12px;background:rgba(0,0,0,.15)}
+  .mgroup h3{font-family:var(--disp);font-weight:800;font-size:18px;color:var(--gold);margin-bottom:8px}
+  .mgroup select{width:100%;margin-bottom:6px;background:#0a1622;color:var(--white);
+    border:1px solid var(--line-2);border-radius:6px;padding:6px;font-size:12px;font-family:var(--body)}
+  .warn{color:var(--loss);font-size:13px;font-weight:600;margin-top:10px;min-height:18px}
+
+  /* board */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .group{background:linear-gradient(180deg,rgba(18,38,59,.6),rgba(10,22,34,.6));
+    border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .g-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);
+    background:linear-gradient(90deg,rgba(13,27,42,.9),rgba(13,27,42,.3))}
+  .g-letter{font-family:var(--disp);font-weight:900;font-size:26px;color:var(--gold)}
+  .g-word{font-size:9px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--silver)}
+  .g-prog{margin-left:auto;font-family:var(--disp);font-weight:700;font-size:14px;color:var(--silver)}
+
+  table{width:100%;border-collapse:collapse}
+  thead th{font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--silver);
+    text-align:center;padding:8px 4px;border-bottom:1px solid var(--line)}
+  thead th.tl{text-align:left;padding-left:14px}
+  tbody td{padding:7px 4px;text-align:center;font-size:13px;border-bottom:1px solid rgba(168,178,187,.06)}
+  tbody td.tl{text-align:left;padding-left:14px}
+  .rk{font-family:var(--disp);font-weight:700;color:var(--silver);width:22px}
+  .tm{display:flex;align-items:center;gap:8px}
+  .tm .nm{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.01em}
+  .tm .co{font-size:9.5px;color:var(--silver)}
+  .adv td{background:linear-gradient(90deg,rgba(229,184,74,.10),transparent)}
+  .adv .rk{color:var(--gold)}
+  .flip{color:var(--gold);font-weight:700}
+  .wl b{color:var(--white)} .diff.pos{color:var(--win)} .diff.neg{color:var(--loss)}
+
+  /* crest */
+  .crest{border-radius:8px;border:2px solid #fff;display:flex;align-items:center;justify-content:center;
+    font-family:var(--disp);font-weight:800;position:relative;overflow:hidden;flex:none;
+    width:28px;height:28px;font-size:11px}
+  .crest.lg{width:34px;height:34px;border-radius:9px;font-size:13px}
+  .crest-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:13%;
+    background:#F5F5F7;box-sizing:border-box}
+
+  /* fixtures */
+  .fixtures{padding:6px 14px 14px}
+  .md{margin-top:10px}
+  .md-h{font-size:8.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);
+    margin:8px 0 4px}
+  .fix{display:flex;align-items:center;gap:8px;padding:5px 0}
+  .fix .side{display:flex;align-items:center;gap:7px;flex:1;min-width:0}
+  .fix .side.r{flex-direction:row-reverse;text-align:right}
+  .fix .ab{font-family:var(--disp);font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fix input{width:38px;height:32px;text-align:center;background:#0a1622;color:var(--white);
+    border:1px solid var(--line-2);border-radius:7px;font-family:var(--disp);font-weight:700;font-size:17px;
+    -moz-appearance:textfield}
+  .fix input::-webkit-outer-spin-button,.fix input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .fix input:focus{outline:none;border-color:var(--gold)}
+  .fix .vs{color:var(--silver);font-family:var(--disp);font-weight:700;font-size:12px}
+  .fix.win-l .side:first-child .ab{color:var(--gold)} .fix.win-r .side:last-child .ab{color:var(--gold)}
+
+  .note{color:var(--silver);font-size:11px;text-align:center;margin-top:22px;opacity:.7;line-height:1.6}
+  .hidden{display:none}
+  input[type=file]{display:none}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}.manual{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Campus Legends of Saturday</div>
+      <h1 class="title">CLOS Cup <span class="g">Group Stage</span></h1>
+    </div>
+    <div class="toolbar">
+      <span class="stat-pill"><b id="playedN">0</b> / 48 played</span>
+      <button class="btn" id="setupBtn">Setup</button>
+      <button class="btn gold" id="saveBtn">Save File</button>
+      <button class="btn" id="loadBtn">Load File</button>
+      <button class="btn" id="resetBtn">Reset Scores</button>
+      <input type="file" id="fileIn" accept="application/json,.json">
+    </div>
+  </header>
+
+  <!-- SETUP -->
+  <div class="setup" id="setup">
+    <h2>Set Your 8 Groups</h2>
+    <p>Paste the draw result from the CLOS Cup Draw tool (an object like <code>{"A":["North Texas","Charlotte",...]}</code>), or fill the groups manually below. Each group needs exactly 4 teams, and every team is used once.</p>
+    <textarea id="pasteBox" placeholder='{"A":["...","...","...","..."], "B":[...], ... "H":[...]}'></textarea>
+    <div class="row">
+      <button class="btn gold" id="importPaste">Load From Paste</button>
+      <button class="btn" id="fillManual">Show Manual Entry</button>
+    </div>
+    <div id="manualWrap" class="hidden">
+      <div class="divider">or assign manually</div>
+      <div class="manual" id="manual"></div>
+      <div class="warn" id="setupWarn"></div>
+      <div class="row"><button class="btn gold" id="applyManual">Save Groups</button></div>
+    </div>
+  </div>
+
+  <!-- BOARD -->
+  <div class="grid" id="board"></div>
+
+  <div class="note" id="note"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var COACHES=[
+    {team:"Temple",coach:"AdHoc",conf:"AAC"},{team:"UAB",coach:"Alex Lew",conf:"AAC"},
+    {team:"USF",coach:"Lonnie",conf:"AAC"},{team:"North Texas",coach:"Mazlu",conf:"AAC"},
+    {team:"Charlotte",coach:"RichHype",conf:"AAC"},{team:"Kennesaw State",coach:"Big Red",conf:"C-USA"},
+    {team:"Middle Tennessee",coach:"Buddy",conf:"C-USA"},{team:"Delaware",coach:"Genie",conf:"C-USA"},
+    {team:"Western Kentucky",coach:"Helmzee",conf:"C-USA"},{team:"Liberty",coach:"MikeTitan",conf:"C-USA"},
+    {team:"New Mexico State",coach:"Prodigee",conf:"C-USA"},{team:"Western Michigan",coach:"Austin",conf:"MAC"},
+    {team:"Sacramento State",coach:"DEpps",conf:"MAC"},{team:"Eastern Michigan",coach:"hi-keif",conf:"MAC"},
+    {team:"Central Michigan",coach:"Imprfkt",conf:"MAC"},{team:"Ohio",coach:"Pwat",conf:"MAC"},
+    {team:"Miami (OH)",coach:"RealDiehl",conf:"MAC"},{team:"UTEP",coach:"CP",conf:"MW"},
+    {team:"North Dakota State",coach:"Fear",conf:"MW"},{team:"Wyoming",coach:"ike723",conf:"MW"},
+    {team:"San Jose State",coach:"Rogeezy",conf:"MW"},{team:"Nevada",coach:"VinceTumbleson",conf:"MW"},
+    {team:"Colorado State",coach:"Amir",conf:"PAC-12"},{team:"Texas State",coach:"CMU",conf:"PAC-12"},
+    {team:"San Diego State",coach:"Eae2106",conf:"PAC-12"},{team:"Fresno State",coach:"GGB",conf:"PAC-12"},
+    {team:"Utah State",coach:"Nysguy",conf:"PAC-12"},{team:"Troy",coach:"Chevy",conf:"SUN BELT"},
+    {team:"Coastal Carolina",coach:"Cproffitt3",conf:"SUN BELT"},{team:"Louisiana",coach:"Marko",conf:"SUN BELT"},
+    {team:"Appalachian State",coach:"Phil",conf:"SUN BELT"},{team:"Arkansas State",coach:"Shaggy",conf:"SUN BELT"}
+  ];
+  var THEME={
+    "Temple":["#9D2235","#EDEDED","TEM"],"UAB":["#1E6B52","#F4C300","UAB"],"USF":["#006747","#CFC493","USF"],
+    "North Texas":["#00853E","#EDEDED","UNT"],"Charlotte":["#00583D","#A49665","CLT"],
+    "Kennesaw State":["#FFC72C","#101010","KENN"],"Middle Tennessee":["#0066A2","#EDEDED","MT"],
+    "Delaware":["#00539F","#FFD200","DEL"],"Western Kentucky":["#C60C30","#EDEDED","WKU"],
+    "Liberty":["#A6192E","#0A2340","LIB"],"New Mexico State":["#8C1D40","#EDEDED","NMSU"],
+    "Western Michigan":["#B5A268","#5E2D18","WMU"],"Sacramento State":["#00573F","#C4B581","SAC"],
+    "Eastern Michigan":["#00694E","#EDEDED","EMU"],"Central Michigan":["#6A0032","#FFC82E","CMU"],
+    "Ohio":["#00694E","#EDEDED","OHIO"],"Miami (OH)":["#B61E2E","#EDEDED","M-OH"],
+    "UTEP":["#FF8200","#041E42","UTEP"],"North Dakota State":["#00593C","#FFC72C","NDSU"],
+    "Wyoming":["#FFC425","#492F24","WYO"],"San Jose State":["#0055A2","#E5A823","SJSU"],
+    "Nevada":["#14396B","#B4BBC0","NEV"],"Colorado State":["#1E4D2B","#C8C372","CSU"],
+    "Texas State":["#862633","#B4975A","TXST"],"San Diego State":["#A6192E","#1A1A1A","SDSU"],
+    "Fresno State":["#DB0032","#002E5D","FS"],"Utah State":["#17324D","#C9CDD0","USU"],
+    "Troy":["#8A2432","#B4BBC0","TROY"],"Coastal Carolina":["#007073","#A27752","CCU"],
+    "Louisiana":["#CE181E","#EDEDED","UL"],"Appalachian State":["#FFCC00","#101010","APP"],
+    "Arkansas State":["#CC092F","#1A1A1A","ARST"]
+  };
+  var ESPN_ID={"Temple":218,"UAB":5,"USF":58,"North Texas":249,"Charlotte":2429,"Kennesaw State":338,
+    "Middle Tennessee":2393,"Delaware":48,"Western Kentucky":98,"Liberty":2335,"New Mexico State":166,
+    "Western Michigan":2711,"Sacramento State":16,"Eastern Michigan":2199,"Central Michigan":2117,"Ohio":195,
+    "Miami (OH)":193,"UTEP":2638,"North Dakota State":2449,"Wyoming":2751,"San Jose State":23,"Nevada":2440,
+    "Colorado State":36,"Texas State":326,"San Diego State":21,"Fresno State":278,"Utah State":328,"Troy":2653,
+    "Coastal Carolina":324,"Louisiana":309,"Appalachian State":2026,"Arkansas State":2032};
+  var TEAM={};
+  COACHES.forEach(function(t){var x=THEME[t.team]||["#1C1C1E","#A8B2BB",t.team.slice(0,3).toUpperCase()];
+    t.c1=x[0];t.c2=x[1];t.abbr=x[2];t.eid=ESPN_ID[t.team]||0;TEAM[t.team]=t;});
+
+  var LETTERS=["A","B","C","D","E","F","G","H"];
+  // matchdays as seed-index pairs (0..3)
+  var MDAYS=[[[0,1],[2,3]],[[0,2],[1,3]],[[0,3],[1,2]]];
+  var KEY='clos-cup-groupstage-v1';
+
+  var STATE={groups:{},scores:{}};
+
+  function crestHTML(t,lg){
+    var cls='crest'+(lg?' lg':'');
+    var st='background-color:'+t.c1+';color:'+txtOn(t.c1)+';border-color:'+t.c2+';';
+    var inner=t.abbr;
+    if(t.eid){
+      var loc='logos/'+t.eid+'.png', esp='https://a.espncdn.com/i/teamlogos/ncaa/500/'+t.eid+'.png';
+      inner=t.abbr+'<img class="crest-img" src="'+loc+'" alt="" '
+        +'onerror="if(this.dataset.f){this.remove();}else{this.dataset.f=1;this.src=\''+esp+'\';}">';
+    }
+    return '<span class="'+cls+'" style="'+st+'">'+inner+'</span>';
+  }
+  function hexRGB(h){h=h.replace('#','');if(h.length===3){h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];}
+    return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
+  function _lin(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);}
+  function lum(h){var c=hexRGB(h);return 0.2126*_lin(c[0])+0.7152*_lin(c[1])+0.0722*_lin(c[2]);}
+  function txtOn(h){return lum(h)>0.45?'#0A0A0A':'#F7F7F9';}
+
+  // ---- persistence ----
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(STATE));}catch(e){}}
+  function load(){try{var s=localStorage.getItem(KEY);if(s){var o=JSON.parse(s);
+    if(o&&o.groups){STATE.groups=o.groups;STATE.scores=o.scores||{};}}}catch(e){}}
+
+  // ---- helpers ----
+  function groupsReady(){var g=STATE.groups;if(!g)return false;
+    for(var i=0;i<8;i++){var a=g[LETTERS[i]];if(!a||a.length!==4)return false;}return true;}
+  function fkey(g,i,j){return g+'-'+i+'-'+j;}
+  function validScore(sc){return sc&&sc[0]!==''&&sc[1]!==''&&sc[0]!=null&&sc[1]!=null
+    &&!isNaN(+sc[0])&&!isNaN(+sc[1]);}
+
+  function computeGroup(g){
+    var names=STATE.groups[g];
+    var st=names.map(function(n,i){var t=TEAM[n]||{team:n,abbr:n.slice(0,3).toUpperCase(),coach:'',c1:'#1C1C1E',c2:'#A8B2BB',eid:0};
+      return {name:n,t:t,seed:i,gp:0,w:0,l:0,pf:0,pa:0,diff:0};});
+    var played=0;
+    MDAYS.forEach(function(md){md.forEach(function(p){
+      var sc=STATE.scores[fkey(g,p[0],p[1])];
+      if(!validScore(sc))return;
+      played++;
+      var a=+sc[0],b=+sc[1],A=st[p[0]],B=st[p[1]];
+      A.gp++;B.gp++;A.pf+=a;A.pa+=b;B.pf+=b;B.pa+=a;
+      if(a>b){A.w++;B.l++;}else if(b>a){B.w++;A.l++;}
+    });});
+    st.forEach(function(s){s.diff=s.pf-s.pa;});
+    return {st:st,played:played};
+  }
+
+  function miniWins(g,cluster){
+    var names=cluster.map(function(s){return s.name;});
+    var m={};cluster.forEach(function(s){m[s.name]=0;});
+    MDAYS.forEach(function(md){md.forEach(function(p){
+      var sc=STATE.scores[fkey(g,p[0],p[1])];if(!validScore(sc))return;
+      var na=STATE.groups[g][p[0]],nb=STATE.groups[g][p[1]];
+      if(names.indexOf(na)<0||names.indexOf(nb)<0)return;
+      var a=+sc[0],b=+sc[1];
+      if(a>b)m[na]++;else if(b>a)m[nb]++;
+    });});
+    return m;
+  }
+
+  function rankGroup(g){
+    var cg=computeGroup(g), st=cg.st;
+    var byW={};st.forEach(function(s){(byW[s.w]=byW[s.w]||[]).push(s);});
+    var wins=Object.keys(byW).map(Number).sort(function(a,b){return b-a;});
+    var ranked=[],flags={};
+    wins.forEach(function(w){
+      var cl=byW[w];
+      if(cl.length===1){ranked.push(cl[0]);return;}
+      var mw=miniWins(g,cl);
+      var arr=cl.map(function(s){return {s:s,mw:mw[s.name]};});
+      arr.sort(function(x,y){
+        if(y.mw!==x.mw)return y.mw-x.mw;
+        if(y.s.diff!==x.s.diff)return y.s.diff-x.s.diff;
+        if(y.s.pf!==x.s.pf)return y.s.pf-x.s.pf;
+        return 0;});
+      function eq(p,q){return p&&q&&p.mw===q.mw&&p.s.diff===q.s.diff&&p.s.pf===q.s.pf;}
+      for(var i=0;i<arr.length;i++){
+        if(eq(arr[i],arr[i-1])||eq(arr[i],arr[i+1])){
+          // only a live tiebreak if these teams have actually played
+          if(arr[i].s.gp>0) flags[arr[i].s.name]=true;
+        }
+        ranked.push(arr[i].s);
+      }
+    });
+    return {ranked:ranked,played:cg.played,flags:flags};
+  }
+
+  // ---- rendering ----
+  function standingsHTML(g){
+    var r=rankGroup(g);
+    var rows=r.ranked.map(function(s,idx){
+      var adv=idx<2?'adv':'';
+      var dcls=s.diff>0?'pos':(s.diff<0?'neg':'');
+      var dstr=(s.diff>0?'+':'')+s.diff;
+      var flip=r.flags[s.name]?' <span class="flip" title="Tiebreaker in play (or coin flip if fully level)">&#9873;</span>':'';
+      return '<tr class="'+adv+'">'
+        +'<td class="rk">'+(idx+1)+'</td>'
+        +'<td class="tl"><span class="tm">'+crestHTML(s.t)
+          +'<span><span class="nm">'+s.t.abbr+flip+'</span> <span class="co">'+(s.t.coach?'@'+s.t.coach:'')+'</span></span></span></td>'
+        +'<td class="wl"><b>'+s.w+'</b>-'+s.l+'</td>'
+        +'<td>'+s.pf+'</td><td>'+s.pa+'</td>'
+        +'<td class="diff '+dcls+'">'+dstr+'</td></tr>';
+    }).join('');
+    return '<table><thead><tr><th></th><th class="tl">Team</th><th>W-L</th><th>PF</th><th>PA</th><th>Diff</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody></table>'
+      +'<div class="g-prog-inline" style="display:none">'+r.played+'</div>';
+  }
+
+  function fixturesHTML(g){
+    var names=STATE.groups[g];
+    var html='<div class="fixtures">';
+    MDAYS.forEach(function(md,mi){
+      html+='<div class="md"><div class="md-h">Matchday '+(mi+1)+'</div>';
+      md.forEach(function(p){
+        var i=p[0],j=p[1],A=TEAM[names[i]],B=TEAM[names[j]];
+        var sc=STATE.scores[fkey(g,i,j)]||['',''];
+        var wcls='';var a=sc[0],b=sc[1];
+        if(validScore(sc)){wcls=(+a>+b)?'win-l':((+b>+a)?'win-r':'');}
+        html+='<div class="fix '+wcls+'" data-fk="'+fkey(g,i,j)+'">'
+          +'<span class="side">'+crestHTML(A)+'<span class="ab">'+A.abbr+'</span></span>'
+          +'<input type="number" min="0" inputmode="numeric" data-k="'+fkey(g,i,j)+'" data-s="0" value="'+(a===''?'':a)+'">'
+          +'<span class="vs">v</span>'
+          +'<input type="number" min="0" inputmode="numeric" data-k="'+fkey(g,i,j)+'" data-s="1" value="'+(b===''?'':b)+'">'
+          +'<span class="side r"><span class="ab">'+B.abbr+'</span>'+crestHTML(B)+'</span>'
+          +'</div>';
+      });
+      html+='</div>';
+    });
+    html+='</div>';
+    return html;
+  }
+
+  function groupCard(g){
+    var r=rankGroup(g);
+    return '<div class="group" id="grp-'+g+'">'
+      +'<div class="g-head"><span class="g-letter">'+g+'</span>'
+        +'<span class="g-word">Group '+g+'</span>'
+        +'<span class="g-prog" id="prog-'+g+'">'+r.played+'/6</span></div>'
+      +'<div class="stand" id="stand-'+g+'">'+standingsHTML(g)+'</div>'
+      +fixturesHTML(g);
+  }
+
+  function renderBoard(){
+    if(!groupsReady()){document.getElementById('board').innerHTML='';return;}
+    var html='';LETTERS.forEach(function(g){html+=groupCard(g);});
+    document.getElementById('board').innerHTML=html;
+    bindInputs();
+    updateGlobal();
+  }
+
+  function refreshGroup(g){
+    document.getElementById('stand-'+g).innerHTML=standingsHTML(g);
+    var r=rankGroup(g);
+    document.getElementById('prog-'+g).textContent=r.played+'/6';
+    // update win highlight on the fixture rows without rebuilding inputs
+    var card=document.getElementById('grp-'+g);
+    card.querySelectorAll('.fix').forEach(function(row){
+      var fk=row.getAttribute('data-fk');var sc=STATE.scores[fk]||['',''];
+      row.classList.remove('win-l','win-r');
+      if(validScore(sc)){row.classList.add(+sc[0]>+sc[1]?'win-l':(+sc[1]>+sc[0]?'win-r':''));}
+    });
+  }
+
+  function bindInputs(){
+    document.querySelectorAll('.fix input').forEach(function(inp){
+      inp.addEventListener('input',function(){
+        var k=inp.getAttribute('data-k'),s=+inp.getAttribute('data-s');
+        var cur=STATE.scores[k]||['',''];
+        cur[s]=inp.value===''?'':String(Math.max(0,parseInt(inp.value,10)||0));
+        if(inp.value==='')cur[s]='';
+        STATE.scores[k]=cur;
+        save();
+        var g=k.split('-')[0];
+        refreshGroup(g);
+        updateGlobal();
+      });
+    });
+  }
+
+  function updateGlobal(){
+    var played=0;
+    LETTERS.forEach(function(g){if(STATE.groups[g])played+=rankGroup(g).played;});
+    document.getElementById('playedN').textContent=played;
+    var anyFlip=false;
+    LETTERS.forEach(function(g){if(STATE.groups[g]&&Object.keys(rankGroup(g).flags).length)anyFlip=true;});
+    document.getElementById('note').innerHTML='Top 2 in each group (gold) advance to the Round of 16. '
+      +(anyFlip?'&#9873; = teams level on record and every tiebreaker so far; head-to-head, then point differential, then points scored decide it, and a &#9873; still showing at the end means a coin flip. ':'')
+      +'Scores auto-save in this browser on your hosted/downloaded copy. Use Save File for a backup you can move between devices.';
+  }
+
+  // ---- setup ----
+  function buildManual(){
+    var opts='<option value="">- pick team -</option>'
+      +COACHES.map(function(t){return '<option value="'+t.team+'">'+t.team+' (@'+t.coach+')</option>';}).join('');
+    var html='';
+    LETTERS.forEach(function(g){
+      html+='<div class="mgroup"><h3>Group '+g+'</h3>';
+      for(var s=0;s<4;s++){
+        var cur=(STATE.groups[g]&&STATE.groups[g][s])||'';
+        html+='<select data-g="'+g+'" data-s="'+s+'">'+opts.replace('value="'+cur+'"','value="'+cur+'" selected')+'</select>';
+      }
+      html+='</div>';
+    });
+    document.getElementById('manual').innerHTML=html;
+  }
+
+  function collectManual(){
+    var g={};var all=[];
+    LETTERS.forEach(function(L){g[L]=['','','',''];});
+    document.querySelectorAll('#manual select').forEach(function(sel){
+      var L=sel.getAttribute('data-g'),s=+sel.getAttribute('data-s');
+      g[L][s]=sel.value; if(sel.value)all.push(sel.value);
+    });
+    return {g:g,all:all};
+  }
+
+  function validateGroups(g){
+    var all=[],dupes={},seen={};
+    LETTERS.forEach(function(L){
+      if(!g[L]||g[L].length!==4)return;
+      g[L].forEach(function(n){if(!n)return;if(seen[n])dupes[n]=true;seen[n]=true;all.push(n);});
+    });
+    var missing=32-all.length;
+    var dupeList=Object.keys(dupes);
+    if(dupeList.length)return 'Duplicate teams: '+dupeList.join(', ');
+    if(missing>0)return missing+' slot(s) still empty. Every group needs 4 teams.';
+    return '';
+  }
+
+  function applyGroups(g){
+    var err=validateGroups(g);
+    if(err){document.getElementById('setupWarn').textContent=err;return false;}
+    STATE.groups=g;save();
+    document.getElementById('setup').classList.add('hidden');
+    renderBoard();
+    return true;
+  }
+
+  // ---- events ----
+  document.getElementById('setupBtn').addEventListener('click',function(){
+    var s=document.getElementById('setup');
+    s.classList.toggle('hidden');
+    if(!s.classList.contains('hidden')){buildManual();window.scrollTo({top:0,behavior:'smooth'});}
+  });
+  document.getElementById('fillManual').addEventListener('click',function(){
+    document.getElementById('manualWrap').classList.remove('hidden');buildManual();
+  });
+  document.getElementById('importPaste').addEventListener('click',function(){
+    var raw=document.getElementById('pasteBox').value.trim();
+    document.getElementById('setupWarn').textContent='';
+    if(!raw){document.getElementById('setupWarn').textContent='Paste your draw JSON first.';return;}
+    var obj;try{obj=JSON.parse(raw);}catch(e){document.getElementById('setupWarn').textContent='That is not valid JSON. Copy the full export from the draw tool.';return;}
+    if(obj.groups)obj=obj.groups;
+    var g={};LETTERS.forEach(function(L){g[L]=(obj[L]||[]).slice(0,4);});
+    // map any names that do not exactly match (trim)
+    LETTERS.forEach(function(L){g[L]=g[L].map(function(n){return typeof n==='string'?n.trim():n;});});
+    applyGroups(g);
+  });
+  document.getElementById('applyManual').addEventListener('click',function(){
+    applyGroups(collectManual().g);
+  });
+  document.getElementById('saveBtn').addEventListener('click',function(){
+    var blob=new Blob([JSON.stringify(STATE,null,2)],{type:'application/json'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='clos-cup-groupstage.json';a.click();URL.revokeObjectURL(a.href);
+  });
+  document.getElementById('loadBtn').addEventListener('click',function(){document.getElementById('fileIn').click();});
+  document.getElementById('fileIn').addEventListener('change',function(e){
+    var f=e.target.files[0];if(!f)return;var rd=new FileReader();
+    rd.onload=function(){try{var o=JSON.parse(rd.result);
+      if(o&&o.groups){STATE.groups=o.groups;STATE.scores=o.scores||{};save();
+        document.getElementById('setup').classList.add('hidden');renderBoard();}
+      else alert('That file does not look like a CLOS Cup save.');
+    }catch(err){alert('Could not read that file.');}};
+    rd.readAsText(f);e.target.value='';
+  });
+  document.getElementById('resetBtn').addEventListener('click',function(){
+    if(!confirm('Clear all scores? Your groups stay put.'))return;
+    STATE.scores={};save();renderBoard();
+  });
+
+  // ---- init ----
+  load();
+  if(groupsReady()){document.getElementById('setup').classList.add('hidden');renderBoard();}
+  else{buildManual();updateGlobal();}
+})();
+</script>
+</body>
+</html>
