@@ -696,9 +696,8 @@ const WEEK_TYPES = [
   { key:'week10',    short:'10', label:'Week 10',                    tone:TONE.late },
   { key:'week11',    short:'11', label:'Week 11',                    tone:TONE.late },
   { key:'week12',    short:'12', label:'Week 12',                    tone:TONE.late },
-  { key:'week13',    short:'13', label:'Week 13',                    tone:TONE.late },
-  { key:'week14',    short:'14', label:'Week 14 — Rivalry Week',     tone:TONE.rivalry },
-  { key:'week15',    short:'15', label:'Week 15 — Army/Navy Week',   tone:TONE.armynavy },
+  { key:'week13',    short:'13', label:'Week 13 — Rivalry Week',     tone:TONE.rivalry },
+  { key:'week14',    short:'14', label:'Week 14 — Army/Navy Week',   tone:TONE.armynavy },
   { key:'confchamp', short:'CC', label:'Conference Championships',   tone:TONE.confchamp },
   { key:'bowl1',     short:'B1', label:'Bowl Week 1',                tone:TONE.bowl },
   { key:'bowl2',     short:'B2', label:'Bowl Week 2',                tone:TONE.bowl },
@@ -727,12 +726,12 @@ const OFFSEASON_KEYS = new Set([
 ]);
 function isOffseason(key) { return OFFSEASON_KEYS.has(key); }
 
-// Weeks during which the GOTW section is shown. Week 15 (Army/Navy Week)
+// Weeks during which the GOTW section is shown. Week 14 (Army/Navy Week)
 // skipped because only one game is played league-wide. Bowl Season + Natty
 // skipped because coaches are locked in and GOTW posts aren't made.
 const GOTW_WEEKS = new Set([
   'kickoff','week1','week2','week3','week4','week5','week6','week7',
-  'week8','week9','week10','week11','week12','week13','week14','confchamp'
+  'week8','week9','week10','week11','week12','week13','confchamp'
 ]);
 function hasGOTW(key) { return GOTW_WEEKS.has(key); }
 
@@ -763,7 +762,15 @@ async function fetchRoster() {
     clearTimeout(timer);
     const data = await resp.json();
     rosterCache = {};
-    data.forEach(r => { if (r.team && r.discord) rosterCache[r.team.toLowerCase()] = r.discord; });
+    // rosterCache now holds a ready-to-post mention string, not a raw username.
+    // Real ping if the sheet has a valid snowflake ID in column N; plain text
+    // fallback to @username if the ID is missing or malformed.
+    data.forEach(r => {
+      if (!r.team || !r.discord) return;
+      const id = String(r.discordId || '').trim();
+      rosterCache[r.team.toLowerCase()] =
+        /^\d{17,20}$/.test(id) ? '<@' + id + '>' : '@' + r.discord;
+    });
     renderRoster(data);
     show(badge);
     badge.textContent = '✓ Synced from Sheet';
@@ -991,7 +998,7 @@ function generate() {
       post += '**' + (i + 1) + '.** ' + team +
               (record ? ' (' + record + ')' : '') +
               indicator(diff) +
-              (discord ? ' | @' + discord : '') + '\n';
+              (discord ? ' | ' + discord : '') + '\n';
     });
 
     const newEntries = parsed.filter(p => p.diff === null && last.length > 0);
@@ -1005,12 +1012,12 @@ function generate() {
       newEntries.forEach(p => {
         post += p.team + (p.record ? ' (' + p.record + ')' : '') +
                 ' — enters at #' + p.rank +
-                (p.discord ? ' | @' + p.discord : '') + '\n';
+                (p.discord ? ' | ' + p.discord : '') + '\n';
       });
     }
     if (dropped.length) {
       post += '\n📉 **DROPPED OUT**\n';
-      dropped.forEach(p => { post += p.team + (p.discord ? ' | @' + p.discord : '') + '\n'; });
+      dropped.forEach(p => { post += p.team + (p.discord ? ' | ' + p.discord : '') + '\n'; });
     }
 
     const risers  = parsed.filter(p => p.diff !== null && p.diff > 0).sort((a,b) => b.diff - a.diff).slice(0,3);
